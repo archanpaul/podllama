@@ -13,7 +13,7 @@ POD_NAME ?= qwen_code_pod
 
 help:
 	@echo "Available Makefile targets:"
-	@echo "  make build               - Build both server and client Podman images using fedora-minimal:44"
+	@echo "  make build               - Build both server and client Podman images using fedora-minimal:latest"
 	@echo "  make service-up          - Launch Chat, Autocomplete & LiteLLM Proxy via Podman Compose (Port 4000)"
 	@echo "  make service-down        - Stop Podman Compose services"
 	@echo "  make service-logs        - View live logs from all running services"

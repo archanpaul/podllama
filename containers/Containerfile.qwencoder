@@ -1,25 +1,25 @@
 # Qwen Code Workspace Agent Container using Official QwenLM/qwen-code
-FROM registry.fedoraproject.org/fedora-minimal:44
+FROM registry.fedoraproject.org/fedora-minimal:latest
 
 ARG QWEN_CODE_VERSION=""
 
 RUN microdnf update -y && \
     microdnf install -y --setopt=install_weak_deps=0 \
-        python3 \
-        python3-requests \
-        python3-urllib3 \
-        curl \
-        git \
-        tar \
-        gzip \
-        ca-certificates && \
+    python3 \
+    python3-requests \
+    python3-urllib3 \
+    curl \
+    git \
+    tar \
+    gzip \
+    ca-certificates && \
     microdnf clean all
 
 # Download and install official QwenLM/qwen-code binary (latest release or specified build arg)
 RUN if [ -n "${QWEN_CODE_VERSION}" ]; then \
-        DOWNLOAD_URL="https://github.com/QwenLM/qwen-code/releases/download/${QWEN_CODE_VERSION}/qwen-code-linux-x64.tar.gz"; \
+    DOWNLOAD_URL="https://github.com/QwenLM/qwen-code/releases/download/${QWEN_CODE_VERSION}/qwen-code-linux-x64.tar.gz"; \
     else \
-        DOWNLOAD_URL="https://github.com/QwenLM/qwen-code/releases/latest/download/qwen-code-linux-x64.tar.gz"; \
+    DOWNLOAD_URL="https://github.com/QwenLM/qwen-code/releases/latest/download/qwen-code-linux-x64.tar.gz"; \
     fi && \
     echo "Downloading QwenLM/qwen-code from: ${DOWNLOAD_URL}" && \
     curl -L -o /tmp/qwen-code.tar.gz "${DOWNLOAD_URL}" && \

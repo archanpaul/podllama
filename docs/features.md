@@ -53,7 +53,7 @@ The **Qwen Code Podman Container Environment** provides a local, GPU-accelerated
 
 ## 7. Zero-Compilation Fedora 44 Minimal Base
 
-- **Prebuilt RPM Packages**: Uses `fedora-minimal:44` base images and installs precompiled `llama.cpp` and `llama.cpp-vulkan` binaries directly via `microdnf`.
+- **Prebuilt RPM Packages**: Uses `fedora-minimal:latest` base images and installs precompiled `llama.cpp` and `llama.cpp-vulkan` binaries directly via `microdnf`.
 - **Fast Build Times**: Eliminates lengthy C++ source builds, lowering container build time from tens of minutes to seconds.
 
 ---
@@ -74,4 +74,3 @@ The **Qwen Code Podman Container Environment** provides a local, GPU-accelerated
   - **Chat Model Streaming**: Sends a streaming request (`qwen-chat`) and validates SSE token chunk streaming.
   - **Autocomplete Model Completion**: Sends an FIM completion request (`qwen-autocomplete`) and validates code output.
   - **Tool Calling**: Sends function tool definitions (`qwen-chat` with `--jinja`) to ensure tool-calling support functions without server error.
-
