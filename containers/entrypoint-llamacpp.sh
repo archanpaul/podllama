@@ -137,8 +137,6 @@ exec "${LLAMA_SERVER_BIN}" \
     -ngl "${GPU_LAYERS}" \
     -t "${CPU_THREADS}" \
     -c "${CTX_SIZE}" \
-    --rope-scaling yarn \
-    --yarn-orig-ctx 32768 \
     --flash-attn auto \
     --jinja \
     --alias "qwen2.5-coder"

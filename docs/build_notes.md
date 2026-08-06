@@ -4,7 +4,7 @@ This document details the multi-stage build system, container layer caching stra
 
 ---
 
-## 1. Qwen Model Server Container (`Containerfile.server`)
+## 1. Qwen Model Server Container (`Containerfile.llamacpp`)
 
 The model server container builds and packages `llama-server` with Vulkan GPU acceleration on top of Fedora Minimal.
 
@@ -17,7 +17,7 @@ The model server container builds and packages `llama-server` with Vulkan GPU ac
 
 ### Layer Caching Strategy (`LLAMA_CPP_TAG`)
 
-To prevent lengthy C++ compilation on every `make build` invocation, `Containerfile.server` uses the `LLAMA_CPP_TAG` build argument:
+To prevent lengthy C++ compilation on every `make build` invocation, `Containerfile.llamacpp` uses the `LLAMA_CPP_TAG` build argument:
 
 ```dockerfile
 ARG LLAMA_CPP_TAG=""
@@ -40,7 +40,7 @@ RUN if [ -n "${LLAMA_CPP_TAG}" ]; then \
 - **Offline / Rate-Limit Fallback**: If GitHub API is offline or rate-limited, `make build-server` automatically falls back to an empty tag (`LLAMA_CPP_TAG=""`), cloning the latest `main` branch directly.
 - **Custom Tag Override**: You can target a specific `llama.cpp` release tag:
   ```bash
-  podman build --build-arg LLAMA_CPP_TAG="b6153" -t qwen-server:latest -f containers/Containerfile.server .
+  podman build --build-arg LLAMA_CPP_TAG="b6153" -t qwen-server:latest -f containers/Containerfile.llamacpp .
   ```
 
 ---

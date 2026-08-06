@@ -1,6 +1,6 @@
 # Makefile for Qwen Code Podman Environment (Vulkan GPU Accelerated)
 
-.PHONY: help build build-server build-client start-server stop-server compose-up compose-down compose-logs compose-start compose-stop compose-restart service-up service-down service-start service-stop service-restart service-logs service-status show-live-logs status unit-tests test smoke-tests smoke_tests smoke-test run-qwencode run-pod check-checksum download-active-models download-models clean
+.PHONY: help build build-server build-client build-litellm build-proxy start-server stop-server compose-up compose-down compose-logs compose-start compose-stop compose-restart service-up service-down service-start service-stop service-restart service-logs service-status show-live-logs status unit-tests test smoke-tests smoke_tests smoke-test run-qwencode run-pod check-checksum download-active-models download-models clean
 
 # Variables
 PODMAN ?= podman
@@ -14,7 +14,8 @@ POD_NAME ?= qwen_code_pod
 help:
 	@echo "Available Makefile targets:"
 	@echo "  make check-infra         - Verify host build/run infrastructure (Podman, Python 3, PyYAML, curl, DRI)"
-	@echo "  make build               - Build both server and client Podman images using fedora-minimal:latest"
+	@echo "  make build               - Build server, client, and LiteLLM proxy Podman images using fedora-minimal:latest"
+	@echo "  make build-litellm       - Build LiteLLM Proxy image (fedora-minimal staged build)"
 	@echo "  make service-up          - Launch Chat, Autocomplete & LiteLLM Proxy via Podman Compose (Port 4000)"
 	@echo "  make service-down        - Stop Podman Compose services"
 	@echo "  make service-logs        - View live logs from all running services"
@@ -44,7 +45,7 @@ check-infra:
 	@echo "  -> System Infrastructure Check: PASSED"
 	@echo ""
 
-build: check-infra build-server build-client
+build: check-infra build-server build-client build-litellm
 
 build-server:
 	@echo "Building Qwen Model Server image (Fedora 44 Minimal + Vulkan)..."
@@ -57,11 +58,17 @@ build-server:
 	else \
 		echo "GitHub API unavailable or rate-limited. Falling back to latest main branch (LLAMA_CPP_TAG=\"\")..."; \
 	fi; \
-	$(PODMAN) build --build-arg LLAMA_CPP_TAG="$${LLAMA_TAG}" -t $(SERVER_IMAGE) -f containers/Containerfile.server .
+	$(PODMAN) build --build-arg LLAMA_CPP_TAG="$${LLAMA_TAG}" -t $(SERVER_IMAGE) -f containers/Containerfile.llamacpp .
 
 build-client:
 	@echo "Building Qwen Encoder Agent image (Fedora 44 Minimal)..."
 	$(PODMAN) build -t $(CLIENT_IMAGE) -f containers/Containerfile.qwencoder .
+
+build-litellm:
+	@echo "Building LiteLLM Proxy image (Fedora Minimal staged build)..."
+	$(PODMAN) build -t qwen-litellm:latest -f containers/Containerfile.litellm .
+
+build-proxy: build-litellm
 
 start-server:
 	@echo "Starting Vulkan Chat Model Server container (port 8080)..."
@@ -165,4 +172,4 @@ download-models:
 	@$(MAKE) check-checksum
 
 clean:
-	-$(PODMAN) rmi $(SERVER_IMAGE) $(CLIENT_IMAGE) || true
+	-$(PODMAN) rmi $(SERVER_IMAGE) $(CLIENT_IMAGE) qwen-litellm:latest || true

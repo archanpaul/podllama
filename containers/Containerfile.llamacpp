@@ -55,10 +55,10 @@ ENV LD_LIBRARY_PATH=/usr/bin:$LD_LIBRARY_PATH
 
 WORKDIR /app
 COPY config/model_conf.yaml /app/config/model_conf.yaml
-COPY containers/entrypoint-server.sh /app/entrypoint-server.sh
-RUN chmod +x /app/entrypoint-server.sh /usr/bin/llama-server
+COPY containers/entrypoint-llamacpp.sh /app/entrypoint-llamacpp.sh
+RUN chmod +x /app/entrypoint-llamacpp.sh /usr/bin/llama-server
 
 EXPOSE 8080
 VOLUME ["/models"]
 
-ENTRYPOINT ["/app/entrypoint-server.sh"]
+ENTRYPOINT ["/app/entrypoint-llamacpp.sh"]

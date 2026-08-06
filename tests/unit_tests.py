@@ -65,7 +65,7 @@ def test_script_permissions():
     print("[2/3] Testing Shell Script Executable Permissions...")
     scripts = [
         os.path.join(PROJECT_ROOT, "scripts", "run_podman.sh"),
-        os.path.join(PROJECT_ROOT, "containers", "entrypoint-server.sh"),
+        os.path.join(PROJECT_ROOT, "containers", "entrypoint-llamacpp.sh"),
         os.path.join(PROJECT_ROOT, "containers", "entrypoint-client.sh"),
     ]
 
@@ -79,7 +79,7 @@ def test_container_definitions():
     """Test presence of Containerfiles and Compose file."""
     print("[3/3] Testing Container Definitions & Compose YAML...")
     container_files = [
-        os.path.join(PROJECT_ROOT, "containers", "Containerfile.server"),
+        os.path.join(PROJECT_ROOT, "containers", "Containerfile.llamacpp"),
         os.path.join(PROJECT_ROOT, "containers", "Containerfile.qwencoder"),
         os.path.join(PROJECT_ROOT, "containers", "compose.yaml"),
     ]

@@ -45,12 +45,12 @@ flowchart TD
 - **Role**: Provides a single OpenAI-compatible HTTP interface (`/v1/chat/completions`, `/v1/completions`, `/v1/models`). Translates incoming requests to appropriate upstream model server backends based on `config/litellm_config.yaml`.
 
 ### 2.2 `qwen_server_chat`
-- **Image**: `qwen-server:latest` (built from `containers/Containerfile.server`)
+- **Image**: `qwen-server:latest` (built from `containers/Containerfile.llamacpp`)
 - **Internal Port**: `8080`
 - **Role**: Runs `llama-server` configured with `MODEL_ROLE=chat`. Loads `qwen2.5-coder-7b-instruct` for high-reasoning code analysis, chat, and agent tool calling.
 
 ### 2.3 `qwen_server_autocomplete`
-- **Image**: `qwen-server:latest` (built from `containers/Containerfile.server`)
+- **Image**: `qwen-server:latest` (built from `containers/Containerfile.llamacpp`)
 - **Internal Port**: `8081`
 - **Role**: Runs `llama-server` configured with `MODEL_ROLE=autocomplete`. Loads `qwen2.5-coder-0.5b` or `1.5b` for low-latency FIM inline autocomplete.
 

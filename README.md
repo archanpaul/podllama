@@ -53,10 +53,10 @@ Detailed documentation is available in the [`docs/`](./docs) directory:
 │   ├── litellm_config.yaml      # LiteLLM Proxy routing configuration & model aliases
 │   └── continue.yaml            # Continue IDE extension configuration template
 ├── containers/
-│   ├── Containerfile.server     # Fedora 44 Minimal image for llama-server (Vulkan & RPMs)
+│   ├── Containerfile.llamacpp    # Fedora 44 Minimal image for llama-server (Vulkan & RPMs)
 │   ├── Containerfile.qwencoder  # Fedora 44 Minimal image for Qwen workspace agent
 │   ├── compose.yaml             # Podman Compose orchestration stack
-│   ├── entrypoint-server.sh     # Server entrypoint (Vulkan GPU check, checksums, auto-download)
+│   ├── entrypoint-llamacpp.sh   # Server entrypoint (Vulkan GPU check, checksums, auto-download)
 │   └── entrypoint-client.sh     # Client agent entrypoint
 ├── docs/
 │   ├── api.md                   # Complete API specification & IDE setup guide
