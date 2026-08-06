@@ -14,25 +14,19 @@ POD_NAME ?= qwen_code_pod
 help:
 	@echo "Available Makefile targets:"
 	@echo "  make build               - Build both server and client Podman images using fedora-minimal:44"
-	@echo "  make compose-up          - Launch Chat, Autocomplete & LiteLLM Proxy via Podman Compose (Port 4000)"
-	@echo "  make compose-down        - Stop Podman Compose services"
+	@echo "  make service-up          - Launch Chat, Autocomplete & LiteLLM Proxy via Podman Compose (Port 4000)"
+	@echo "  make service-down        - Stop Podman Compose services"
 	@echo "  make service-logs        - View live logs from all running services"
-	@echo "  make compose-logs        - Alias for make service-logs"
-	@echo "  make show-live-logs      - Alias for make service-logs"
-	@echo "  make service-up          - Alias for make compose-up"
-	@echo "  make service-down        - Alias for make compose-down"
-	@echo "  make service-logs        - Alias for make compose-logs"
-	@echo "  make service-status      - Alias for make status"
-	@echo "  make service-restart     - Restart all services (compose-down then compose-up)"
+	@echo "  make service-status      - Check running status and health of qwen services"
+	@echo "  make service-restart     - Restart all services (service-down then service-up)"
 	@echo "  make start-server        - Start Vulkan chat model server container on port 8080"
 	@echo "  make start-autocomplete-server - Start Vulkan autocomplete model server container on port 8081"
 	@echo "  make start-all           - Start both model server containers"
 	@echo "  make stop-server         - Stop model server containers"
 	@echo "  make status              - Check running status and health of qwen services"
 	@echo "  make unit-tests          - Run automated unit test suite (config schema, permissions, container files)"
-	@echo "  make test                - Alias for make unit-tests"
+	@echo "  make tests               - Run all unit and smoke test suites"
 	@echo "  make smoke-tests         - Run live smoke test on Chat (streaming), Autocomplete, and Tool Calling"
-	@echo "  make smoke-test          - Alias for make smoke-tests"
 	@echo "  make download-active-models - Download active chat and autocomplete models into $(MODELS_DIR)"
 	@echo "  make download-models     - Download ALL registered GGUF models into $(MODELS_DIR)"
 	@echo "  make check-checksum      - Verify SHA256 checksum of local model files"
@@ -79,26 +73,26 @@ start-autocomplete-server:
 
 start-all: start-server start-autocomplete-server
 
-compose-up:
+service-up:
 	@echo "Starting Chat, Autocomplete & LiteLLM Proxy via Podman Compose..."
 	@mkdir -p $(MODELS_DIR)
 	$(PODMAN_COMPOSE) -f containers/compose.yaml up -d
 	@echo "LiteLLM Proxy is running on http://127.0.0.1:4000/v1"
 
-compose-start: compose-up
-service-up: compose-up
-service-start: compose-up
+service-start: service-up
+compose-up: service-up
+compose-start: service-up
 
-compose-down:
+service-down:
 	@echo "Stopping Podman Compose services..."
 	$(PODMAN_COMPOSE) -f containers/compose.yaml down
 
-compose-stop: compose-down
-service-down: compose-down
-service-stop: compose-down
+service-stop: service-down
+compose-down: service-down
+compose-stop: service-down
 
-compose-restart: compose-down compose-up
-service-restart: compose-down compose-up
+service-restart: service-down service-up
+compose-restart: service-restart
 
 service-logs:
 	$(PODMAN_COMPOSE) -f containers/compose.yaml logs -f
@@ -118,6 +112,8 @@ status:
 	@echo ""
 	@echo "=== Checking API Health Endpoint ==="
 	@curl -s -m 3 http://127.0.0.1:4000/health/liveliness || curl -s -m 3 -H "Authorization: Bearer sk-local" http://127.0.0.1:4000/v1/models || curl -s -m 3 http://127.0.0.1:8080/health || echo "API endpoint (http://127.0.0.1:4000 or 8080) is unreachable."
+
+tests: unit-tests smoke-tests
 
 unit-tests:
 	python3 tests/unit_tests.py
