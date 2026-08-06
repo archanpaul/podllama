@@ -15,8 +15,9 @@ MAX_RETRIES=30
 RETRY_COUNT=0
 
 while [ ${RETRY_COUNT} -lt ${MAX_RETRIES} ]; do
-    if curl -s "http://${SERVER_HOST}:${SERVER_PORT}/health" > /dev/null 2>&1 || \
-       curl -s "${SERVER_URL}/models" > /dev/null 2>&1; then
+    if curl -s "http://${SERVER_HOST}:${SERVER_PORT}/health/liveliness" > /dev/null 2>&1 || \
+       curl -s -H "Authorization: Bearer ${OPENAI_API_KEY:-sk-local}" "${SERVER_URL}/models" > /dev/null 2>&1 || \
+       curl -s "http://${SERVER_HOST}:${SERVER_PORT}/health" > /dev/null 2>&1; then
         echo "Connected to Qwen model server endpoint!"
         break
     fi
@@ -34,7 +35,17 @@ export OPENAI_BASE_URL="${SERVER_URL}"
 export OPENAI_API_KEY="${OPENAI_API_KEY:-sk-local}"
 export OPENAI_MODEL="${OPENAI_MODEL:-qwen-chat}"
 
-QWEN_BIN=$(command -v qwen-code || command -v qwen || echo "/usr/local/bin/qwen-code")
+QWEN_BIN=""
+for candidate in "/usr/local/bin/qwen-code" "/usr/local/bin/qwen" "/opt/qwen-code/bin/qwen"; do
+    if [ -x "${candidate}" ] && [ ! -d "${candidate}" ]; then
+        QWEN_BIN="${candidate}"
+        break
+    fi
+done
+
+if [ -z "${QWEN_BIN}" ]; then
+    QWEN_BIN=$(command -v qwen-code || command -v qwen || echo "/opt/qwen-code/bin/qwen")
+fi
 
 echo "Launching official QwenLM/qwen-code CLI..."
 exec "${QWEN_BIN}" "$@"

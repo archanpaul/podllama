@@ -23,9 +23,12 @@ RUN if [ -n "${QWEN_CODE_VERSION}" ]; then \
     fi && \
     echo "Downloading QwenLM/qwen-code from: ${DOWNLOAD_URL}" && \
     curl -L -o /tmp/qwen-code.tar.gz "${DOWNLOAD_URL}" && \
-    tar -xzf /tmp/qwen-code.tar.gz -C /usr/local/bin/ && \
+    mkdir -p /opt && \
+    tar -xzf /tmp/qwen-code.tar.gz -C /opt/ && \
     rm -f /tmp/qwen-code.tar.gz && \
-    chmod +x /usr/local/bin/qwen* || true
+    ln -sf /opt/qwen-code/bin/qwen /usr/local/bin/qwen-code && \
+    ln -sf /opt/qwen-code/bin/qwen /usr/local/bin/qwen && \
+    chmod +x /opt/qwen-code/bin/qwen /usr/local/bin/qwen-code
 
 # Set up application workspace
 WORKDIR /app
