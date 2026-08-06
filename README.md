@@ -37,6 +37,7 @@ Detailed documentation is available in the [`docs/`](./docs) directory:
 - **[docs/features.md](./docs/features.md)**: Technical feature overview, Vulkan acceleration, rootless Podman security, and model management.
 - **[docs/api.md](./docs/api.md)**: OpenAI-compatible API reference (`/v1/chat/completions`, `/v1/completions`, `/health/liveliness`) and VS Code / Continue integration guides.
 - **[docs/design.md](./docs/design.md)**: Architecture design document with Mermaid sequence/flow diagrams, network topology, and SELinux volume isolation.
+- **[docs/build_notes.md](./docs/build_notes.md)**: Container multi-stage build pipeline, Vulkan compilation, layer caching, and version pinning notes.
 
 ---
 
@@ -59,6 +60,7 @@ Detailed documentation is available in the [`docs/`](./docs) directory:
 │   └── entrypoint-client.sh     # Client agent entrypoint
 ├── docs/
 │   ├── api.md                   # Complete API specification & IDE setup guide
+│   ├── build_notes.md           # Multi-stage build system & compilation caching notes
 │   ├── design.md                # System architecture, sequence diagrams & SELinux design
 │   └── features.md              # Technical feature overview
 ├── models/
@@ -76,6 +78,14 @@ Detailed documentation is available in the [`docs/`](./docs) directory:
 ---
 
 ## Quick Start Guide
+
+### 0. Verify System Infrastructure
+
+Verify host system prerequisites (Podman, Python 3, PyYAML, curl, and GPU hardware DRI drivers):
+
+```bash
+make check-infra
+```
 
 ### 1. Download Model Files
 
@@ -301,6 +311,7 @@ The workspace agent container (`Containerfile.qwencoder`) is launched with:
 
 | Command | Description |
 | :--- | :--- |
+| `make check-infra` | Verifies host build and runtime infrastructure (Podman, Python 3, PyYAML, curl, DRI) |
 | `make build` | Builds `qwen-server` and `qwen-client` Podman images |
 | `make service-up` | Launches Chat Server, Autocomplete Server & LiteLLM Proxy via Podman Compose |
 | `make service-down` | Stops Podman Compose stack |

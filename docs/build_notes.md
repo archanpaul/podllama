@@ -63,6 +63,7 @@ The workspace agent container packages the official standalone release binary of
 
 | Command | Description |
 | :--- | :--- |
+| `make check-infra` | Verifies host build and runtime infrastructure (Podman, Python 3, PyYAML, curl, DRI) |
 | `make build` | Builds both `qwen-server:latest` and `qwen-client:latest` images |
 | `make build-server` | Builds only the model server container image |
 | `make build-client` | Builds only the workspace encoder agent container image |

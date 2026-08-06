@@ -13,6 +13,7 @@ POD_NAME ?= qwen_code_pod
 
 help:
 	@echo "Available Makefile targets:"
+	@echo "  make check-infra         - Verify host build/run infrastructure (Podman, Python 3, PyYAML, curl, DRI)"
 	@echo "  make build               - Build both server and client Podman images using fedora-minimal:latest"
 	@echo "  make service-up          - Launch Chat, Autocomplete & LiteLLM Proxy via Podman Compose (Port 4000)"
 	@echo "  make service-down        - Stop Podman Compose services"
