@@ -99,16 +99,7 @@ test:
 
 
 run:
-	@echo "Running Qwen Code Client for workspace: $(WORKSPACE_DIR)"
-	$(PODMAN) run -it --rm \
-		--name qwen_code_client_$$$$ \
-		--network host \
-		-e QWEN_SERVER_HOST="127.0.0.1" \
-		-e QWEN_SERVER_PORT="8080" \
-		-v "$(WORKSPACE_DIR):/workspace:Z" \
-		-w /workspace \
-		--userns=keep-id \
-		$(CLIENT_IMAGE)
+	@CLIENT_IMAGE="$(CLIENT_IMAGE)" ./scripts/run_qwencode.sh "$(WORKSPACE_DIR)"
 
 run-pod:
 	./scripts/run_podman.sh pod "$(WORKSPACE_DIR)"
