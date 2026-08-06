@@ -35,6 +35,7 @@ FROM registry.fedoraproject.org/fedora-minimal:latest AS runtime_deps
 
 RUN microdnf update -y && \
     microdnf install -y --setopt=install_weak_deps=0 \
+    libgomp \
     mesa-vulkan-drivers \
     vulkan-loader \
     vulkan-tools \
