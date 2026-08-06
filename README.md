@@ -135,11 +135,11 @@ Run the workspace agent inside your current project folder:
 
 ```bash
 # Option A: From inside the qwen_code_container directory
-make run
+make run-qwencode
 
 # Option B: From inside any target project directory
 cd /path/to/your/project
-make -C /path/to/qwen_code_container run WORKSPACE_DIR=$(pwd)
+make -C /path/to/qwen_code_container run-qwencode WORKSPACE_DIR=$(pwd)
 
 # Option C: Direct script invocation
 /path/to/qwen_code_container/scripts/run_qwencode.sh /path/to/your/project
@@ -283,7 +283,6 @@ make test
 | `make download-active-models` | Downloads active chat and autocomplete models into models directory |
 | `make download-models` | Downloads ALL configured GGUF models into models directory |
 | `make run-qwencode` | Runs Qwen workspace agent CLI client in current workspace directory |
-| `make run` | Alias for `make run-qwencode` |
 | `make run-pod` | Runs server and client together inside a single Podman pod |
 | `make clean` | Cleans Podman container images and temporary files |
 
