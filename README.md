@@ -13,7 +13,7 @@ This project addresses these challenges by delivering an enterprise-ready, self-
 1. **Complete Data Privacy & Sovereignty**: All code processing and model inference happen 100% locally on your machine. Proprietary source code never leaves your workspace.
 2. **Cross-Vendor Hardware Acceleration (Vulkan)**: Uses `llama.cpp-vulkan` to provide high-speed GPU layer offloading across Intel Arc/Iris Xe, AMD Radeon, and NVIDIA GPUs without requiring complex CUDA installations.
 3. **Optimized Dual-Model Architecture**: Serves low-latency autocomplete models (0.5B / 1.5B) alongside high-reasoning chat models (7B Instruct) simultaneously, orchestrated behind a single unified LiteLLM Proxy endpoint on port 4000.
-4. **Strict Workspace Container Isolation**: Enforces rootless Podman user namespace mapping (`--userns=keep-id`) and SELinux volume isolation (`:Z`) so that AI agent file operations and command executions are strictly confined to your current workspace directory.
+4. **Strict Workspace Container Isolation**: Enforces rootless Podman user namespace mapping (`--userns=keep-id`) and SELinux volume isolation (`:z`/`:ro,Z`) so that AI agent file operations and command executions are strictly confined to your workspace directory.
 5. **Zero-Compilation Instant Deployment**: Employs `fedora-minimal:44` base images with prebuilt RPM packages, eliminating lengthy C++ source builds and ensuring fast, reproducible deployments.
 
 ---
@@ -30,10 +30,21 @@ This project addresses these challenges by delivering an enterprise-ready, self-
 
 ---
 
+## Documentation
+
+Detailed documentation is available in the [`docs/`](./docs) directory:
+
+- **[docs/features.md](./docs/features.md)**: Technical feature overview, Vulkan acceleration, rootless Podman security, and model management.
+- **[docs/api.md](./docs/api.md)**: OpenAI-compatible API reference (`/v1/chat/completions`, `/v1/completions`, `/health/liveliness`) and VS Code / Continue integration guides.
+- **[docs/design.md](./docs/design.md)**: Architecture design document with Mermaid sequence/flow diagrams, network topology, and SELinux volume isolation.
+
+---
+
 ## Repository Directory Structure
 
 ```
 .
+├── LICENSE                      # GNU General Public License v3.0 (GPLv3)
 ├── Makefile                     # Root Makefile for build, run, and compose targets
 ├── .gitignore                   # Excludes GGUF models, temporary downloads, and bytecode
 ├── config/
@@ -45,13 +56,19 @@ This project addresses these challenges by delivering an enterprise-ready, self-
 │   ├── compose.yaml             # Podman Compose orchestration stack
 │   ├── entrypoint-server.sh     # Server entrypoint (Vulkan GPU check, checksums, auto-download)
 │   └── entrypoint-client.sh     # Client agent entrypoint
+├── docs/
+│   ├── api.md                   # Complete API specification & IDE setup guide
+│   ├── design.md                # System architecture, sequence diagrams & SELinux design
+│   └── features.md              # Technical feature overview
 ├── models/
 │   └── .gitkeep                 # Storage directory for local GGUF model files
 ├── scripts/
-│   └── run_podman.sh            # Podman container launcher script
+│   ├── download_models.py       # Python downloader and SHA256 verifier
+│   ├── run_podman.sh            # Podman container launcher script
+│   └── run_qwencode.sh          # Interactive workspace agent launcher script
 ├── tests/
 │   └── test_all.py              # Automated unit test suite
-└── README.md                    # Detailed documentation
+└── README.md                    # Main repository documentation
 ```
 
 ---
@@ -114,11 +131,18 @@ make compose-down
 
 ### 4. Launch Workspace Agent CLI
 
-Run the workspace agent in your current project folder:
+Run the workspace agent inside your current project folder:
 
 ```bash
+# Option A: From inside the qwen_code_container directory
+make run
+
+# Option B: From inside any target project directory
 cd /path/to/your/project
-make -C /path/to/qwen_code_container run
+make -C /path/to/qwen_code_container run WORKSPACE_DIR=$(pwd)
+
+# Option C: Direct script invocation
+/path/to/qwen_code_container/scripts/run_qwencode.sh /path/to/your/project
 ```
 
 ---
@@ -265,5 +289,4 @@ make test
 
 ## License
 
-This project is licensed under the [GNU General Public License v3.0 (GPL-3.0)](file:///home/arp/workspace/grokking.workspace/qwen_code_container.git/LICENSE).
-
+This project is licensed under the [GNU General Public License v3.0 (GPL-3.0)](./LICENSE).
