@@ -1,0 +1,49 @@
+# Continue IDE Extension Configuration (continue.yaml)
+# Place or reference this configuration in ~/.continue/config.yaml or .continue/config.yaml
+
+name: Qwen Code Local Environment (Vulkan GPU Accelerated)
+
+models:
+  - name: Qwen Chat (Local Vulkan)
+    provider: openai
+    model: qwen-chat
+    apiBase: http://localhost:4000/v1
+    apiKey: sk-local
+    contextLength: 16384
+    roles:
+      - chat
+      - edit
+
+  - name: Qwen 7B Instruct Direct
+    provider: openai
+    model: qwen2.5-coder-7b-instruct
+    apiBase: http://localhost:4000/v1
+    apiKey: sk-local
+    contextLength: 16384
+
+tabAutocompleteModel:
+  name: Qwen Autocomplete (Local Vulkan)
+  provider: openai
+  model: qwen-autocomplete
+  apiBase: http://localhost:4000/v1
+  apiKey: sk-local
+
+contextProviders:
+  - name: code
+    params: {}
+  - name: docs
+    params: {}
+  - name: diff
+    params: {}
+  - name: terminal
+    params: {}
+  - name: folder
+    params: {}
+
+slashCommands:
+  - name: edit
+    description: Edit selected code snippet
+  - name: comment
+    description: Write docstrings and comments for selected code
+  - name: share
+    description: Export chat session summary

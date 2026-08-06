@@ -16,9 +16,16 @@ def test_yaml_configurations():
     print("[1/3] Testing YAML Configuration Files...")
     model_conf_path = os.path.join(PROJECT_ROOT, "config", "model_conf.yaml")
     litellm_conf_path = os.path.join(PROJECT_ROOT, "config", "litellm_config.yaml")
+    continue_conf_path = os.path.join(PROJECT_ROOT, "config", "continue.yaml")
 
     assert os.path.exists(model_conf_path), "config/model_conf.yaml missing!"
     assert os.path.exists(litellm_conf_path), "config/litellm_config.yaml missing!"
+    assert os.path.exists(continue_conf_path), "config/continue.yaml missing!"
+
+    with open(continue_conf_path, "r", encoding="utf-8") as f:
+        continue_conf = yaml.safe_load(f)
+    assert "models" in continue_conf, "Missing models in config/continue.yaml"
+    assert "tabAutocompleteModel" in continue_conf, "Missing tabAutocompleteModel in config/continue.yaml"
 
     with open(model_conf_path, "r", encoding="utf-8") as f:
         model_conf = yaml.safe_load(f)
