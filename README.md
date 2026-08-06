@@ -260,3 +260,10 @@ make test
 | `make download-models` | Downloads ALL configured GGUF models into models directory |
 | `make check-checksum` | Verifies SHA256 hash of downloaded GGUF model files |
 | `make clean` | Cleans Podman container images and temporary files |
+
+---
+
+## License
+
+This project is licensed under the [GNU General Public License v3.0 (GPL-3.0)](file:///home/arp/workspace/grokking.workspace/qwen_code_container.git/LICENSE).
+

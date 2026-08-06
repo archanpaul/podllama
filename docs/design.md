@@ -1,0 +1,158 @@
+# Architecture & System Design Document
+
+This document outlines the architecture, container orchestration, network flow, security boundary, and configuration schemas of the **Qwen Code Podman Container Environment**.
+
+---
+
+## 1. High-Level Architecture Overview
+
+The system employs a containerized microservices architecture organized into three main layers:
+
+1. **Client / Workspace Layer**: The user's workstation or `qwen-client` terminal agent.
+2. **Unified Routing Proxy Layer**: `litellm_proxy` listening on host port `4000`.
+3. **Backend Model Server Layer**: Isolated `llama-server` instances with Vulkan GPU layer offloading.
+
+```mermaid
+flowchart TD
+    subgraph Host Workstation / IDE
+        Client Agent["qwen-client CLI / VS Code Extensions"]
+    end
+
+    subgraph Podman Container Stack (containers_default network)
+        LiteLLM["litellm_proxy\n(Port 4000:4000)"]
+        ChatServer["qwen_server_chat\n(Port 8080 internal)\nQwen2.5-Coder-7B"]
+        AutoServer["qwen_server_autocomplete\n(Port 8081 internal)\nQwen2.5-Coder-0.5B / 1.5B"]
+    end
+
+    subgraph GPU Hardware Layer
+        Vulkan["/dev/dri (Intel / AMD / NVIDIA GPU)"]
+    end
+
+    Client Agent -->|HTTP / OpenAI API| LiteLLM
+    LiteLLM -->|Route qwen-chat| ChatServer
+    LiteLLM -->|Route qwen-autocomplete| AutoServer
+    ChatServer -->|Vulkan Offload -ngl 99| Vulkan
+    AutoServer -->|Vulkan Offload -ngl 99| Vulkan
+```
+
+---
+
+## 2. Container Hierarchy & Component Responsibilities
+
+### 2.1 `litellm_proxy`
+- **Image**: `ghcr.io/berriai/litellm:main-latest`
+- **Exposed Port**: `4000:4000`
+- **Role**: Provides a single OpenAI-compatible HTTP interface (`/v1/chat/completions`, `/v1/completions`, `/v1/models`). Translates incoming requests to appropriate upstream model server backends based on `config/litellm_config.yaml`.
+
+### 2.2 `qwen_server_chat`
+- **Image**: `qwen-server:latest` (built from `containers/Containerfile.server`)
+- **Internal Port**: `8080`
+- **Role**: Runs `llama-server` configured with `MODEL_ROLE=chat`. Loads `qwen2.5-coder-7b-instruct` for high-reasoning code analysis, chat, and agent tool calling.
+
+### 2.3 `qwen_server_autocomplete`
+- **Image**: `qwen-server:latest` (built from `containers/Containerfile.server`)
+- **Internal Port**: `8081`
+- **Role**: Runs `llama-server` configured with `MODEL_ROLE=autocomplete`. Loads `qwen2.5-coder-0.5b` or `1.5b` for low-latency FIM inline autocomplete.
+
+### 2.4 `qwen-client`
+- **Image**: `qwen-client:latest` (built from `containers/Containerfile.qwencoder`)
+- **Role**: Standalone interactive workspace agent container pre-packaged with official `QwenLM/qwen-code` CLI tool. Mounted directly to the project root directory.
+
+---
+
+## 3. Network Topology & Container Security
+
+```mermaid
+graph LR
+    subgraph Host Network
+        HostIP["Host 127.0.0.1:4000"]
+    end
+
+    subgraph Podman User Network (containers_default)
+        LiteLLM["litellm_proxy:4000"]
+        Chat["qwen_server_chat:8080"]
+        Auto["qwen_server_autocomplete:8081"]
+    end
+
+    HostIP -->|Port Forward 4000| LiteLLM
+    LiteLLM -->|Internal DNS| Chat
+    LiteLLM -->|Internal DNS| Auto
+```
+
+### Security Controls
+
+- **SELinux Isolation (`:Z` & `:ro,Z`)**:
+  - Model directory volume: `${MODELS_DIR}:/models:Z`
+  - LiteLLM config file: `../config/litellm_config.yaml:/app/config.yaml:ro,Z`
+- **Rootless User Namespace (`--userns=keep-id`)**: Maps host UID/GID directly into client containers to prevent root privilege escalation while granting local file write access to project workspace directories.
+- **Internal Backend Isolation**: Backend `qwen_server_chat` and `qwen_server_autocomplete` services do not publish host ports in Compose mode, preventing direct unauthenticated host access.
+
+---
+
+## 4. Initialization & Pre-flight Diagnostics Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Podman Entrypoint Script
+    participant V as Vulkan GPU Hardware
+    participant M as Model Registry (model_conf.yaml)
+    participant S as Llama Server Process
+
+    C->>V: Execute vulkaninfo --summary & check /dev/dri
+    alt Vulkan GPU Available
+        C->>C: Set vulkan_gpu_layers = 99
+    else CPU Fallback
+        C->>C: Set vulkan_gpu_layers = 0
+    end
+
+    C->>M: Parse active model role (chat vs autocomplete)
+    C->>C: Check SHA256 checksum in /models/
+    alt Model file missing / invalid
+        C->>C: Auto-download GGUF model via curl
+    end
+
+    C->>S: Launch llama-server --model <file> --port <port> --n-gpu-layers 99
+```
+
+---
+
+## 5. Configuration Schemas
+
+### 5.1 `config/model_conf.yaml`
+Centralized YAML schema specifying active models, URLs, ports, and checksums:
+
+```yaml
+active_chat_model: qwen2.5-coder-7b-instruct-q4_k_m.gguf
+active_autocomplete_model: qwen2.5-coder-0.5b-q4_k_m.gguf
+chat_server_port: 8080
+autocomplete_server_port: 8081
+vulkan_gpu_layers: 99
+context_size: 16384
+
+models:
+  qwen2.5-coder-7b-instruct-q4_k_m.gguf:
+    url: https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF/resolve/main/qwen2.5-coder-7b-instruct-q4_k_m.gguf
+    sha256: 509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c
+```
+
+### 5.2 `config/litellm_config.yaml`
+LiteLLM model aliases and routing table:
+
+```yaml
+model_list:
+  - model_name: qwen-chat
+    litellm_params:
+      model: openai/qwen2.5-coder
+      api_base: http://qwen_server_chat:8080/v1
+      api_key: sk-local
+
+  - model_name: qwen-autocomplete
+    litellm_params:
+      model: openai/qwen2.5-coder
+      api_base: http://qwen_server_autocomplete:8081/v1
+      api_key: sk-local
+
+general_settings:
+  master_key: sk-local
+```

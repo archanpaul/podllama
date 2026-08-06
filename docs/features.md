@@ -1,0 +1,64 @@
+# Features Overview
+
+The **Qwen Code Podman Container Environment** provides a local, GPU-accelerated, containerized AI coding workspace. Below is a breakdown of the primary features and technical capabilities.
+
+---
+
+## 1. 100% Data Privacy & Local Sovereignty
+
+- **Zero Cloud Leakage**: Code processing, context window indexing, and LLM inference occur entirely on your local machine.
+- **Air-Gapped Operation**: Once model files are downloaded, no external network connections are required for code generation, autocomplete, or workspace agent tasks.
+
+---
+
+## 2. Cross-Vendor Vulkan GPU Acceleration
+
+- **`llama.cpp-vulkan` Backend**: Leverages the Vulkan API for GPU layer offloading (`-ngl 99`).
+- **Broad Hardware Compatibility**: Works natively on Linux with Intel Arc / Iris Xe GPUs, AMD Radeon GPUs, and NVIDIA GPUs without complex CUDA toolchains or proprietary kernel drivers.
+- **Automated Hardware Fallback**: Pre-flight diagnostics run `vulkaninfo --summary` and inspect `/dev/dri`. If a hardware Vulkan device is unavailable, the server falls back to multi-threaded CPU inference.
+
+---
+
+## 3. Dual-Model Architecture
+
+- **Dedicated Chat Model**: Runs `qwen2.5-coder-7b-instruct-q4_k_m.gguf` on port `8080` for high-reasoning tasks, refactoring, code explanation, and workspace agent commands.
+- **Low-Latency Autocomplete Model**: Runs `qwen2.5-coder-0.5b-q4_k_m.gguf` or `1.5b` on port `8081` for low-latency inline code completions.
+- **Resource Optimization**: CPU and RAM allocations are managed independently for chat (`8 CPUs / 8GB RAM`) and autocomplete (`2 CPUs / 4GB RAM`) services in Podman Compose.
+
+---
+
+## 4. Unified LiteLLM Proxy (Port 4000)
+
+- **Single OpenAI-Compatible API Endpoint**: Exposes `http://localhost:4000/v1` to interface with editors and IDE extensions.
+- **Dynamic Routing**: Inspects request parameters and routes `qwen-chat` requests to the 7B backend and `qwen-autocomplete` requests to the 0.5B/1.5B backend.
+- **Model Aliases**: Exposes standardized model aliases (`gpt-3.5-turbo`, `qwen2.5-coder`, `qwen-chat`, `qwen-autocomplete`).
+- **Health & Diagnostics**: Provides `/health/liveliness` and `/v1/models` health monitoring endpoints.
+
+---
+
+## 5. Official QwenLM CLI Integration
+
+- **`Containerfile.qwencoder`**: Packages the official [QwenLM/qwen-code](https://github.com/QwenLM/qwen-code) terminal agent inside a Fedora 44 Minimal container.
+- **Dynamic Binary Fetching**: Fetches the latest GitHub release of `qwen-code` at build time without hardcoded version locks, with optional version pinning via `--build-arg QWEN_CODE_VERSION=vX.Y.Z`.
+- **Interactive Workspace Shell**: Runs inside user workspaces with full access to project file trees.
+
+---
+
+## 6. Rootless Podman & SELinux Security
+
+- **Rootless User Namespace Mapping**: Employs `--userns=keep-id` so container processes map directly to the host user UID/GID without root privilege escalation.
+- **SELinux Container Isolation**: Mounts workspace and configuration volumes with `:Z` and `:ro,Z` flags to strictly scope container read/write access to approved directory trees.
+
+---
+
+## 7. Zero-Compilation Fedora 44 Minimal Base
+
+- **Prebuilt RPM Packages**: Uses `fedora-minimal:44` base images and installs precompiled `llama.cpp` and `llama.cpp-vulkan` binaries directly via `microdnf`.
+- **Fast Build Times**: Eliminates lengthy C++ source builds, lowering container build time from tens of minutes to seconds.
+
+---
+
+## 8. Automated Model Management & Checksum Verification
+
+- **Centralized Model Registry**: `config/model_conf.yaml` maps model identifiers to download URLs and SHA256 hashes.
+- **Automated Downloads & Verification**: `scripts/download_models.py` downloads missing models into `./models` and validates SHA256 checksums before initiating model server processes.
