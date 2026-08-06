@@ -25,17 +25,17 @@ ARG LLAMA_CPP_TAG=""
 WORKDIR /build
 RUN if [ -n "${LLAMA_CPP_TAG}" ]; then \
         echo "Cloning llama.cpp pinned release: ${LLAMA_CPP_TAG}"; \
-        git clone --depth 1 --branch "${LLAMA_CPP_TAG}" https://github.com/ggerganov/llama.cpp.git .; \
+        git clone --depth 1 --branch "${LLAMA_CPP_TAG}" https://github.com/ggml-org/llama.cpp.git .; \
     else \
         echo "Cloning llama.cpp latest main branch..."; \
-        git clone --depth 1 https://github.com/ggerganov/llama.cpp.git .; \
+        git clone --depth 1 https://github.com/ggml-org/llama.cpp.git .; \
     fi && \
     cmake -B build -DGGML_VULKAN=ON -DCMAKE_BUILD_TYPE=Release && \
     cmake --build build --config Release -j$(nproc) --target llama-server
 ```
 
 #### Cache Behavior & Automated Tag Resolution:
-- **Automated Tag Detection (`make build-server`)**: `make build-server` automatically queries GitHub API for the latest `llama.cpp` release tag and passes it as `--build-arg LLAMA_CPP_TAG="..."`.
+- **Automated Tag Detection (`make build-server`)**: `make build-server` automatically queries the human-readable GitHub API endpoint (`https://api.github.com/repos/ggml-org/llama.cpp/tags`) for the latest release tag and passes it as `--build-arg LLAMA_CPP_TAG="..."`.
 - **Deterministic Layer Caching**: When a tag is detected, Podman reuses cached compilation layers (`--> Using cache`), skipping source compilation completely on subsequent builds (takes 0 seconds).
 - **Offline / Rate-Limit Fallback**: If GitHub API is offline or rate-limited, `make build-server` automatically falls back to an empty tag (`LLAMA_CPP_TAG=""`), cloning the latest `main` branch directly.
 - **Custom Tag Override**: You can target a specific `llama.cpp` release tag:
