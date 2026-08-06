@@ -34,12 +34,14 @@ RUN if [ -n "${LLAMA_CPP_TAG}" ]; then \
     cmake --build build --config Release -j$(nproc) --target llama-server
 ```
 
-#### Cache Behavior:
-- **Default (Pinned Tag `b6153`)**: Podman matches the deterministic `git clone` command across builds. Subsequent builds reuse cached compilation layers (`--> Using cache`), completing in under a second.
+#### Cache Behavior & Automated Tag Resolution:
+- **Automated Tag Detection (`make build-server`)**: `make build-server` automatically queries GitHub API for the latest `llama.cpp` release tag and passes it as `--build-arg LLAMA_CPP_TAG="..."`.
+- **Deterministic Layer Caching**: Because the build argument resolves to a fixed release tag, Podman reuses cached compilation layers (`--> Using cache`), skipping source compilation completely on subsequent builds (takes 0 seconds).
+- **Offline / Rate-Limit Fallback**: If GitHub API is offline or rate-limited, `make build-server` falls back to default `b6153`.
 - **Empty Tag (`LLAMA_CPP_TAG=""`)**: If passed as empty, the build script automatically falls back to cloning the latest `main` branch from GitHub.
 - **Custom Tag Override**: You can target a specific `llama.cpp` release tag:
   ```bash
-  podman build --build-arg LLAMA_CPP_TAG="b4600" -t qwen-server:latest -f containers/Containerfile.server .
+  podman build --build-arg LLAMA_CPP_TAG="b6153" -t qwen-server:latest -f containers/Containerfile.server .
   ```
 
 ---
