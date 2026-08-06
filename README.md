@@ -302,15 +302,15 @@ The workspace agent container (`Containerfile.qwencoder`) is launched with:
 | Command | Description |
 | :--- | :--- |
 | `make build` | Builds `qwen-server` and `qwen-client` Podman images |
-| `make compose-up` | Launches Chat Server, Autocomplete Server & LiteLLM Proxy via Podman Compose |
-| `make compose-down` | Stops Podman Compose stack |
-| `make compose-logs` | Displays live logs from all containers |
-| `make show-live-logs` | Alias for `make compose-logs` |
-| `make service-up` | Alias for `make compose-up` |
-| `make service-down` | Alias for `make compose-down` |
-| `make service-logs` | Alias for `make compose-logs` |
-| `make service-status` | Alias for `make status` |
+| `make service-up` | Launches Chat Server, Autocomplete Server & LiteLLM Proxy via Podman Compose |
+| `make service-down` | Stops Podman Compose stack |
+| `make service-logs` | Displays live logs from all running containers |
+| `make service-status` | Checks running container status and health endpoints |
 | `make service-restart` | Restarts all Podman Compose stack services |
+| `make compose-up` | Alias for `make service-up` |
+| `make compose-down` | Alias for `make service-down` |
+| `make compose-logs` | Alias for `make service-logs` |
+| `make show-live-logs` | Alias for `make service-logs` |
 | `make start-server` | Launches Chat Model Server container standalone (Port 8080) |
 | `make start-autocomplete-server` | Launches Autocomplete Model Server container standalone (Port 8081) |
 | `make start-all` | Launches both standalone model servers |
