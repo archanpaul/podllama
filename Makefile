@@ -32,10 +32,18 @@ help:
 	@echo "  make check-checksum      - Verify SHA256 checksum of local model files"
 	@echo "  make run-qwencode        - Run workspace agent client in current directory ($(WORKSPACE_DIR))"
 	@echo "  make run-pod             - Run server + client together in a Podman pod"
-	@echo "  make clean               - Clean Podman containers and images"
+check-infra:
+	@echo "=== Checking System Build & Runtime Infrastructure ==="
+	@which podman >/dev/null 2>&1 || (echo "ERROR: 'podman' is not installed. Please install Podman." && exit 1)
+	@which python3 >/dev/null 2>&1 || (echo "ERROR: 'python3' is not installed. Please install Python 3." && exit 1)
+	@which curl >/dev/null 2>&1 || (echo "ERROR: 'curl' is not installed. Please install curl." && exit 1)
+	@python3 -c "import yaml" >/dev/null 2>&1 || (echo "ERROR: Python 'pyyaml' module is missing. Install with 'pip install pyyaml' or distribution package." && exit 1)
+	@which $(PODMAN_COMPOSE) >/dev/null 2>&1 || (which podman-compose >/dev/null 2>&1 || which docker-compose >/dev/null 2>&1 || echo "NOTICE: Podman Compose plugin recommended for compose operations.")
+	@[ -e /dev/dri ] && echo "  -> GPU Hardware DRI (/dev/dri): Present (Vulkan acceleration enabled)." || echo "  -> GPU Hardware DRI (/dev/dri): Not found (CPU fallback mode will be used)."
+	@echo "  -> System Infrastructure Check: PASSED"
+	@echo ""
 
-
-build: build-server build-client
+build: check-infra build-server build-client
 
 build-server:
 	@echo "Building Qwen Model Server image (Fedora 44 Minimal + Vulkan)..."
@@ -82,7 +90,7 @@ start-autocomplete-server:
 
 start-all: start-server start-autocomplete-server
 
-service-up:
+service-up: check-infra
 	@echo "Starting Chat, Autocomplete & LiteLLM Proxy via Podman Compose..."
 	@mkdir -p $(MODELS_DIR)
 	$(PODMAN_COMPOSE) -f containers/compose.yaml up -d
