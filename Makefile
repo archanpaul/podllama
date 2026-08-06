@@ -39,7 +39,7 @@ build: build-server build-client
 
 build-server:
 	@echo "Building Qwen Model Server image (Fedora 44 Minimal + Vulkan)..."
-	@LLAMA_TAG=$$(curl -sL https://api.github.com/repositories/612354784/tags 2>/dev/null | grep -o '"name": "[^"]*"' | head -n 1 | cut -d'"' -f4); \
+	@LLAMA_TAG=$$(curl -sL https://api.github.com/repos/ggerganov/llama.cpp/tags 2>/dev/null | grep -o '"name": "[^"]*"' | head -n 1 | cut -d'"' -f4); \
 	if [ -n "$${LLAMA_TAG}" ]; then \
 		echo "Detected llama.cpp release tag: $${LLAMA_TAG}"; \
 	else \
