@@ -1,0 +1,35 @@
+services:
+  qwen_server_chat:
+    image: qwen-server:latest
+    container_name: qwen_server_chat
+    environment:
+      - MODEL_ROLE=chat
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - ${HOME}/.cache/qwen_models:/models:Z
+    restart: unless-stopped
+
+  qwen_server_autocomplete:
+    image: qwen-server:latest
+    container_name: qwen_server_autocomplete
+    environment:
+      - MODEL_ROLE=autocomplete
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - ${HOME}/.cache/qwen_models:/models:Z
+    restart: unless-stopped
+
+  litellm_proxy:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: litellm_proxy
+    ports:
+      - "4000:4000"
+    volumes:
+      - ../config/litellm_config.yaml:/app/config.yaml:ro
+    command: ["--config", "/app/config.yaml", "--port", "4000", "--host", "0.0.0.0"]
+    depends_on:
+      - qwen_server_chat
+      - qwen_server_autocomplete
+    restart: unless-stopped
