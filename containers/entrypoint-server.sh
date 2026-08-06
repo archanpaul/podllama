@@ -54,8 +54,16 @@ verify_checksum() {
         return 1
     fi
     
+    # Check minimum valid file size (>10MB) to reject corrupt or 0-byte / 29-byte HTML/LFS files
+    local file_size
+    file_size=$(stat -c%s "${file_path}" 2>/dev/null || echo 0)
+    if [ "${file_size}" -lt 10485760 ]; then
+        echo "File ${file_path} is invalid or corrupted (size: ${file_size} bytes)."
+        return 1
+    fi
+    
     if [ "${expected_hash}" = "auto-verify-on-download" ] || [ -z "${expected_hash}" ]; then
-        echo "File ${file_path} exists. Skipping strict SHA256 assertion."
+        echo "File ${file_path} size verified (${file_size} bytes). Skipping strict SHA256 hash assertion."
         return 0
     fi
     
@@ -76,20 +84,21 @@ verify_checksum() {
 if verify_checksum "${TARGET_MODEL_PATH}" "${EXPECTED_SHA256}"; then
     echo "Model ${ACTIVE_MODEL} is valid and verified. Skipping download."
 else
-    echo "Model file missing or checksum invalid. Initiating download..."
+    echo "Model file missing, corrupt, or checksum invalid. Initiating download..."
     mkdir -p "${MODELS_DIR}"
     
     TEMP_FILE="${TARGET_MODEL_PATH}.tmp"
     rm -f "${TEMP_FILE}"
     
     echo "Downloading ${MODEL_URL}..."
-    curl -L --progress-bar -o "${TEMP_FILE}" "${MODEL_URL}"
+    curl -L --fail --progress-bar -o "${TEMP_FILE}" "${MODEL_URL}"
     
+    echo "Verifying SHA256 checksum after download..."
     if verify_checksum "${TEMP_FILE}" "${EXPECTED_SHA256}"; then
         mv "${TEMP_FILE}" "${TARGET_MODEL_PATH}"
         echo "Download completed and verified successfully!"
     else
-        echo "ERROR: Downloaded file failed SHA256 verification!" >&2
+        echo "ERROR: Downloaded file failed post-download SHA256 verification!" >&2
         rm -f "${TEMP_FILE}"
         exit 1
     fi
