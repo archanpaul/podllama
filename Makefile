@@ -136,7 +136,15 @@ status:
 	@$(PODMAN) ps --filter "name=qwen" --filter "name=litellm"
 	@echo ""
 	@echo "=== Checking API Health Endpoint ==="
-	@curl -s -m 3 http://127.0.0.1:4000/health/liveliness || curl -s -m 3 -H "Authorization: Bearer sk-local" http://127.0.0.1:4000/v1/models || curl -s -m 3 http://127.0.0.1:8080/health || echo "API endpoint (http://127.0.0.1:4000 or 8080) is unreachable."
+	@for i in $$(seq 1 30); do \
+		OUTPUT=$$(curl -s -m 1 http://127.0.0.1:4000/health/liveliness || curl -s -m 1 -H "Authorization: Bearer sk-local" http://127.0.0.1:4000/v1/models || curl -s -m 1 http://127.0.0.1:8080/health); \
+		if [ -n "$$OUTPUT" ]; then \
+			echo "$$OUTPUT"; \
+			exit 0; \
+		fi; \
+		sleep 1; \
+	done; \
+	echo "API endpoint (http://127.0.0.1:4000 or 8080) is unreachable."
 
 tests: unit-tests smoke-tests
 
