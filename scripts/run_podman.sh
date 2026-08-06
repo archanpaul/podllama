@@ -3,7 +3,7 @@ set -eo pipefail
 
 MODE="${1:-client}"
 WORKSPACE_DIR="${2:-$(pwd)}"
-MODELS_DIR="${MODELS_DIR:-${HOME}/.cache/qwen_models}"
+MODELS_DIR="${MODELS_DIR:-$(dirname $(dirname $(realpath $0)))/models}"
 POD_NAME="qwen_code_pod"
 SERVER_CONTAINER_NAME="qwen_server"
 CLIENT_CONTAINER_NAME="qwen_code_client"
