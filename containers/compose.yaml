@@ -8,6 +8,8 @@ services:
       - /dev/dri:/dev/dri
     volumes:
       - ${MODELS_DIR:-../models}:/models:Z
+    mem_limit: 8g
+    mem_reservation: 4g
     restart: unless-stopped
 
   qwen_server_autocomplete:
@@ -19,6 +21,8 @@ services:
       - /dev/dri:/dev/dri
     volumes:
       - ${MODELS_DIR:-../models}:/models:Z
+    mem_limit: 4g
+    mem_reservation: 1g
     restart: unless-stopped
 
   litellm_proxy:
@@ -32,4 +36,5 @@ services:
     depends_on:
       - qwen_server_chat
       - qwen_server_autocomplete
+    mem_limit: 1g
     restart: unless-stopped
