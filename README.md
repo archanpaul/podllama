@@ -306,6 +306,11 @@ The workspace agent container (`Containerfile.qwencoder`) is launched with:
 | `make compose-down` | Stops Podman Compose stack |
 | `make compose-logs` | Displays live logs from all containers |
 | `make show-live-logs` | Alias for `make compose-logs` |
+| `make service-up` | Alias for `make compose-up` |
+| `make service-down` | Alias for `make compose-down` |
+| `make service-logs` | Alias for `make compose-logs` |
+| `make service-status` | Alias for `make status` |
+| `make service-restart` | Restarts all Podman Compose stack services |
 | `make start-server` | Launches Chat Model Server container standalone (Port 8080) |
 | `make start-autocomplete-server` | Launches Autocomplete Model Server container standalone (Port 8081) |
 | `make start-all` | Launches both standalone model servers |

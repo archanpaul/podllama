@@ -1,6 +1,6 @@
 # Makefile for Qwen Code Podman Environment (Vulkan GPU Accelerated)
 
-.PHONY: help build build-server build-client start-server stop-server compose-up compose-down compose-logs show-live-logs status unit-tests test smoke-tests smoke_tests smoke-test run-qwencode run-pod check-checksum download-active-models download-models clean
+.PHONY: help build build-server build-client start-server stop-server compose-up compose-down compose-logs compose-start compose-stop compose-restart service-up service-down service-start service-stop service-restart service-logs service-status show-live-logs status unit-tests test smoke-tests smoke_tests smoke-test run-qwencode run-pod check-checksum download-active-models download-models clean
 
 # Variables
 PODMAN ?= podman
@@ -18,6 +18,11 @@ help:
 	@echo "  make compose-down        - Stop Podman Compose services"
 	@echo "  make compose-logs        - View Podman Compose logs"
 	@echo "  make show-live-logs      - Alias for make compose-logs"
+	@echo "  make service-up          - Alias for make compose-up"
+	@echo "  make service-down        - Alias for make compose-down"
+	@echo "  make service-logs        - Alias for make compose-logs"
+	@echo "  make service-status      - Alias for make status"
+	@echo "  make service-restart     - Restart all services (compose-down then compose-up)"
 	@echo "  make start-server        - Start Vulkan chat model server container on port 8080"
 	@echo "  make start-autocomplete-server - Start Vulkan autocomplete model server container on port 8081"
 	@echo "  make start-all           - Start both model server containers"
@@ -79,14 +84,27 @@ compose-up:
 	$(PODMAN_COMPOSE) -f containers/compose.yaml up -d
 	@echo "LiteLLM Proxy is running on http://127.0.0.1:4000/v1"
 
+compose-start: compose-up
+service-up: compose-up
+service-start: compose-up
+
 compose-down:
 	@echo "Stopping Podman Compose services..."
 	$(PODMAN_COMPOSE) -f containers/compose.yaml down
+
+compose-stop: compose-down
+service-down: compose-down
+service-stop: compose-down
+
+compose-restart: compose-down compose-up
+service-restart: compose-down compose-up
 
 compose-logs:
 	$(PODMAN_COMPOSE) -f containers/compose.yaml logs -f
 
 show-live-logs: compose-logs
+service-logs: compose-logs
+service-status: status
 
 stop-server:
 	@echo "Stopping Model Server containers..."
