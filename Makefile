@@ -138,13 +138,11 @@ check-checksum:
 
 download-active-models:
 	@mkdir -p $(MODELS_DIR)
-	@cp -f config/model_conf.yaml $(MODELS_DIR)/model_conf.yaml
 	@python3 scripts/download_models.py --active-only --models-dir $(MODELS_DIR)
 	@$(MAKE) check-checksum
 
 download-models:
 	@mkdir -p $(MODELS_DIR)
-	@cp -f config/model_conf.yaml $(MODELS_DIR)/model_conf.yaml
 	@python3 scripts/download_models.py --models-dir $(MODELS_DIR)
 	@$(MAKE) check-checksum
 
