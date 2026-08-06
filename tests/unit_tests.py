@@ -25,7 +25,8 @@ def test_yaml_configurations():
     with open(continue_conf_path, "r", encoding="utf-8") as f:
         continue_conf = yaml.safe_load(f)
     assert "models" in continue_conf, "Missing models in config/continue.yaml"
-    assert "tabAutocompleteModel" in continue_conf, "Missing tabAutocompleteModel in config/continue.yaml"
+    assert "version" in continue_conf, "Missing version in config/continue.yaml"
+    assert "schema" in continue_conf, "Missing schema in config/continue.yaml"
 
     with open(model_conf_path, "r", encoding="utf-8") as f:
         model_conf = yaml.safe_load(f)

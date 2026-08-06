@@ -141,7 +141,9 @@ curl http://localhost:4000/health/liveliness
 Use the pre-configured [config/continue.yaml](file:///home/arp/workspace/grokking.workspace/qwen_code_container.git/config/continue.yaml) template:
 
 ```yaml
-name: Qwen Code Local Environment (Vulkan GPU Accelerated)
+name: Qwen Code Local (Vulkan GPU Accelerated)
+version: 0.0.1
+schema: v1
 
 models:
   - name: Qwen Chat (Local Vulkan)
@@ -154,12 +156,13 @@ models:
       - chat
       - edit
 
-tabAutocompleteModel:
-  name: Qwen Autocomplete (Local Vulkan)
-  provider: openai
-  model: qwen-autocomplete
-  apiBase: http://localhost:4000/v1
-  apiKey: sk-local
+  - name: Qwen Autocomplete (Local Vulkan)
+    provider: openai
+    model: qwen-autocomplete
+    apiBase: http://localhost:4000/v1
+    apiKey: sk-local
+    roles:
+      - autocomplete
 ```
 
 ### 4.2 Cline / Roo Code Extension Configuration

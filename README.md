@@ -234,7 +234,9 @@ To use the local GPU-accelerated server with VS Code AI extensions:
 A ready-to-use template is provided in [`config/continue.yaml`](./config/continue.yaml):
 
 ```yaml
-name: Qwen Code Local Environment (Vulkan GPU Accelerated)
+name: Qwen Code Local (Vulkan GPU Accelerated)
+version: 0.0.1
+schema: v1
 
 models:
   - name: Qwen Chat (Local Vulkan)
@@ -247,12 +249,13 @@ models:
       - chat
       - edit
 
-tabAutocompleteModel:
-  name: Qwen Autocomplete (Local Vulkan)
-  provider: openai
-  model: qwen-autocomplete
-  apiBase: http://localhost:4000/v1
-  apiKey: sk-local
+  - name: Qwen Autocomplete (Local Vulkan)
+    provider: openai
+    model: qwen-autocomplete
+    apiBase: http://localhost:4000/v1
+    apiKey: sk-local
+    roles:
+      - autocomplete
 ```
 
 ---
