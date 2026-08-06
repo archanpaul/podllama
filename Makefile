@@ -119,49 +119,13 @@ check-checksum:
 download-active-models:
 	@mkdir -p $(MODELS_DIR)
 	@cp -f config/model_conf.yaml $(MODELS_DIR)/model_conf.yaml
-	@echo "Checking active chat and autocomplete models in $(MODELS_DIR)..."
-	@python3 -c "import yaml, subprocess, os, hashlib, sys; conf=yaml.safe_load(open('config/model_conf.yaml')); active=[m for m in [conf.get('active_chat_model'), conf.get('active_autocomplete_model')] if m and m in conf['models']]; \
-	def download_and_verify(m):\
-		target=os.path.join('$(MODELS_DIR)', m);\
-		expected=conf['models'][m]['sha256'];\
-		if os.path.exists(target) and os.path.getsize(target)>=10485760 and (expected=='auto-verify-on-download' or hashlib.sha256(open(target,'rb').read()).hexdigest()==expected):\
-			print(f'--> Model {m} already present and verified in $(MODELS_DIR).'); return;\
-		tmp=target+'.tmp';\
-		if os.path.exists(tmp): os.remove(tmp);\
-		print(f'--> Downloading active model: {m}'); print(f'    URL: {conf[\"models\"][m][\"url\"]}');\
-		res=subprocess.run(['curl', '-L', '--fail', '--progress-bar', '-o', tmp, conf['models'][m]['url']]);\
-		if res.returncode!=0 or not os.path.exists(tmp) or os.path.getsize(tmp)<10485760:\
-			if os.path.exists(tmp): os.remove(tmp);\
-			print(f'ERROR: Failed to download {m}!'); sys.exit(1);\
-		actual=hashlib.sha256(open(tmp,'rb').read()).hexdigest();\
-		if expected!='auto-verify-on-download' and actual!=expected:\
-			os.remove(tmp); print(f'ERROR: Checksum mismatch for {m}! Expected {expected}, got {actual}'); sys.exit(1);\
-		os.rename(tmp, target); print(f'--> Post-download checksum VERIFIED for {m} ({actual[:12]}...).');\
-	[download_and_verify(m) for m in active]"
+	@python3 scripts/download_models.py --active-only --models-dir $(MODELS_DIR)
 	@$(MAKE) check-checksum
 
 download-models:
 	@mkdir -p $(MODELS_DIR)
 	@cp -f config/model_conf.yaml $(MODELS_DIR)/model_conf.yaml
-	@echo "Checking all configured GGUF models in $(MODELS_DIR)..."
-	@python3 -c "import yaml, subprocess, os, hashlib, sys; conf=yaml.safe_load(open('config/model_conf.yaml')); \
-	def download_and_verify(name, meta):\
-		target=os.path.join('$(MODELS_DIR)', name);\
-		expected=meta['sha256'];\
-		if os.path.exists(target) and os.path.getsize(target)>=10485760 and (expected=='auto-verify-on-download' or hashlib.sha256(open(target,'rb').read()).hexdigest()==expected):\
-			print(f'--> Model {name} already present and verified in $(MODELS_DIR).'); return;\
-		tmp=target+'.tmp';\
-		if os.path.exists(tmp): os.remove(tmp);\
-		print(f'--> Downloading model: {name}'); print(f'    URL: {meta[\"url\"]}');\
-		res=subprocess.run(['curl', '-L', '--fail', '--progress-bar', '-o', tmp, meta['url']]);\
-		if res.returncode!=0 or not os.path.exists(tmp) or os.path.getsize(tmp)<10485760:\
-			if os.path.exists(tmp): os.remove(tmp);\
-			print(f'ERROR: Failed to download {name}!'); sys.exit(1);\
-		actual=hashlib.sha256(open(tmp,'rb').read()).hexdigest();\
-		if expected!='auto-verify-on-download' and actual!=expected:\
-			os.remove(tmp); print(f'ERROR: Checksum mismatch for {name}! Expected {expected}, got {actual}'); sys.exit(1);\
-		os.rename(tmp, target); print(f'--> Post-download checksum VERIFIED for {name} ({actual[:12]}...).');\
-	[download_and_verify(name, meta) for name, meta in conf['models'].items()]"
+	@python3 scripts/download_models.py --models-dir $(MODELS_DIR)
 	@$(MAKE) check-checksum
 
 clean:
