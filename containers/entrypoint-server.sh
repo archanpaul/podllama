@@ -4,7 +4,7 @@ set -eo pipefail
 CONFIG_FILE="/app/config/model_conf.yaml"
 MODELS_DIR="/models"
 
-if [ -f "/models/model_conf.yaml" ]; then
+if [ ! -f "/app/config/model_conf.yaml" ] && [ -f "/models/model_conf.yaml" ]; then
     CONFIG_FILE="/models/model_conf.yaml"
 fi
 
