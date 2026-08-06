@@ -49,7 +49,8 @@ Detailed documentation is available in the [`docs/`](./docs) directory:
 ├── .gitignore                   # Excludes GGUF models, temporary downloads, and bytecode
 ├── config/
 │   ├── model_conf.yaml          # Model registry & server configuration (YAML)
-│   └── litellm_config.yaml      # LiteLLM Proxy routing configuration & model aliases
+│   ├── litellm_config.yaml      # LiteLLM Proxy routing configuration & model aliases
+│   └── continue.yaml            # Continue IDE extension configuration template
 ├── containers/
 │   ├── Containerfile.server     # Fedora 44 Minimal image for llama-server (Vulkan & RPMs)
 │   ├── Containerfile.qwencoder  # Fedora 44 Minimal image for Qwen workspace agent
@@ -229,26 +230,29 @@ To use the local GPU-accelerated server with VS Code AI extensions:
 - **Autocomplete Model**: `qwen-autocomplete`
 - **API Key**: `sk-local`
 
-#### Example `config.json` for Continue Extension:
-```json
-{
-  "models": [
-    {
-      "title": "Qwen Chat (Local Vulkan)",
-      "provider": "openai",
-      "apiBase": "http://localhost:4000/v1",
-      "model": "qwen-chat",
-      "apiKey": "sk-local"
-    }
-  ],
-  "tabAutocompleteModel": {
-    "title": "Qwen Autocomplete (Local Vulkan)",
-    "provider": "openai",
-    "apiBase": "http://localhost:4000/v1",
-    "model": "qwen-autocomplete",
-    "apiKey": "sk-local"
-  }
-}
+#### Pre-configured `config/continue.yaml` Template:
+A ready-to-use template is provided in [`config/continue.yaml`](./config/continue.yaml):
+
+```yaml
+name: Qwen Code Local Environment (Vulkan GPU Accelerated)
+
+models:
+  - name: Qwen Chat (Local Vulkan)
+    provider: openai
+    model: qwen-chat
+    apiBase: http://localhost:4000/v1
+    apiKey: sk-local
+    contextLength: 16384
+    roles:
+      - chat
+      - edit
+
+tabAutocompleteModel:
+  name: Qwen Autocomplete (Local Vulkan)
+  provider: openai
+  model: qwen-autocomplete
+  apiBase: http://localhost:4000/v1
+  apiKey: sk-local
 ```
 
 ---

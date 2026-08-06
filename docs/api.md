@@ -136,27 +136,30 @@ curl http://localhost:4000/health/liveliness
 
 ## 4. IDE Integration Configurations
 
-### 4.1 Continue Extension (`config.json`)
+### 4.1 Continue Extension (`config/continue.yaml` / `~/.continue/config.yaml`)
 
-```json
-{
-  "models": [
-    {
-      "title": "Qwen Chat (Local Vulkan)",
-      "provider": "openai",
-      "apiBase": "http://localhost:4000/v1",
-      "model": "qwen-chat",
-      "apiKey": "sk-local"
-    }
-  ],
-  "tabAutocompleteModel": {
-    "title": "Qwen Autocomplete (Local Vulkan)",
-    "provider": "openai",
-    "apiBase": "http://localhost:4000/v1",
-    "model": "qwen-autocomplete",
-    "apiKey": "sk-local"
-  }
-}
+Use the pre-configured [config/continue.yaml](file:///home/arp/workspace/grokking.workspace/qwen_code_container.git/config/continue.yaml) template:
+
+```yaml
+name: Qwen Code Local Environment (Vulkan GPU Accelerated)
+
+models:
+  - name: Qwen Chat (Local Vulkan)
+    provider: openai
+    model: qwen-chat
+    apiBase: http://localhost:4000/v1
+    apiKey: sk-local
+    contextLength: 16384
+    roles:
+      - chat
+      - edit
+
+tabAutocompleteModel:
+  name: Qwen Autocomplete (Local Vulkan)
+  provider: openai
+  model: qwen-autocomplete
+  apiBase: http://localhost:4000/v1
+  apiKey: sk-local
 ```
 
 ### 4.2 Cline / Roo Code Extension Configuration
