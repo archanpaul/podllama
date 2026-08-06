@@ -282,7 +282,9 @@ make test
 | `make test` | Runs automated test suite (config schema, script permissions, container files) |
 | `make download-active-models` | Downloads active chat and autocomplete models into models directory |
 | `make download-models` | Downloads ALL configured GGUF models into models directory |
-| `make check-checksum` | Verifies SHA256 hash of downloaded GGUF model files |
+| `make run-qwencode` | Runs Qwen workspace agent CLI client in current workspace directory |
+| `make run` | Alias for `make run-qwencode` |
+| `make run-pod` | Runs server and client together inside a single Podman pod |
 | `make clean` | Cleans Podman container images and temporary files |
 
 ---

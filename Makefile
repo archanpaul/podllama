@@ -1,6 +1,6 @@
 # Makefile for Qwen Code Podman Environment (Vulkan GPU Accelerated)
 
-.PHONY: help build build-server build-client start-server stop-server compose-up compose-down compose-logs status test run run-pod check-checksum download-active-models download-models clean
+.PHONY: help build build-server build-client start-server stop-server compose-up compose-down compose-logs status test run run-qwencode run-pod check-checksum download-active-models download-models clean
 
 # Variables
 PODMAN ?= podman
@@ -26,7 +26,8 @@ help:
 	@echo "  make download-active-models - Download active chat and autocomplete models into $(MODELS_DIR)"
 	@echo "  make download-models     - Download ALL registered GGUF models into $(MODELS_DIR)"
 	@echo "  make check-checksum      - Verify SHA256 checksum of local model files"
-	@echo "  make run                 - Run workspace agent client in current directory ($(WORKSPACE_DIR))"
+	@echo "  make run-qwencode        - Run workspace agent client in current directory ($(WORKSPACE_DIR))"
+	@echo "  make run                 - Alias for make run-qwencode"
 	@echo "  make run-pod             - Run server + client together in a Podman pod"
 	@echo "  make clean               - Clean Podman containers and images"
 
@@ -97,9 +98,10 @@ status:
 test:
 	python3 tests/test_all.py
 
-
-run:
+run-qwencode:
 	@CLIENT_IMAGE="$(CLIENT_IMAGE)" ./scripts/run_qwencode.sh "$(WORKSPACE_DIR)"
+
+run: run-qwencode
 
 run-pod:
 	./scripts/run_podman.sh pod "$(WORKSPACE_DIR)"
