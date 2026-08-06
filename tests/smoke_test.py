@@ -123,7 +123,7 @@ def test_chat_model_streaming():
 
 
 def test_autocomplete_model():
-    log("Testing Autocomplete Model ('qwen-autocomplete') completion...")
+    log("Testing Autocomplete Model ('qwen-autocomplete') prompt processing & completion...")
     payload = {
         "model": "qwen-autocomplete",
         "prompt": "def fibonacci(n: int) -> int:\n    if n <= 1:\n        return n\n    return ",
@@ -145,8 +145,12 @@ def test_autocomplete_model():
             choices = data.get("choices", [])
             assert len(choices) > 0, "No completion choices returned!"
             text = choices[0].get("text", "")
-            log(f"  -> Completion: {repr(text.strip())}")
-            log("  -> PASSED: Autocomplete model generated code completion successfully.")
+            usage = data.get("usage", {})
+            prompt_tokens = usage.get("prompt_tokens", 0)
+            completion_tokens = usage.get("completion_tokens", 0)
+            log(f"  -> Prompt evaluated: {prompt_tokens} tokens processed.")
+            log(f"  -> Completion generated: {completion_tokens} tokens ({repr(text.strip())}).")
+            log("  -> PASSED: Autocomplete model prompt processing & completion verified.")
     except Exception as e:
         log(f"  -> FAILED: Autocomplete model completion request failed: {e}")
         sys.exit(1)
@@ -200,9 +204,9 @@ def main():
     print("       Qwen Code Environment Smoke Test          ")
     print("==================================================")
     test_proxy_health()
+    test_autocomplete_model()
     test_prompt_processing()
     test_chat_model_streaming()
-    test_autocomplete_model()
     test_tool_calling()
     print("==================================================")
     print(" SUCCESS: All smoke tests passed!                ")
