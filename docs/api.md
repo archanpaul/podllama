@@ -173,10 +173,10 @@ curl http://localhost:4000/health/liveliness
 Execute end-to-end verification against the active stack using:
 
 ```bash
-make smoke-test
+make smoke-tests
 ```
 
-This runs `tests/smoke_test.py` to validate:
+This runs `tests/smoke_tests.py` to validate:
 - **Proxy Liveliness**: Probes `http://localhost:4000/health/liveliness`.
 - **Prompt Processing**: Evaluates input code context prompts and verifies `prompt_tokens` token evaluation and accounting.
 - **Chat Model Streaming**: Sends `POST /v1/chat/completions` with `"stream": true` and streams tokens.

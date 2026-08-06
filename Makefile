@@ -1,6 +1,6 @@
 # Makefile for Qwen Code Podman Environment (Vulkan GPU Accelerated)
 
-.PHONY: help build build-server build-client start-server stop-server compose-up compose-down compose-logs show-live-logs status test smoke-test run-qwencode run-pod check-checksum download-active-models download-models clean
+.PHONY: help build build-server build-client start-server stop-server compose-up compose-down compose-logs show-live-logs status unit-tests test smoke-tests smoke_tests smoke-test run-qwencode run-pod check-checksum download-active-models download-models clean
 
 # Variables
 PODMAN ?= podman
@@ -23,8 +23,10 @@ help:
 	@echo "  make start-all           - Start both model server containers"
 	@echo "  make stop-server         - Stop model server containers"
 	@echo "  make status              - Check running status and health of qwen services"
-	@echo "  make test                - Run automated unit test suite (config schema, permissions, container files)"
-	@echo "  make smoke-test          - Run live smoke test on Chat (streaming), Autocomplete, and Tool Calling"
+	@echo "  make unit-tests          - Run automated unit test suite (config schema, permissions, container files)"
+	@echo "  make test                - Alias for make unit-tests"
+	@echo "  make smoke-tests         - Run live smoke test on Chat (streaming), Autocomplete, and Tool Calling"
+	@echo "  make smoke-test          - Alias for make smoke-tests"
 	@echo "  make download-active-models - Download active chat and autocomplete models into $(MODELS_DIR)"
 	@echo "  make download-models     - Download ALL registered GGUF models into $(MODELS_DIR)"
 	@echo "  make check-checksum      - Verify SHA256 checksum of local model files"
@@ -98,11 +100,16 @@ status:
 	@echo "=== Checking API Health Endpoint ==="
 	@curl -s -m 3 http://127.0.0.1:4000/health/liveliness || curl -s -m 3 -H "Authorization: Bearer sk-local" http://127.0.0.1:4000/v1/models || curl -s -m 3 http://127.0.0.1:8080/health || echo "API endpoint (http://127.0.0.1:4000 or 8080) is unreachable."
 
-test:
-	python3 tests/test_all.py
+unit-tests:
+	python3 tests/unit_tests.py
 
-smoke-test:
-	python3 tests/smoke_test.py
+test: unit-tests
+
+smoke-tests:
+	python3 tests/smoke_tests.py
+
+smoke_tests: smoke-tests
+smoke-test: smoke-tests
 
 run-qwencode:
 	@CLIENT_IMAGE="$(CLIENT_IMAGE)" ./scripts/run_qwencode.sh "$(WORKSPACE_DIR)"

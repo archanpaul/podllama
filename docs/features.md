@@ -67,8 +67,8 @@ The **Qwen Code Podman Container Environment** provides a local, GPU-accelerated
 
 ## 9. Automated Testing & Live Smoke Verification
 
-- **Unit Test Suite (`make test` / `tests/test_all.py`)**: Validates YAML configuration schemas, file permissions, and container definition files.
-- **Live Smoke Test Suite (`make smoke-test` / `tests/smoke_test.py`)**: Executes live end-to-end verification against the running Podman stack, testing:
+- **Unit Test Suite (`make unit-tests` / `tests/unit_tests.py`)**: Validates YAML configuration schemas, file permissions, and container definition files.
+- **Live Smoke Test Suite (`make smoke-tests` / `tests/smoke_tests.py`)**: Executes live end-to-end verification against the running Podman stack, testing:
   - **Proxy Liveliness**: Probes `http://localhost:4000/health/liveliness`.
   - **Prompt Processing**: Evaluates input code context prompts and verifies `prompt_tokens` prefill accounting.
   - **Chat Model Streaming**: Sends a streaming request (`qwen-chat`) and validates SSE token chunk streaming.

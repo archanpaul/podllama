@@ -67,8 +67,8 @@ Detailed documentation is available in the [`docs/`](./docs) directory:
 │   ├── run_podman.sh            # Podman container launcher script
 │   └── run_qwencode.sh          # Interactive workspace agent launcher script
 ├── tests/
-│   ├── test_all.py              # Automated unit test suite
-│   └── smoke_test.py            # Live endpoint smoke test suite (Chat, Autocomplete, Tool Calling)
+│   ├── unit_tests.py            # Automated unit test suite
+│   └── smoke_tests.py           # Live endpoint smoke test suite (Chat, Autocomplete, Tool Calling)
 └── README.md                    # Main repository documentation
 ```
 
@@ -257,19 +257,23 @@ To use the local GPU-accelerated server with VS Code AI extensions:
 
 The project includes both static unit tests and live endpoint smoke verification:
 
-### 1. Automated Unit Tests (`make test`)
+### 1. Automated Unit Tests (`make unit-tests`)
 Validates configuration YAML schemas, script permissions, and container definitions:
 ```bash
+make unit-tests
+# or alias:
 make test
 ```
 
-### 2. Live Endpoint Smoke Testing (`make smoke-test`)
+### 2. Live Endpoint Smoke Testing (`make smoke-tests`)
 Performs live end-to-end verification against the running Podman stack:
 ```bash
+make smoke-tests
+# or alias:
 make smoke-test
 ```
 
-This runs `tests/smoke_test.py` to verify:
+This runs `tests/smoke_tests.py` to verify:
 - **Proxy Liveliness**: Probes `http://localhost:4000/health/liveliness`.
 - **Autocomplete Model Prompt Processing & Completion**: Tests `qwen-autocomplete` prompt prefill (`prompt_tokens`) and code output.
 - **Chat Model Prompt Processing & Token Accounting**: Tests `qwen-chat` prompt evaluation tokens (`prompt_tokens`).
@@ -300,8 +304,10 @@ The workspace agent container (`Containerfile.qwencoder`) is launched with:
 | `make start-all` | Launches both standalone model servers |
 | `make stop-server` | Stops all standalone server containers |
 | `make status` | Checks running container status and health endpoints |
-| `make test` | Runs automated unit test suite (config schema, script permissions, container files) |
-| `make smoke-test` | Runs live smoke test on Chat (streaming), Autocomplete, and Tool Calling endpoints |
+| `make unit-tests` | Runs automated unit test suite (config schema, script permissions, container files) |
+| `make test` | Alias for `make unit-tests` |
+| `make smoke-tests` | Runs live smoke test on Chat (streaming), Autocomplete, and Tool Calling endpoints |
+| `make smoke-test` | Alias for `make smoke-tests` |
 | `make download-active-models` | Downloads active chat and autocomplete models into models directory |
 | `make download-models` | Downloads ALL configured GGUF models into models directory |
 | `make run-qwencode` | Runs Qwen workspace agent CLI client in current workspace directory |
