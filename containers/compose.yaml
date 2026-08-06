@@ -7,7 +7,7 @@ services:
     devices:
       - /dev/dri:/dev/dri
     volumes:
-      - ${MODELS_DIR:-../models}:/models:Z
+      - ${MODELS_DIR:-../models}:/models:z
     mem_limit: 8g
     mem_reservation: 4g
     cpus: "8.0"
@@ -21,7 +21,7 @@ services:
     devices:
       - /dev/dri:/dev/dri
     volumes:
-      - ${MODELS_DIR:-../models}:/models:Z
+      - ${MODELS_DIR:-../models}:/models:z
     mem_limit: 4g
     mem_reservation: 1g
     cpus: "2.0"
