@@ -114,7 +114,7 @@ run-pod:
 
 check-checksum:
 	@echo "Verifying SHA256 checksums from config/model_conf.yaml..."
-	@python3 -c "import yaml, hashlib, os; conf=yaml.safe_load(open('config/model_conf.yaml')); [print(f'Checking {m}...', 'Match:' if os.path.exists(os.path.join('$(MODELS_DIR)', m)) and (exp:=(info['sha256']=='auto-verify-on-download' or hashlib.sha256(open(os.path.join('$(MODELS_DIR)', m),'rb').read()).hexdigest()==info['sha256'])) else 'Missing/Failed') for m, info in conf['models'].items()]"
+	@python3 -c "import yaml, hashlib, os; conf=yaml.safe_load(open('config/model_conf.yaml')); active={conf.get('active_chat_model'), conf.get('active_autocomplete_model')}; [print(f'  {\"[ACTIVE]  \" if m in active else \"[OPTIONAL]\"} {m}:', 'OK' if (p:=os.path.join('$(MODELS_DIR)', m)) and os.path.exists(p) and (info['sha256']=='auto-verify-on-download' or hashlib.sha256(open(p,'rb').read()).hexdigest()==info['sha256']) else ('CHECKSUM FAILED' if os.path.exists(p) else 'Not Downloaded')) for m, info in conf['models'].items()]"
 
 download-active-models:
 	@mkdir -p $(MODELS_DIR)
