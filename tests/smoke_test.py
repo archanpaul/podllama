@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Smoke Test Suite for Qwen Code Podman Environment.
-Verifies live endpoint connectivity, Chat model streaming, Autocomplete model completion, and Tool calling.
+Verifies live endpoint connectivity, Prompt processing token evaluation, Chat model streaming, Autocomplete model completion, and Tool calling.
 """
 
 import sys
@@ -29,6 +29,43 @@ def test_proxy_health():
             log("  -> PASSED: Proxy health endpoint active.")
     except Exception as e:
         log(f"  -> FAILED: Could not connect to LiteLLM Proxy liveliness at {HEALTH_URL}: {e}")
+        sys.exit(1)
+
+
+def test_prompt_processing():
+    log("Testing Prompt Processing & Token Accounting ('qwen-chat')...")
+    payload = {
+        "model": "qwen-chat",
+        "messages": [
+            {"role": "system", "content": "You are a code analyzer."},
+            {"role": "user", "content": "Analyze snippet:\ndef add(a: int, b: int) -> int:\n    return a + b\nSummarize function purpose."}
+        ],
+        "max_tokens": 32,
+        "temperature": 0.1
+    }
+
+    url = f"{BASE_URL}/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {API_KEY}"
+    }
+
+    try:
+        req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            assert resp.status == 200, f"Expected 200, got {resp.status}"
+            usage = data.get("usage", {})
+            prompt_tokens = usage.get("prompt_tokens", 0)
+            completion_tokens = usage.get("completion_tokens", 0)
+            content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            log(f"  -> Prompt evaluated: {prompt_tokens} tokens processed.")
+            log(f"  -> Response generated: {completion_tokens} tokens ({repr(content.strip())}).")
+            assert prompt_tokens > 0, "Prompt tokens count must be > 0"
+            assert completion_tokens > 0, "Completion tokens count must be > 0"
+            log("  -> PASSED: Prompt processing and token accounting verified.")
+    except Exception as e:
+        log(f"  -> FAILED: Prompt processing test failed: {e}")
         sys.exit(1)
 
 
@@ -163,6 +200,7 @@ def main():
     print("       Qwen Code Environment Smoke Test          ")
     print("==================================================")
     test_proxy_health()
+    test_prompt_processing()
     test_chat_model_streaming()
     test_autocomplete_model()
     test_tool_calling()

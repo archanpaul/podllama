@@ -178,6 +178,7 @@ make smoke-test
 
 This runs `tests/smoke_test.py` to validate:
 - **Proxy Liveliness**: Probes `http://localhost:4000/health/liveliness`.
+- **Prompt Processing**: Evaluates input code context prompts and verifies `prompt_tokens` token evaluation and accounting.
 - **Chat Model Streaming**: Sends `POST /v1/chat/completions` with `"stream": true` and streams tokens.
 - **Autocomplete Model Completion**: Sends `POST /v1/completions` to test inline code completion.
 - **Tool Calling Support**: Sends function definitions (`qwen-chat` with `--jinja`) to ensure tool-calling endpoints function without server errors.
