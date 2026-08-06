@@ -5,18 +5,24 @@ model_list:
       model: openai/qwen2.5-coder
       api_base: http://qwen_server_chat:8080/v1
       api_key: sk-local
-      max_tokens: 32768
-      max_input_tokens: 32768
+      max_tokens: 65536
+      max_input_tokens: 65536
       truncate_input_tokens: true
+    model_info:
+      max_tokens: 65536
+      max_input_tokens: 65536
 
   - model_name: qwen-autocomplete
     litellm_params:
       model: openai/qwen2.5-coder
       api_base: http://qwen_server_autocomplete:8081/v1
       api_key: sk-local
-      max_tokens: 32768
-      max_input_tokens: 32768
+      max_tokens: 65536
+      max_input_tokens: 65536
       truncate_input_tokens: true
+    model_info:
+      max_tokens: 65536
+      max_input_tokens: 65536
 
   # 7B & 3B Models (Chat Server - Port 8080)
   - model_name: qwen2.5-coder-7b-instruct-q4_k_m.gguf
@@ -97,7 +103,7 @@ router_settings:
   timeout: 120
 
 litellm_settings:
-  max_tokens: 32768
-  max_input_tokens: 32768
+  max_tokens: 65536
+  max_input_tokens: 65536
   truncate_input_tokens: true
   drop_params: true
