@@ -119,15 +119,15 @@ check-checksum:
 download-active-models:
 	@mkdir -p $(MODELS_DIR)
 	@cp -f config/model_conf.yaml $(MODELS_DIR)/model_conf.yaml
-	@echo "Downloading active chat and autocomplete models into $(MODELS_DIR)..."
-	@python3 -c "import yaml, subprocess, os; conf=yaml.safe_load(open('config/model_conf.yaml')); active={conf.get('active_chat_model'), conf.get('active_autocomplete_model')}-{None}; [subprocess.run(['curl', '-L', '-o', f'$(MODELS_DIR)/{m}', conf['models'][m]['url']]) for m in active if m in conf['models'] and not os.path.exists(f'$(MODELS_DIR)/{m}')]"
+	@echo "Checking active chat and autocomplete models in $(MODELS_DIR)..."
+	@python3 -c "import yaml, subprocess, os; conf=yaml.safe_load(open('config/model_conf.yaml')); active=[m for m in [conf.get('active_chat_model'), conf.get('active_autocomplete_model')] if m and m in conf['models']]; [(print(f'--> Downloading active model: {m}'), print(f'    URL: {conf[\"models\"][m][\"url\"]}'), subprocess.run(['curl', '-L', '-o', f'$(MODELS_DIR)/{m}', conf['models'][m]['url']])) if not os.path.exists(f'$(MODELS_DIR)/{m}') else print(f'--> Model {m} already present in $(MODELS_DIR).') for m in active]"
 	@$(MAKE) check-checksum
 
 download-models:
 	@mkdir -p $(MODELS_DIR)
 	@cp -f config/model_conf.yaml $(MODELS_DIR)/model_conf.yaml
-	@echo "Downloading ALL configured GGUF models into $(MODELS_DIR)..."
-	@python3 -c "import yaml, subprocess, os; conf=yaml.safe_load(open('config/model_conf.yaml')); [subprocess.run(['curl', '-L', '-o', f'$(MODELS_DIR)/{name}', meta['url']]) for name, meta in conf['models'].items() if not os.path.exists(f'$(MODELS_DIR)/{name}')]"
+	@echo "Checking all configured GGUF models in $(MODELS_DIR)..."
+	@python3 -c "import yaml, subprocess, os; conf=yaml.safe_load(open('config/model_conf.yaml')); [(print(f'--> Downloading model: {name}'), print(f'    URL: {meta[\"url\"]}'), subprocess.run(['curl', '-L', '-o', f'$(MODELS_DIR)/{name}', meta['url']])) if not os.path.exists(f'$(MODELS_DIR)/{name}') else print(f'--> Model {name} already present in $(MODELS_DIR).') for name, meta in conf['models'].items()]"
 	@$(MAKE) check-checksum
 
 clean:

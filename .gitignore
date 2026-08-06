@@ -1,6 +1,7 @@
 # Models and temporary files
 models/*.gguf
 models/*.tmp
+models/*.yaml
 *.tmp
 
 # Python bytecode and caches
