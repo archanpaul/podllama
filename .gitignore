@@ -12,3 +12,5 @@ __pycache__/
 
 # User cache
 .cache/
+.npm/
+.qwen/
