@@ -7,7 +7,7 @@ services:
     devices:
       - /dev/dri:/dev/dri
     volumes:
-      - ${HOME}/.cache/qwen_models:/models:Z
+      - ${MODELS_DIR:-../models}:/models:Z
     restart: unless-stopped
 
   qwen_server_autocomplete:
@@ -18,7 +18,7 @@ services:
     devices:
       - /dev/dri:/dev/dri
     volumes:
-      - ${HOME}/.cache/qwen_models:/models:Z
+      - ${MODELS_DIR:-../models}:/models:Z
     restart: unless-stopped
 
   litellm_proxy:

@@ -5,7 +5,7 @@
 # Variables
 PODMAN ?= podman
 PODMAN_COMPOSE ?= podman compose
-MODELS_DIR ?= $(HOME)/.cache/qwen_models
+MODELS_DIR ?= ./models
 WORKSPACE_DIR ?= $(shell pwd)
 SERVER_IMAGE ?= qwen-server:latest
 CLIENT_IMAGE ?= qwen-client:latest

@@ -60,7 +60,7 @@ This project addresses these challenges by delivering an enterprise-ready, self-
 
 ### 1. Download Model Files
 
-Download all configured GGUF model files (0.5B, 1.5B, 7B) into `~/.cache/qwen_models`:
+Download all configured GGUF model files (0.5B, 1.5B, 7B) into `./models`:
 
 ```bash
 make download-models
