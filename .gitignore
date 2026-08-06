@@ -1,0 +1,13 @@
+# Models and temporary files
+models/*.gguf
+models/*.tmp
+*.tmp
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# User cache
+.cache/
