@@ -274,6 +274,7 @@ make test
 | `make compose-up` | Launches Chat Server, Autocomplete Server & LiteLLM Proxy via Podman Compose |
 | `make compose-down` | Stops Podman Compose stack |
 | `make compose-logs` | Displays live logs from all containers |
+| `make show-live-logs` | Alias for `make compose-logs` |
 | `make start-server` | Launches Chat Model Server container standalone (Port 8080) |
 | `make start-autocomplete-server` | Launches Autocomplete Model Server container standalone (Port 8081) |
 | `make start-all` | Launches both standalone model servers |

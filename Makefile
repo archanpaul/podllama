@@ -1,6 +1,6 @@
 # Makefile for Qwen Code Podman Environment (Vulkan GPU Accelerated)
 
-.PHONY: help build build-server build-client start-server stop-server compose-up compose-down compose-logs status test run-qwencode run-pod check-checksum download-active-models download-models clean
+.PHONY: help build build-server build-client start-server stop-server compose-up compose-down compose-logs show-live-logs status test run-qwencode run-pod check-checksum download-active-models download-models clean
 
 # Variables
 PODMAN ?= podman
@@ -17,6 +17,7 @@ help:
 	@echo "  make compose-up          - Launch Chat, Autocomplete & LiteLLM Proxy via Podman Compose (Port 4000)"
 	@echo "  make compose-down        - Stop Podman Compose services"
 	@echo "  make compose-logs        - View Podman Compose logs"
+	@echo "  make show-live-logs      - Alias for make compose-logs"
 	@echo "  make start-server        - Start Vulkan chat model server container on port 8080"
 	@echo "  make start-autocomplete-server - Start Vulkan autocomplete model server container on port 8081"
 	@echo "  make start-all           - Start both model server containers"
@@ -81,6 +82,8 @@ compose-down:
 
 compose-logs:
 	$(PODMAN_COMPOSE) -f containers/compose.yaml logs -f
+
+show-live-logs: compose-logs
 
 stop-server:
 	@echo "Stopping Model Server containers..."
