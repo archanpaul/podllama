@@ -1,6 +1,6 @@
 # Makefile for Qwen Code Podman Environment (Vulkan GPU Accelerated)
 
-.PHONY: help build build-server build-client start-server stop-server compose-up compose-down compose-logs show-live-logs status test run-qwencode run-pod check-checksum download-active-models download-models clean
+.PHONY: help build build-server build-client start-server stop-server compose-up compose-down compose-logs show-live-logs status test smoke-test run-qwencode run-pod check-checksum download-active-models download-models clean
 
 # Variables
 PODMAN ?= podman
@@ -23,7 +23,8 @@ help:
 	@echo "  make start-all           - Start both model server containers"
 	@echo "  make stop-server         - Stop model server containers"
 	@echo "  make status              - Check running status and health of qwen services"
-	@echo "  make test                - Run automated test suite (config schema, script permissions, container files)"
+	@echo "  make test                - Run automated unit test suite (config schema, permissions, container files)"
+	@echo "  make smoke-test          - Run live smoke test on Chat (streaming), Autocomplete, and Tool Calling"
 	@echo "  make download-active-models - Download active chat and autocomplete models into $(MODELS_DIR)"
 	@echo "  make download-models     - Download ALL registered GGUF models into $(MODELS_DIR)"
 	@echo "  make check-checksum      - Verify SHA256 checksum of local model files"
@@ -99,6 +100,9 @@ status:
 
 test:
 	python3 tests/test_all.py
+
+smoke-test:
+	python3 tests/smoke_test.py
 
 run-qwencode:
 	@CLIENT_IMAGE="$(CLIENT_IMAGE)" ./scripts/run_qwencode.sh "$(WORKSPACE_DIR)"

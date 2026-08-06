@@ -62,3 +62,15 @@ The **Qwen Code Podman Container Environment** provides a local, GPU-accelerated
 
 - **Centralized Model Registry**: `config/model_conf.yaml` maps model identifiers to download URLs and SHA256 hashes.
 - **Automated Downloads & Verification**: `scripts/download_models.py` downloads missing models into `./models` and validates SHA256 checksums before initiating model server processes.
+
+---
+
+## 9. Automated Testing & Live Smoke Verification
+
+- **Unit Test Suite (`make test` / `tests/test_all.py`)**: Validates YAML configuration schemas, file permissions, and container definition files.
+- **Live Smoke Test Suite (`make smoke-test` / `tests/smoke_test.py`)**: Executes live end-to-end verification against the running Podman stack, testing:
+  - **Proxy Liveliness**: Probes `http://localhost:4000/health/liveliness`.
+  - **Chat Model Streaming**: Sends a streaming request (`qwen-chat`) and validates SSE token chunk streaming.
+  - **Autocomplete Model Completion**: Sends an FIM completion request (`qwen-autocomplete`) and validates code output.
+  - **Tool Calling**: Sends function tool definitions (`qwen-chat` with `--jinja`) to ensure tool-calling support functions without server error.
+

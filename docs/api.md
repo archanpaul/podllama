@@ -165,3 +165,20 @@ curl http://localhost:4000/health/liveliness
 - **Base URL**: `http://localhost:4000/v1`
 - **API Key**: `sk-local`
 - **Model ID**: `qwen-chat`
+
+---
+
+## 5. Live Endpoint Smoke Testing
+
+Execute end-to-end verification against the active stack using:
+
+```bash
+make smoke-test
+```
+
+This runs `tests/smoke_test.py` to validate:
+- **Proxy Liveliness**: Probes `http://localhost:4000/health/liveliness`.
+- **Chat Model Streaming**: Sends `POST /v1/chat/completions` with `"stream": true` and streams tokens.
+- **Autocomplete Model Completion**: Sends `POST /v1/completions` to test inline code completion.
+- **Tool Calling Support**: Sends function definitions (`qwen-chat` with `--jinja`) to ensure tool-calling endpoints function without server errors.
+

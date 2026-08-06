@@ -67,7 +67,8 @@ Detailed documentation is available in the [`docs/`](./docs) directory:
 │   ├── run_podman.sh            # Podman container launcher script
 │   └── run_qwencode.sh          # Interactive workspace agent launcher script
 ├── tests/
-│   └── test_all.py              # Automated unit test suite
+│   ├── test_all.py              # Automated unit test suite
+│   └── smoke_test.py            # Live endpoint smoke test suite (Chat, Autocomplete, Tool Calling)
 └── README.md                    # Main repository documentation
 ```
 
@@ -280,7 +281,8 @@ make test
 | `make start-all` | Launches both standalone model servers |
 | `make stop-server` | Stops all standalone server containers |
 | `make status` | Checks running container status and health endpoints |
-| `make test` | Runs automated test suite (config schema, script permissions, container files) |
+| `make test` | Runs automated unit test suite (config schema, script permissions, container files) |
+| `make smoke-test` | Runs live smoke test on Chat (streaming), Autocomplete, and Tool Calling endpoints |
 | `make download-active-models` | Downloads active chat and autocomplete models into models directory |
 | `make download-models` | Downloads ALL configured GGUF models into models directory |
 | `make run-qwencode` | Runs Qwen workspace agent CLI client in current workspace directory |
