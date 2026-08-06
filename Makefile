@@ -16,8 +16,9 @@ help:
 	@echo "  make build               - Build both server and client Podman images using fedora-minimal:44"
 	@echo "  make compose-up          - Launch Chat, Autocomplete & LiteLLM Proxy via Podman Compose (Port 4000)"
 	@echo "  make compose-down        - Stop Podman Compose services"
-	@echo "  make compose-logs        - View Podman Compose logs"
-	@echo "  make show-live-logs      - Alias for make compose-logs"
+	@echo "  make service-logs        - View live logs from all running services"
+	@echo "  make compose-logs        - Alias for make service-logs"
+	@echo "  make show-live-logs      - Alias for make service-logs"
 	@echo "  make service-up          - Alias for make compose-up"
 	@echo "  make service-down        - Alias for make compose-down"
 	@echo "  make service-logs        - Alias for make compose-logs"
@@ -99,11 +100,11 @@ service-stop: compose-down
 compose-restart: compose-down compose-up
 service-restart: compose-down compose-up
 
-compose-logs:
+service-logs:
 	$(PODMAN_COMPOSE) -f containers/compose.yaml logs -f
 
-show-live-logs: compose-logs
-service-logs: compose-logs
+compose-logs: service-logs
+show-live-logs: service-logs
 service-status: status
 
 stop-server:
