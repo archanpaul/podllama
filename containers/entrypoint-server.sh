@@ -22,9 +22,11 @@ parse_yaml_val() {
 if [ "${MODEL_ROLE}" = "autocomplete" ]; then
     DEFAULT_MODEL=$(parse_yaml_val "print(c.get('active_autocomplete_model', c.get('active_chat_model', '')))" "")
     DEFAULT_PORT=$(parse_yaml_val "print(c.get('autocomplete_server_port', 8081))" "8081")
+    DEFAULT_THREADS=$(parse_yaml_val "print(c.get('autocomplete_cpu_threads', c.get('cpu_threads', 4)))" "4")
 else
     DEFAULT_MODEL=$(parse_yaml_val "print(c.get('active_chat_model', c.get('active_model', '')))" "")
     DEFAULT_PORT=$(parse_yaml_val "print(c.get('chat_server_port', 8080))" "8080")
+    DEFAULT_THREADS=$(parse_yaml_val "print(c.get('chat_cpu_threads', c.get('cpu_threads', 8)))" "8")
 fi
 
 ACTIVE_MODEL="${ACTIVE_MODEL:-${DEFAULT_MODEL}}"
@@ -33,7 +35,7 @@ SERVER_PORT="${SERVER_PORT:-${DEFAULT_PORT}}"
 MODEL_URL=$(parse_yaml_val "print(c['models']['${ACTIVE_MODEL}']['url'])" "")
 EXPECTED_SHA256=$(parse_yaml_val "print(c['models']['${ACTIVE_MODEL}']['sha256'])" "")
 GPU_LAYERS=$(parse_yaml_val "print(c.get('vulkan_gpu_layers', 99))" "99")
-CPU_THREADS=$(parse_yaml_val "print(c.get('cpu_threads', 4))" "4")
+CPU_THREADS="${CPU_THREADS:-${DEFAULT_THREADS}}"
 CTX_SIZE=$(parse_yaml_val "print(c.get('context_size', 16384))" "16384")
 
 TARGET_MODEL_PATH="${MODELS_DIR}/${ACTIVE_MODEL}"
