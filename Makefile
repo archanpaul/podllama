@@ -92,7 +92,7 @@ status:
 	@$(PODMAN) ps --filter "name=qwen" --filter "name=litellm"
 	@echo ""
 	@echo "=== Checking API Health Endpoint ==="
-	@curl -s -m 3 http://127.0.0.1:4000/health || curl -s -m 3 http://127.0.0.1:4000/v1/models || curl -s -m 3 http://127.0.0.1:8080/health || echo "API endpoint (http://127.0.0.1:4000 or 8080) is unreachable."
+	@curl -s -m 3 http://127.0.0.1:4000/health/liveliness || curl -s -m 3 -H "Authorization: Bearer sk-local" http://127.0.0.1:4000/v1/models || curl -s -m 3 http://127.0.0.1:8080/health || echo "API endpoint (http://127.0.0.1:4000 or 8080) is unreachable."
 
 test:
 	python3 tests/test_all.py
