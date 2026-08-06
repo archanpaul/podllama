@@ -40,8 +40,11 @@ build: build-server build-client
 build-server:
 	@echo "Building Qwen Model Server image (Fedora 44 Minimal + Vulkan)..."
 	@LLAMA_TAG=$$(curl -sL https://api.github.com/repositories/612354784/tags 2>/dev/null | grep -o '"name": "[^"]*"' | head -n 1 | cut -d'"' -f4); \
-	LLAMA_TAG=$${LLAMA_TAG:-b6153}; \
-	echo "Detected llama.cpp release tag: $${LLAMA_TAG}"; \
+	if [ -n "$${LLAMA_TAG}" ]; then \
+		echo "Detected llama.cpp release tag: $${LLAMA_TAG}"; \
+	else \
+		echo "GitHub API unavailable or rate-limited. Falling back to latest main branch (LLAMA_CPP_TAG=\"\")..."; \
+	fi; \
 	$(PODMAN) build --build-arg LLAMA_CPP_TAG="$${LLAMA_TAG}" -t $(SERVER_IMAGE) -f containers/Containerfile.server .
 
 build-client:

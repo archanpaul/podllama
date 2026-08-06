@@ -20,7 +20,7 @@ The model server container builds and packages `llama-server` with Vulkan GPU ac
 To prevent lengthy C++ compilation on every `make build` invocation, `Containerfile.server` uses the `LLAMA_CPP_TAG` build argument:
 
 ```dockerfile
-ARG LLAMA_CPP_TAG="b6153"
+ARG LLAMA_CPP_TAG=""
 
 WORKDIR /build
 RUN if [ -n "${LLAMA_CPP_TAG}" ]; then \
@@ -36,9 +36,8 @@ RUN if [ -n "${LLAMA_CPP_TAG}" ]; then \
 
 #### Cache Behavior & Automated Tag Resolution:
 - **Automated Tag Detection (`make build-server`)**: `make build-server` automatically queries GitHub API for the latest `llama.cpp` release tag and passes it as `--build-arg LLAMA_CPP_TAG="..."`.
-- **Deterministic Layer Caching**: Because the build argument resolves to a fixed release tag, Podman reuses cached compilation layers (`--> Using cache`), skipping source compilation completely on subsequent builds (takes 0 seconds).
-- **Offline / Rate-Limit Fallback**: If GitHub API is offline or rate-limited, `make build-server` falls back to default `b6153`.
-- **Empty Tag (`LLAMA_CPP_TAG=""`)**: If passed as empty, the build script automatically falls back to cloning the latest `main` branch from GitHub.
+- **Deterministic Layer Caching**: When a tag is detected, Podman reuses cached compilation layers (`--> Using cache`), skipping source compilation completely on subsequent builds (takes 0 seconds).
+- **Offline / Rate-Limit Fallback**: If GitHub API is offline or rate-limited, `make build-server` automatically falls back to an empty tag (`LLAMA_CPP_TAG=""`), cloning the latest `main` branch directly.
 - **Custom Tag Override**: You can target a specific `llama.cpp` release tag:
   ```bash
   podman build --build-arg LLAMA_CPP_TAG="b6153" -t qwen-server:latest -f containers/Containerfile.server .
