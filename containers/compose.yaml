@@ -10,6 +10,7 @@ services:
       - ${MODELS_DIR:-../models}:/models:Z
     mem_limit: 8g
     mem_reservation: 4g
+    cpus: "4.0"
     restart: unless-stopped
 
   qwen_server_autocomplete:
@@ -23,6 +24,7 @@ services:
       - ${MODELS_DIR:-../models}:/models:Z
     mem_limit: 4g
     mem_reservation: 1g
+    cpus: "2.0"
     restart: unless-stopped
 
   litellm_proxy:

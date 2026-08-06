@@ -33,6 +33,7 @@ SERVER_PORT="${SERVER_PORT:-${DEFAULT_PORT}}"
 MODEL_URL=$(parse_yaml_val "print(c['models']['${ACTIVE_MODEL}']['url'])" "")
 EXPECTED_SHA256=$(parse_yaml_val "print(c['models']['${ACTIVE_MODEL}']['sha256'])" "")
 GPU_LAYERS=$(parse_yaml_val "print(c.get('vulkan_gpu_layers', 99))" "99")
+CPU_THREADS=$(parse_yaml_val "print(c.get('cpu_threads', 4))" "4")
 CTX_SIZE=$(parse_yaml_val "print(c.get('context_size', 16384))" "16384")
 
 TARGET_MODEL_PATH="${MODELS_DIR}/${ACTIVE_MODEL}"
@@ -117,12 +118,13 @@ fi
 
 LLAMA_SERVER_BIN=$(command -v llama-server || command -v llama.cpp-server || echo "/usr/bin/llama-server")
 
-echo "Launching ${LLAMA_SERVER_BIN}..."
+echo "Launching ${LLAMA_SERVER_BIN} with ${CPU_THREADS} CPU threads..."
 exec "${LLAMA_SERVER_BIN}" \
     -m "${TARGET_MODEL_PATH}" \
     --host 0.0.0.0 \
     --port "${SERVER_PORT}" \
     -ngl "${GPU_LAYERS}" \
+    -t "${CPU_THREADS}" \
     -c "${CTX_SIZE}" \
     --alias "qwen2.5-coder"
 

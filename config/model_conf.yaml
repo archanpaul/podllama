@@ -6,6 +6,7 @@ models_dir: /models
 workspace_dir: /workspace
 server_host: 0.0.0.0
 vulkan_gpu_layers: 99
+cpu_threads: 4
 context_size: 16384
 
 models:
