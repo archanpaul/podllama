@@ -3,8 +3,7 @@ FROM registry.fedoraproject.org/fedora-minimal:44
 
 RUN microdnf update -y && \
     microdnf install -y --setopt=install_weak_deps=0 \
-        llama.cpp \
-        llama.cpp-vulkan \
+        llama-cpp \
         mesa-vulkan-drivers \
         vulkan-loader \
         vulkan-tools \
