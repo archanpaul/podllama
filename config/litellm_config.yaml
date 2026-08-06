@@ -84,6 +84,7 @@ model_list:
 
 general_settings:
   master_key: sk-local
+  disable_master_key_auth: true
 
 router_settings:
   num_retries: 3
