@@ -26,9 +26,11 @@ RUN if [ -n "${QWEN_CODE_VERSION}" ]; then \
     mkdir -p /opt && \
     tar -xzf /tmp/qwen-code.tar.gz -C /opt/ && \
     rm -f /tmp/qwen-code.tar.gz && \
-    ln -sf /opt/qwen-code/bin/qwen /usr/local/bin/qwen-code && \
-    ln -sf /opt/qwen-code/bin/qwen /usr/local/bin/qwen && \
-    chmod +x /opt/qwen-code/bin/qwen /usr/local/bin/qwen-code
+    echo '#!/usr/bin/env sh' > /usr/local/bin/qwen-code && \
+    echo 'exec /opt/qwen-code/bin/qwen "$@"' >> /usr/local/bin/qwen-code && \
+    echo '#!/usr/bin/env sh' > /usr/local/bin/qwen && \
+    echo 'exec /opt/qwen-code/bin/qwen "$@"' >> /usr/local/bin/qwen && \
+    chmod +x /opt/qwen-code/bin/qwen /usr/local/bin/qwen-code /usr/local/bin/qwen
 
 # Set up application workspace
 WORKDIR /app
