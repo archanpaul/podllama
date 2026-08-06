@@ -20,7 +20,7 @@ The model server container builds and packages `llama-server` with Vulkan GPU ac
 To prevent lengthy C++ compilation on every `make build` invocation, `Containerfile.server` uses the `LLAMA_CPP_TAG` build argument:
 
 ```dockerfile
-ARG LLAMA_CPP_TAG="b4700"
+ARG LLAMA_CPP_TAG="b6153"
 
 WORKDIR /build
 RUN if [ -n "${LLAMA_CPP_TAG}" ]; then \
@@ -35,7 +35,7 @@ RUN if [ -n "${LLAMA_CPP_TAG}" ]; then \
 ```
 
 #### Cache Behavior:
-- **Default (Pinned Tag `b4700`)**: Podman matches the deterministic `git clone` command across builds. Subsequent builds reuse cached compilation layers (`--> Using cache`), completing in under a second.
+- **Default (Pinned Tag `b6153`)**: Podman matches the deterministic `git clone` command across builds. Subsequent builds reuse cached compilation layers (`--> Using cache`), completing in under a second.
 - **Empty Tag (`LLAMA_CPP_TAG=""`)**: If passed as empty, the build script automatically falls back to cloning the latest `main` branch from GitHub.
 - **Custom Tag Override**: You can target a specific `llama.cpp` release tag:
   ```bash
