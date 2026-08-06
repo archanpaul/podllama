@@ -10,7 +10,7 @@ services:
       - ${MODELS_DIR:-../models}:/models:z
       - ../config/model_conf.yaml:/app/config/model_conf.yaml:ro,Z
     mem_limit: 16g
-    mem_reservation: 6g
+    mem_reservation: 4g
     cpus: "8.0"
     restart: unless-stopped
 

@@ -13,15 +13,46 @@ echo "Listening on: ${HOST}:${PORT}"
 CHAT_HOST="${CHAT_SERVER_HOST:-qwen_server_chat}"
 CHAT_PORT="${CHAT_SERVER_PORT:-8080}"
 AUTOCOMPLETE_HOST="${AUTOCOMPLETE_SERVER_HOST:-qwen_server_autocomplete}"
-AUTOCOMPLETE_PORT="${AUTOCOMPLETE_SERVER_PORT:-8081}"
+AUTOCOMPLETE_PORT="${AUTOCOMPLETE_SERVER_PORT:-8080}"
 
 echo "Waiting for backend model servers..."
 MAX_RETRIES=60
 RETRY_COUNT=0
 
+# Use python for health checks since curl may not be available in the
+# official litellm image.  Falls back to curl if python is missing.
+health_check() {
+    local host="$1" port="$2"
+    if command -v python3 &>/dev/null; then
+        python3 -c "
+import urllib.request, sys
+try:
+    urllib.request.urlopen('http://${host}:${port}/health', timeout=2)
+    sys.exit(0)
+except Exception:
+    sys.exit(1)
+" 2>/dev/null
+    elif command -v python &>/dev/null; then
+        python -c "
+import urllib.request, sys
+try:
+    urllib.request.urlopen('http://${host}:${port}/health', timeout=2)
+    sys.exit(0)
+except Exception:
+    sys.exit(1)
+" 2>/dev/null
+    elif command -v curl &>/dev/null; then
+        curl -s -m 2 "http://${host}:${port}/health" > /dev/null 2>&1
+    else
+        # No tool available; skip health check and start immediately
+        echo "WARNING: Neither python nor curl found; skipping backend health check."
+        return 0
+    fi
+}
+
 while [ ${RETRY_COUNT} -lt ${MAX_RETRIES} ]; do
-    if curl -s -m 2 "http://${CHAT_HOST}:${CHAT_PORT}/health" > /dev/null 2>&1 || \
-       curl -s -m 2 "http://${AUTOCOMPLETE_HOST}:${AUTOCOMPLETE_PORT}/health" > /dev/null 2>&1; then
+    if health_check "${CHAT_HOST}" "${CHAT_PORT}" || \
+       health_check "${AUTOCOMPLETE_HOST}" "${AUTOCOMPLETE_PORT}"; then
         echo "Backend model server is reachable!"
         break
     fi

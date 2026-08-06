@@ -1,46 +1,13 @@
-# Multi-stage LiteLLM Proxy Server (Fedora Minimal)
-# Stage 1: Build - install Python build deps, compile wheels, create venv
-FROM registry.fedoraproject.org/fedora-minimal:latest AS builder
+# LiteLLM Proxy Server — based on the official prebuilt image
+# https://docs.litellm.ai/docs/proxy/deploy
+#
+# Pin a specific tag for reproducibility; bump as needed.
+# Use "latest" only for development.
+ARG LITELLM_TAG=latest
+FROM ghcr.io/berriai/litellm:${LITELLM_TAG}
 
-RUN microdnf update -y && \
-    microdnf install -y --setopt=install_weak_deps=0 \
-    python3 \
-    python3-pip \
-    python3-devel \
-    gcc \
-    gcc-c++ \
-    libffi-devel \
-    openssl-devel \
-    cargo \
-    && microdnf clean all
-
-RUN python3 -m venv /app/.venv
-ENV PATH="/app/.venv/bin:$PATH"
-
-# Pin litellm version for reproducibility; bump as needed
-ARG LITELLM_VERSION=""
-RUN if [ -n "${LITELLM_VERSION}" ]; then \
-        pip install --no-cache-dir "litellm[proxy]==${LITELLM_VERSION}"; \
-    else \
-        pip install --no-cache-dir "litellm[proxy]"; \
-    fi
-
-# Stage 2: Runtime - minimal image with only the venv
-FROM registry.fedoraproject.org/fedora-minimal:latest AS runtime
-
-RUN microdnf update -y && \
-    microdnf install -y --setopt=install_weak_deps=0 \
-    python3 \
-    libffi \
-    openssl-libs \
-    curl \
-    ca-certificates \
-    && microdnf clean all
-
-# Copy the pre-built venv from the builder stage
-COPY --from=builder /app/.venv /app/.venv
-ENV PATH="/app/.venv/bin:$PATH" \
-    PYTHONUNBUFFERED=1
+# The official image already includes litellm, fastapi, uvicorn, etc.
+# We only add our project config and custom entrypoint.
 
 WORKDIR /app
 COPY config/litellm_config.yaml /app/config.yaml
@@ -51,4 +18,3 @@ EXPOSE 4000
 
 ENTRYPOINT ["/app/entrypoint-litellm.sh"]
 CMD []
-
