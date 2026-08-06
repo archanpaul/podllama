@@ -128,9 +128,9 @@ curl http://localhost:4000/health/liveliness
 | `qwen-chat` | `qwen_server_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` | Chat, Code Generation, Refactoring |
 | `qwen2.5-coder-7b-instruct` | `qwen_server_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` | Chat, High-Reasoning Tasks |
 | `gpt-3.5-turbo` | `qwen_server_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` | Legacy API Compatibility Fallback |
-| `qwen-autocomplete` | `qwen_server_autocomplete:8081` | `qwen2.5-coder-0.5b-q4_k_m.gguf` | Low-latency Inline Code Completion |
-| `qwen2.5-coder-0.5b` | `qwen_server_autocomplete:8081` | `qwen2.5-coder-0.5b-q4_k_m.gguf` | Fast Autocomplete |
-| `qwen2.5-coder-1.5b` | `qwen_server_autocomplete:8081` | `qwen2.5-coder-1.5b-q4_k_m.gguf` | Balanced Autocomplete |
+| `qwen-autocomplete` | `qwen_server_autocomplete:8081` | `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` | Low-latency Inline Code Completion |
+| `qwen2.5-coder-0.5b` | `qwen_server_autocomplete:8081` | `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` | Fast Autocomplete |
+| `qwen2.5-coder-1.5b` | `qwen_server_autocomplete:8081` | `qwen2.5-coder-1.5b-instruct-q4_k_m.gguf` | Balanced Autocomplete |
 
 ---
 
