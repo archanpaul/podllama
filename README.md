@@ -194,7 +194,7 @@ Edit `config/model_conf.yaml` to change default models or settings:
 
 ```yaml
 active_chat_model: qwen2.5-coder-7b-instruct-q4_k_m.gguf
-active_autocomplete_model: qwen2.5-coder-0.5b-q4_k_m.gguf
+active_autocomplete_model: qwen2.5-coder-0.5b-instruct-q4_k_m.gguf
 chat_server_port: 8080
 autocomplete_server_port: 8081
 models_dir: /models
@@ -253,17 +253,36 @@ To use the local GPU-accelerated server with VS Code AI extensions:
 
 ---
 
+## Testing & Verification
+
+The project includes both static unit tests and live endpoint smoke verification:
+
+### 1. Automated Unit Tests (`make test`)
+Validates configuration YAML schemas, script permissions, and container definitions:
+```bash
+make test
+```
+
+### 2. Live Endpoint Smoke Testing (`make smoke-test`)
+Performs live end-to-end verification against the running Podman stack:
+```bash
+make smoke-test
+```
+
+This runs `tests/smoke_test.py` to verify:
+- **Proxy Liveliness**: Probes `http://localhost:4000/health/liveliness`.
+- **Autocomplete Model Prompt Processing & Completion**: Tests `qwen-autocomplete` prompt prefill (`prompt_tokens`) and code output.
+- **Chat Model Prompt Processing & Token Accounting**: Tests `qwen-chat` prompt evaluation tokens (`prompt_tokens`).
+- **Chat Model Token Streaming**: Validates real-time SSE chunk streaming output.
+- **Tool Calling Support**: Validates function tool definitions (`qwen-chat` with `--jinja`) to ensure tool support functions without server error.
+
+---
+
 ## Security & Workspace Isolation
 
 The workspace agent container (`Containerfile.qwencoder`) is launched with:
 - `-v "$(pwd):/workspace:Z"`: SELinux-labeled volume mount restricted strictly to the current working directory.
 - `--userns=keep-id`: Preserves host user UID/GID without root privileges in workspace.
-
-Run automated test suite:
-
-```bash
-make test
-```
 
 ---
 
