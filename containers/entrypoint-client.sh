@@ -33,7 +33,7 @@ fi
 # Environment variables for official QwenLM/qwen-code CLI
 export OPENAI_BASE_URL="${SERVER_URL}"
 export OPENAI_API_KEY="${OPENAI_API_KEY:-sk-local}"
-export OPENAI_MODEL="${OPENAI_MODEL:-qwen-chat}"
+export OPENAI_MODEL="${OPENAI_MODEL:-podllama-chat}"
 
 QWEN_BIN=""
 for candidate in "/usr/local/bin/qwen-code" "/usr/local/bin/qwen" "/opt/qwen-code/bin/qwen"; do

@@ -44,7 +44,7 @@ case "${MODE}" in
 
     pod)
         echo "Creating and running PodLlama Pod..."
-        podman pod create --name "${POD_NAME}" -p 8080:8080 --replace
+        podman pod create --name "${POD_NAME}" -p 4000:4000 -p 8080:8080 -p 8081:8081 --replace
         
         echo "Launching Model Server in Pod..."
         podman run -d \
@@ -52,7 +52,8 @@ case "${MODE}" in
             --name "${SERVER_CONTAINER_NAME}" \
             --replace \
             --device /dev/dri \
-            -v "${MODELS_DIR}:/models:Z" \
+            -v "${MODELS_DIR}:/models:z" \
+            -v "$(dirname $(dirname $(realpath $0)))/config/model_conf.yaml:/app/config/model_conf.yaml:ro,z" \
             podllama-server:latest
 
         echo "Launching Workspace Client in Pod..."
@@ -60,7 +61,8 @@ case "${MODE}" in
             --pod "${POD_NAME}" \
             --name "${CLIENT_CONTAINER_NAME}" \
             -e PODLLAMA_SERVER_HOST="127.0.0.1" \
-            -e PODLLAMA_SERVER_PORT="8080" \
+            -e PODLLAMA_SERVER_PORT="4000" \
+            -e OPENAI_MODEL="podllama-chat" \
             -v "${WORKSPACE_DIR}:/workspace:Z" \
             -w /workspace \
             --userns=keep-id \
