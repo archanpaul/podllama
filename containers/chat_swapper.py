@@ -192,13 +192,14 @@ def ensure_model_running(requested_model_name):
     last_request_time = time.time()
 
     target_file = resolve_model_filename(requested_model_name)
+    display_name = requested_model_name if requested_model_name else "podllama-chat"
 
     with state_lock:
         if llama_process is None:
-            print(f"[Swapper] [Cold-Start] Booting model '{target_file}'...", flush=True)
+            print(f"[Swapper] [Cold-Start] [{display_name}] Booting backend model '{target_file}'...", flush=True)
             start_llama_server(target_file)
         elif current_model != target_file:
-            print(f"[Swapper] [Auto-Swap] Model swap requested: current='{current_model}' -> target='{target_file}'", flush=True)
+            print(f"[Swapper] [Auto-Swap] [{display_name}] Model swap requested: current='{current_model}' -> target='{target_file}'", flush=True)
             stop_llama_server()
             start_llama_server(target_file)
 
