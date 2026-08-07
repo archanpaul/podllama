@@ -1,7 +1,7 @@
 services:
-  qwen_server_chat:
-    image: qwen-server:latest
-    container_name: qwen_server_chat
+  podllama_chat:
+    image: podllama-server:latest
+    container_name: podllama_chat
     environment:
       - MODEL_ROLE=chat
     devices:
@@ -14,9 +14,9 @@ services:
     cpus: "8.0"
     restart: unless-stopped
 
-  qwen_server_autocomplete:
-    image: qwen-server:latest
-    container_name: qwen_server_autocomplete
+  podllama_autocomplete:
+    image: podllama-server:latest
+    container_name: podllama_autocomplete
     environment:
       - MODEL_ROLE=autocomplete
     devices:
@@ -29,15 +29,15 @@ services:
     cpus: "2.0"
     restart: unless-stopped
 
-  litellm_proxy:
-    image: qwen-litellm:latest
-    container_name: litellm_proxy
+  podllama_proxy:
+    image: podllama-litellm:latest
+    container_name: podllama_proxy
     ports:
       - "4000:4000"
     volumes:
       - ../config/litellm_config.yaml:/app/config.yaml:ro,Z
     depends_on:
-      - qwen_server_chat
-      - qwen_server_autocomplete
+      - podllama_chat
+      - podllama_autocomplete
     mem_limit: 1g
     restart: unless-stopped
