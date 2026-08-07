@@ -248,9 +248,11 @@ make smoke-tests
 ```
 
 This runs `tests/smoke_tests.py` to validate:
-- **Proxy Liveliness**: Probes `http://localhost:4000/health/liveliness`.
-- **Prompt Processing**: Evaluates input code context prompts and verifies `prompt_tokens` token evaluation and accounting.
-- **Chat Model Streaming**: Sends `POST /v1/chat/completions` with `"stream": true` and streams tokens.
-- **Autocomplete Model Completion**: Sends `POST /v1/completions` to test inline code completion.
-- **Tool Calling Support**: Sends function definitions (`qwen-chat` with `--jinja`) to ensure tool-calling endpoints function without server errors.
+- **1. Proxy Liveliness**: Probes `GET /health/liveliness`.
+- **2. List Models API**: Probes `GET /v1/models` and parses registered model IDs.
+- **3. Chat Completions**: Sends `POST /v1/chat/completions` with `podllama-chat` to evaluate input code context prompts and verify `prompt_tokens` accounting.
+- **4. Deep Thinking & Reasoning**: Sends `POST /v1/chat/completions` with `podllama-thinking` to test reasoning model output.
+- **5. Chat Model Streaming**: Sends `POST /v1/chat/completions` with `"stream": true` and streams Server-Sent Events (SSE) token chunks.
+- **6. Autocomplete Model Completion**: Sends `POST /v1/completions` with `podllama-autocomplete` to test inline FIM code completion.
+- **7. Tool Calling Support**: Sends function tool definitions (`podllama-chat` with `--jinja`) to ensure tool-calling endpoints function without server errors.
 

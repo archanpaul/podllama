@@ -71,9 +71,11 @@ The **PodLlama Container Environment** provides a local, GPU-accelerated, contai
 ## 9. Automated Testing & Live Smoke Verification
 
 - **Unit Test Suite (`make unit-tests` / `tests/unit_tests.py`)**: Validates YAML configuration schemas, file permissions, container definition files, and idle supervisor configuration.
-- **Live Smoke Test Suite (`make smoke-tests` / `tests/smoke_tests.py`)**: Executes live end-to-end verification against the running Podman stack, testing:
-  - **Proxy Liveliness**: Probes `http://localhost:4000/health/liveliness`.
-  - **Prompt Processing**: Evaluates input code context prompts and verifies `prompt_tokens` prefill accounting.
-  - **Chat Model Streaming**: Sends a streaming request (`podllama-chat`) and validates SSE token chunk streaming.
-  - **Autocomplete Model Completion**: Sends an FIM completion request (`podllama-autocomplete`) and validates code output.
-  - **Tool Calling**: Sends function tool definitions (`podllama-chat` with `--jinja`) to ensure tool-calling support functions without server error.
+- **Live Smoke Test Suite (`make smoke-tests` / `tests/smoke_tests.py`)**: Executes live end-to-end verification against the running Podman stack with verbose diagnostic logs for 7 distinct API endpoints:
+  - **1. Proxy Liveliness**: Probes `GET /health/liveliness`.
+  - **2. List Models API**: Probes `GET /v1/models` and verifies registered model aliases.
+  - **3. Chat Completions & Prompt Processing**: Sends `podllama-chat` prompt and verifies `prompt_tokens` accounting.
+  - **4. Deep Thinking & Reasoning**: Sends `podllama-thinking` request and verifies reasoning model output.
+  - **5. Chat Model Streaming**: Sends `podllama-chat` streaming request and validates SSE token chunk streaming.
+  - **6. Autocomplete Model Completion**: Sends `podllama-autocomplete` FIM request and validates inline code completion.
+  - **7. Function & Tool Calling**: Sends tool definitions to validate tool support without server error.

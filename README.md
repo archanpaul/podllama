@@ -369,12 +369,14 @@ make smoke-tests
 make smoke-test
 ```
 
-This runs `tests/smoke_tests.py` to verify:
-- **Proxy Liveliness**: Probes `http://localhost:4000/health/liveliness`.
-- **Autocomplete Model Prompt Processing & Completion**: Tests `podllama-autocomplete` prompt prefill (`prompt_tokens`) and code output.
-- **Chat Model Prompt Processing & Token Accounting**: Tests `podllama-chat` prompt evaluation tokens (`prompt_tokens`).
-- **Chat Model Token Streaming**: Validates real-time SSE chunk streaming output.
-- **Tool Calling Support**: Validates function tool definitions (`podllama-chat` with `--jinja`) to ensure tool support functions without server error.
+This runs `tests/smoke_tests.py` to perform verbose end-to-end verification across 7 API endpoints:
+- **1. Proxy Liveliness**: Probes `http://localhost:4000/health/liveliness`.
+- **2. List Models API**: Probes `GET /v1/models` and parses registered model IDs.
+- **3. Chat Completions**: Tests `podllama-chat` prompt evaluation tokens (`prompt_tokens`).
+- **4. Deep Thinking & Reasoning**: Tests `podllama-thinking` reasoning output.
+- **5. Chat Model Token Streaming**: Validates real-time SSE chunk streaming output.
+- **6. Autocomplete Model Completion**: Tests `podllama-autocomplete` prompt prefill and FIM code output.
+- **7. Tool Calling Support**: Validates function tool definitions (`podllama-chat` with `--jinja`) without server error.
 
 ---
 
