@@ -141,9 +141,26 @@ function syncModelProvidersToDisk(podllamaEndpointDef: any) {
           customEndpoints.push(podllamaEndpointDef);
           json['github.copilot.chat.customEndpoints'] = customEndpoints;
           json['chat.customEndpoints'] = customEndpoints;
-          fs.writeFileSync(sPath, JSON.stringify(json, null, 2), 'utf8');
-          console.log(`PodLlama Model Provider synced to ${sPath}`);
         }
+
+        // Populate Agent dropdown menu settings (chat.agent.providers & customProviders)
+        let agentProviders = json['chat.agent.providers'] || json['chat.agent.customProviders'] || [];
+        if (!Array.isArray(agentProviders)) {
+          agentProviders = [];
+        }
+        if (!agentProviders.some((p: any) => (typeof p === 'string' && p === 'PodLlama') || p?.name === 'PodLlama')) {
+          agentProviders.push({
+            id: 'podllama',
+            name: 'PodLlama',
+            provider: 'customendpoint',
+            url: 'http://localhost:4000/v1',
+          });
+          json['chat.agent.providers'] = agentProviders;
+          json['chat.agent.customProviders'] = agentProviders;
+        }
+
+        fs.writeFileSync(sPath, JSON.stringify(json, null, 2), 'utf8');
+        console.log(`PodLlama Model Provider & Agent dropdown synced to ${sPath}`);
       } catch {
         // ignore parse errors
       }

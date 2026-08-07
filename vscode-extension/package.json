@@ -82,10 +82,20 @@
         "category": "PodLlama"
       }
     ],
+    "chatAgents": [
+      {
+        "id": "podllama",
+        "name": "PodLlama",
+        "fullName": "PodLlama Local Agent",
+        "description": "PodLlama GPU-Accelerated Local Agent & AI Assistant",
+        "isUnlisted": false
+      }
+    ],
     "chatParticipants": [
       {
         "id": "podllama.chat",
         "name": "podllama",
+        "fullName": "PodLlama Local Agent",
         "description": "PodLlama Local Agent & AI Assistant (Vulkan GPU Accelerated)",
         "isUnlisted": false,
         "commands": [

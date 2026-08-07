@@ -198,3 +198,10 @@ vscode_extension-install: vscode_extension-package
 	@which code >/dev/null 2>&1 && code --install-extension vscode-extension/podllama-vscode-0.1.0.vsix --force || (which codium >/dev/null 2>&1 && codium --install-extension vscode-extension/podllama-vscode-0.1.0.vsix --force || (which cursor >/dev/null 2>&1 && cursor --install-extension vscode-extension/podllama-vscode-0.1.0.vsix --force || echo "NOTICE: Neither 'code', 'codium', nor 'cursor' CLI tools found on PATH. Install manually via: code --install-extension vscode-extension/podllama-vscode-0.1.0.vsix"))
 
 vscode_extension-update: vscode_extension-install
+
+extension-build: vscode_extension-build
+extension-test: vscode_extension-test
+extension-package: vscode_extension-package
+extension-install: vscode_extension-install
+extension-update: vscode_extension-install
+
