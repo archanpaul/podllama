@@ -33,8 +33,8 @@ The **PodLlama Container Environment** provides a local, GPU-accelerated, contai
 ## 4. Unified LiteLLM Proxy (Port 4000)
 
 - **Single OpenAI-Compatible API Endpoint**: Exposes `http://localhost:4000/v1` to interface with editors and IDE extensions.
-- **Dynamic Routing**: Inspects request parameters and routes `qwen-chat` requests to the 7B backend and `qwen-autocomplete` requests to the 0.5B/1.5B backend.
-- **Model Aliases**: Exposes standardized model aliases (`gpt-3.5-turbo`, `qwen2.5-coder`, `qwen-chat`, `qwen-autocomplete`).
+- **Dynamic Routing**: Inspects request parameters and routes `podllama-chat` / `podllama-thinking` requests to port 8080 and `podllama-autocomplete` requests to port 8081.
+- **Model Aliases**: Exposes standardized role model aliases (`podllama-chat`, `podllama-thinking`, `podllama-autocomplete`).
 - **Health & Diagnostics**: Provides `/health/liveliness` and `/v1/models` health monitoring endpoints.
 
 ---
@@ -70,10 +70,10 @@ The **PodLlama Container Environment** provides a local, GPU-accelerated, contai
 
 ## 9. Automated Testing & Live Smoke Verification
 
-- **Unit Test Suite (`make unit-tests` / `tests/unit_tests.py`)**: Validates YAML configuration schemas, file permissions, and container definition files.
+- **Unit Test Suite (`make unit-tests` / `tests/unit_tests.py`)**: Validates YAML configuration schemas, file permissions, container definition files, and idle supervisor configuration.
 - **Live Smoke Test Suite (`make smoke-tests` / `tests/smoke_tests.py`)**: Executes live end-to-end verification against the running Podman stack, testing:
   - **Proxy Liveliness**: Probes `http://localhost:4000/health/liveliness`.
   - **Prompt Processing**: Evaluates input code context prompts and verifies `prompt_tokens` prefill accounting.
-  - **Chat Model Streaming**: Sends a streaming request (`qwen-chat`) and validates SSE token chunk streaming.
-  - **Autocomplete Model Completion**: Sends an FIM completion request (`qwen-autocomplete`) and validates code output.
-  - **Tool Calling**: Sends function tool definitions (`qwen-chat` with `--jinja`) to ensure tool-calling support functions without server error.
+  - **Chat Model Streaming**: Sends a streaming request (`podllama-chat`) and validates SSE token chunk streaming.
+  - **Autocomplete Model Completion**: Sends an FIM completion request (`podllama-autocomplete`) and validates code output.
+  - **Tool Calling**: Sends function tool definitions (`podllama-chat` with `--jinja`) to ensure tool-calling support functions without server error.

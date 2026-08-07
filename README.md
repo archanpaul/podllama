@@ -26,7 +26,7 @@ This project addresses these challenges by delivering an enterprise-ready, self-
 - **Configurable Idle Auto-Stop (0 MB LLM VRAM/RAM Mode)**: Automatically shuts down the chat container backend process after a configurable idle duration (`idle_timeout_seconds`, defaulting to 10 minutes / 600s), freeing 100% of LLM VRAM and host RAM until cold-started by the next request.
 - **Unified LiteLLM Proxy API (Port 4000)**: Exposes a single, multithreaded OpenAI-compatible API endpoint on port 4000 (`http://localhost:4000/v1`) that dynamically routes requests to the appropriate model server backend based on the model name in API requests.
 - **Official QwenLM/qwen-code CLI Integration**: The workspace agent container (`Containerfile.qwencoder`) automatically installs the latest release of [QwenLM/qwen-code](https://github.com/QwenLM/qwen-code) directly from GitHub releases without API rate limits or hardcoded versions. Supports build-time version pinning via `QWEN_CODE_VERSION`.
-- **Podman Compose Orchestration**: Easily manage the entire stack (`podllama_chat`, `podllama_autocomplete`, `podllama_proxy`) with a single command (`make compose-up`).
+- **Podman Compose Orchestration**: Easily manage the entire stack (`podllama_chat`, `podllama_autocomplete`, `podllama_proxy`) with a single command (`make service-up`).
 - **YAML Model Configuration (`config/model_conf.yaml`)**: Centralized model registry specifying download URLs, active chat/autocomplete model selections, ports, context sizes, and SHA256 checksums.
 
 ---
@@ -110,18 +110,12 @@ Build the server and workspace agent images (automatically fetches latest `QwenL
 make build
 ```
 
-Optional: To build with a specific version of `qwen-code`:
-
-```bash
-podman build --build-arg QWEN_CODE_VERSION=v0.21.6 -t qwen-client:latest -f containers/Containerfile.qwencoder .
-```
-
 ### 3. Launch Full Stack with Podman Compose (Recommended)
 
 Start Chat Server, Autocomplete Server, and LiteLLM Proxy on port 4000:
 
 ```bash
-make compose-up
+make service-up
 ```
 
 Check status:
@@ -133,13 +127,13 @@ make status
 View live logs:
 
 ```bash
-make compose-logs
+make service-logs
 ```
 
 Stop stack:
 
 ```bash
-make compose-down
+make service-down
 ```
 
 ### 4. Launch Workspace Agent CLI
@@ -164,39 +158,58 @@ make -C /path/to/qwen_code_container run-qwencode WORKSPACE_DIR=$(pwd)
 
 The LiteLLM Proxy runs on `http://localhost:4000/v1`. You can select chat or autocomplete models directly in your API calls:
 
-### 1. Chat Completion API (`qwen-chat` / `qwen2.5-coder-7b-instruct`)
+### 1. Chat Completion API (`podllama-chat`)
 
 ```bash
 curl http://localhost:4000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer sk-local" \
   -d '{
-    "model": "qwen-chat",
+    "model": "podllama-chat",
     "messages": [
       {"role": "user", "content": "Write a python function to compute prime numbers."}
     ]
   }'
 ```
 
-### 2. Autocomplete Completion API (`qwen-autocomplete` / `qwen2.5-coder-0.5b`)
+### 2. Deep Thinking & Reasoning API (`podllama-thinking`)
+
+```bash
+curl http://localhost:4000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer sk-local" \
+  -d '{
+    "model": "podllama-thinking",
+    "messages": [
+      {"role": "user", "content": "Analyze algorithm time complexity for quicksort best vs worst case."}
+    ]
+  }'
+```
+
+> [!NOTE]
+> **VRAM/RAM Memory Isolation & Concurrency**:
+> - **`podllama-chat` & `podllama-thinking`** both run on backend port `8080` via `chat_swapper.py`. Due to GPU VRAM and system RAM limitations, only **one** chat or thinking model runs in VRAM at a time. Requesting `podllama-thinking` automatically unloads `podllama-chat` (and vice-versa) before cold-starting the target model.
+> - **`podllama-autocomplete`** runs on dedicated backend port `8081` and operates **in parallel** with chat/thinking models without triggering swaps.
+
+### 3. Autocomplete Completion API (`podllama-autocomplete`)
 
 ```bash
 curl http://localhost:4000/v1/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer sk-local" \
   -d '{
-    "model": "qwen-autocomplete",
+    "model": "podllama-autocomplete",
     "prompt": "def fibonacci(n):\n"
   }'
 ```
 
-### 3. Model Aliases Map
+### 4. Model Aliases Map
 
-| Request Model Name | Role | Backend Target Server | Loaded GGUF Model |
-| :--- | :--- | :--- | :--- |
-| `podllama-chat`, `qwen-chat`, `gpt-3.5-turbo` | Chat | `podllama_chat:8080` | `active_chat_model` (`qwen2.5-coder-7b-instruct-q4_k_m.gguf`) |
-| `podllama-thinking`, `deepseek-r1` | Thinking / Reasoning | `podllama_chat:8080` | `active_thinking_model` (`DeepSeek-R1-Distill-Qwen-7B` or `14B`) |
-| `podllama-autocomplete`, `qwen-autocomplete` | Autocomplete | `podllama_autocomplete:8081` | `active_autocomplete_model` (`qwen2.5-coder-0.5b-instruct-q4_k_m.gguf`) |
+| Request Model Name | Role | Backend Target Server | Loaded GGUF Model | Concurrency Behavior |
+| :--- | :--- | :--- | :--- | :--- |
+| `podllama-chat` | Chat | `podllama_chat:8080` | `active_chat_model` (`qwen2.5-coder-7b`) | Auto-swaps on port 8080 (Single active instance) |
+| `podllama-thinking` | Thinking / Reasoning | `podllama_chat:8080` | `active_thinking_model` (`DeepSeek-R1-Distill-7B/14B`) | Auto-swaps on port 8080 (Single active instance) |
+| `podllama-autocomplete` | Autocomplete | `podllama_autocomplete:8081` | `active_autocomplete_model` (`qwen2.5-coder-0.5b`) | Dedicated port 8081 (Runs in parallel) |
 
 ---
 
@@ -292,32 +305,42 @@ To use the local GPU-accelerated server with VS Code AI extensions:
 ### Option A: Via LiteLLM Unified Proxy (Port 4000)
 - **API Provider**: OpenAI / Local Server
 - **Base URL**: `http://localhost:4000/v1`
-- **Chat Model**: `qwen-chat`
-- **Autocomplete Model**: `qwen-autocomplete`
+- **Chat Model**: `podllama-chat`
+- **Thinking Model**: `podllama-thinking`
+- **Autocomplete Model**: `podllama-autocomplete`
 - **API Key**: `sk-local`
 
 #### Pre-configured `config/continue.yaml` Template:
 A ready-to-use template is provided in [`config/continue.yaml`](./config/continue.yaml):
 
 ```yaml
-name: Qwen Code Local (Vulkan GPU Accelerated)
+name: PodLlama Local (Vulkan GPU Accelerated)
 version: 0.0.1
 schema: v1
 
 models:
-  - name: Qwen Chat (Local Vulkan)
+  - name: PodLlama Chat (Local Vulkan)
     provider: openai
-    model: qwen-chat
+    model: podllama-chat
     apiBase: http://localhost:4000/v1
     apiKey: sk-local
-    contextLength: 16384
+    contextLength: 65536
     roles:
       - chat
       - edit
 
-  - name: Qwen Autocomplete (Local Vulkan)
+  - name: PodLlama Thinking (DeepSeek-R1 Local Vulkan)
     provider: openai
-    model: qwen-autocomplete
+    model: podllama-thinking
+    apiBase: http://localhost:4000/v1
+    apiKey: sk-local
+    contextLength: 65536
+    roles:
+      - chat
+
+  - name: PodLlama Autocomplete (Local Vulkan)
+    provider: openai
+    model: podllama-autocomplete
     apiBase: http://localhost:4000/v1
     apiKey: sk-local
     roles:
@@ -348,10 +371,10 @@ make smoke-test
 
 This runs `tests/smoke_tests.py` to verify:
 - **Proxy Liveliness**: Probes `http://localhost:4000/health/liveliness`.
-- **Autocomplete Model Prompt Processing & Completion**: Tests `qwen-autocomplete` prompt prefill (`prompt_tokens`) and code output.
-- **Chat Model Prompt Processing & Token Accounting**: Tests `qwen-chat` prompt evaluation tokens (`prompt_tokens`).
+- **Autocomplete Model Prompt Processing & Completion**: Tests `podllama-autocomplete` prompt prefill (`prompt_tokens`) and code output.
+- **Chat Model Prompt Processing & Token Accounting**: Tests `podllama-chat` prompt evaluation tokens (`prompt_tokens`).
 - **Chat Model Token Streaming**: Validates real-time SSE chunk streaming output.
-- **Tool Calling Support**: Validates function tool definitions (`qwen-chat` with `--jinja`) to ensure tool support functions without server error.
+- **Tool Calling Support**: Validates function tool definitions (`podllama-chat` with `--jinja`) to ensure tool support functions without server error.
 
 ---
 

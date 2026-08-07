@@ -10,7 +10,7 @@ This skill provides guidelines and operational procedures for managing the Podma
 ## Overview
 
 The repository manages two main container images and a Podman Compose service stack:
-- **Server Image (`podllama-server:latest`)**: Built via `containers/Containerfile.server`. Runs `llama-server` with Vulkan GPU acceleration on Fedora minimal.
+- **Server Image (`podllama-server:latest`)**: Built via `containers/Containerfile.llamacpp`. Runs `llama-server` with Vulkan GPU acceleration on Fedora minimal.
 - **Client Image (`qwen-client:latest`)**: Built via `containers/Containerfile.qwencoder`. Houses the Qwen CLI agent.
 - **Compose Stack (`containers/compose.yaml`)**: Manages `podllama_chat` (port 8080), `podllama_autocomplete` (port 8081), and `podllama_proxy` (port 4000).
 

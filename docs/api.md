@@ -50,9 +50,45 @@ curl http://localhost:4000/v1/chat/completions \
   }'
 ```
 
+### 2.2 Deep Thinking & Reasoning (`POST /v1/chat/completions`)
+
+Used for deep reasoning, mathematical proofs, logic analysis, and complex code architecture tasks using `podllama-thinking` (`DeepSeek-R1-Distill-Qwen-7B` or `14B`).
+
+#### Request Body
+```json
+{
+  "model": "podllama-thinking",
+  "messages": [
+    { "role": "system", "content": "You are a logic and reasoning expert." },
+    { "role": "user", "content": "Analyze algorithm time complexity for quicksort best vs worst case." }
+  ],
+  "temperature": 0.1,
+  "max_tokens": 2048,
+  "stream": false
+}
+```
+
+#### Example cURL
+```bash
+curl http://localhost:4000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer sk-local" \
+  -d '{
+    "model": "podllama-thinking",
+    "messages": [
+      {"role": "user", "content": "Analyze algorithm time complexity for quicksort best vs worst case."}
+    ]
+  }'
+```
+
+> [!NOTE]
+> **VRAM/RAM Memory Isolation & Concurrency**:
+> - **`podllama-chat` & `podllama-thinking`** both run on backend port `8080` via `chat_swapper.py`. Due to GPU VRAM and system RAM limitations, only **one** chat or thinking model runs in VRAM at a time. Requesting `podllama-thinking` automatically unloads `podllama-chat` (and vice-versa) before cold-starting the target model.
+> - **`podllama-autocomplete`** runs on dedicated backend port `8081` and operates **in parallel** with chat/thinking models without triggering swaps.
+
 ---
 
-### 2.2 Text Completions / Autocomplete (`POST /v1/completions`)
+### 2.3 Text Completions / Autocomplete (`POST /v1/completions`)
 
 Used for low-latency inline code autocompletion and FIM (Fill-In-Middle) requests.
 
@@ -80,7 +116,7 @@ curl http://localhost:4000/v1/completions \
 
 ---
 
-### 2.3 List Models (`GET /v1/models`)
+### 2.4 List Models (`GET /v1/models`)
 
 Retrieves available models and registered aliases.
 
@@ -104,7 +140,7 @@ curl http://localhost:4000/v1/models \
 
 ---
 
-### 2.4 Liveliness & Health (`GET /health/liveliness`)
+### 2.5 Liveliness & Health (`GET /health/liveliness`)
 
 Probes whether the LiteLLM Proxy is active and responding (unauthenticated).
 
@@ -122,15 +158,15 @@ curl http://localhost:4000/health/liveliness
 
 ## 3. Model Mapping Table
 
-| Model Alias / ID | Backend Route | Default Model File | Intended Use Case |
+| Model Alias / ID | Backend Route | Default Model File | Concurrency & Execution Behavior |
 | :--- | :--- | :--- | :--- |
-| `podllama-chat` | `podllama_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` | Chat, Code Generation, Refactoring |
-| `podllama-thinking` | `podllama_chat:8080` | `DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf` | High-Reasoning & Thinking Tasks |
-| `podllama-autocomplete` | `podllama_autocomplete:8081` | `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` | Low-latency Inline Code Completion |
+| `podllama-chat` | `podllama_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` | Auto-swaps on port 8080 (Single active instance) |
+| `podllama-thinking` | `podllama_chat:8080` | `DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf` | Auto-swaps on port 8080 (Single active instance) |
+| `podllama-autocomplete` | `podllama_autocomplete:8081` | `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` | Dedicated port 8081 (Runs in parallel) |
 
 ---
 
-## 3. On-Demand Model Switching & Selection
+## 4. On-Demand Model Switching & Selection
 
 The LiteLLM Proxy (`http://localhost:4000/v1`) forwards requests to backend supervisors that support on-demand model swapping. You can switch models on the fly by changing the `"model"` field in API requests:
 
