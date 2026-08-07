@@ -133,7 +133,13 @@ curl http://localhost:4000/v1/models \
   "data": [
     { "id": "podllama-chat", "object": "model", "owned_by": "litellm" },
     { "id": "podllama-autocomplete", "object": "model", "owned_by": "litellm" },
-    { "id": "podllama-thinking", "object": "model", "owned_by": "litellm" }
+    { "id": "podllama-thinking", "object": "model", "owned_by": "litellm" },
+    { "id": "qwen2.5-coder-0.5b-instruct-q4_k_m.gguf", "object": "model", "owned_by": "litellm" },
+    { "id": "qwen2.5-coder-1.5b-instruct-q4_k_m.gguf", "object": "model", "owned_by": "litellm" },
+    { "id": "qwen2.5-coder-3b-instruct-q4_k_m.gguf", "object": "model", "owned_by": "litellm" },
+    { "id": "qwen2.5-coder-7b-instruct-q4_k_m.gguf", "object": "model", "owned_by": "litellm" },
+    { "id": "DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf", "object": "model", "owned_by": "litellm" },
+    { "id": "DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf", "object": "model", "owned_by": "litellm" }
   ]
 }
 ```
