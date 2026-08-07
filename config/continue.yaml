@@ -11,7 +11,7 @@ models:
     model: podllama-chat
     apiBase: http://localhost:4000/v1
     apiKey: sk-local
-    contextLength: 65536
+    contextLength: 16384
     roles:
       - chat
       - edit
@@ -21,7 +21,7 @@ models:
     model: podllama-thinking
     apiBase: http://localhost:4000/v1
     apiKey: sk-local
-    contextLength: 65536
+    contextLength: 16384
     roles:
       - chat
 

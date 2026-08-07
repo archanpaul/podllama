@@ -303,7 +303,7 @@ idle_timeout_seconds: 600
 models_dir: /models
 workspace_dir: /workspace
 vulkan_gpu_layers: 99
-context_size: 65536
+context_size: 16384
 
 models:
   qwen2.5-coder-0.5b-instruct-q4_k_m.gguf:
@@ -351,17 +351,17 @@ models:
     model: podllama-chat
     apiBase: http://localhost:4000/v1
     apiKey: sk-local
-    contextLength: 65536
+    contextLength: 16384
     roles:
       - chat
       - edit
 
-  - name: PodLlama Thinking (DeepSeek-R1 Local Vulkan)
+  - name: PodLlama Thinking (Local Vulkan)
     provider: openai
     model: podllama-thinking
     apiBase: http://localhost:4000/v1
     apiKey: sk-local
-    contextLength: 65536
+    contextLength: 16384
     roles:
       - chat
 
