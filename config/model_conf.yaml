@@ -47,3 +47,10 @@ models:
     file: DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf
     url: https://huggingface.co/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf
     sha256: auto-verify-on-download
+
+  DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf:
+    name: DeepSeek-R1-Distill-Qwen-14B (Q4_K_M)
+    repo: unsloth/DeepSeek-R1-Distill-Qwen-14B-GGUF
+    file: DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf
+    url: https://huggingface.co/unsloth/DeepSeek-R1-Distill-Qwen-14B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf
+    sha256: auto-verify-on-download
