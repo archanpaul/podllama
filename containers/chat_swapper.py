@@ -221,6 +221,12 @@ class ProxyHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         pass  # Suppress standard HTTP request logging
 
+    def handle_one_request(self):
+        try:
+            super().handle_one_request()
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+
     def handle_proxy(self):
         global last_request_time
         last_request_time = time.time()
@@ -270,15 +276,24 @@ class ProxyHandler(BaseHTTPRequestHandler):
                     self.send_header('Content-Length', str(len(resp_body)))
                     self.end_headers()
                     self.wfile.write(resp_body)
+        except (BrokenPipeError, ConnectionResetError):
+            # Client disconnected before request completed (e.g. user stopped generation in UI)
+            print("[Swapper] Client disconnected during proxy streaming.", flush=True)
         except urllib.error.HTTPError as e:
-            self.send_response(e.code)
-            self.end_headers()
-            self.wfile.write(e.read())
+            try:
+                self.send_response(e.code)
+                self.end_headers()
+                self.wfile.write(e.read())
+            except (BrokenPipeError, ConnectionResetError):
+                pass
         except Exception as e:
             print(f"[Swapper] Error proxying request to llama-server: {e}", flush=True)
-            self.send_response(503)
-            self.end_headers()
-            self.wfile.write(json.dumps({"error": f"Model server proxy error: {str(e)}"}).encode("utf-8"))
+            try:
+                self.send_response(503)
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": f"Model server proxy error: {str(e)}"}).encode("utf-8"))
+            except (BrokenPipeError, ConnectionResetError):
+                pass
 
     def do_GET(self):
         if self.path == "/v1/models" or self.path == "/models":

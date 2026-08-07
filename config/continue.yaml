@@ -32,6 +32,8 @@ models:
     apiKey: sk-local
     roles:
       - autocomplete
+    promptTemplates:
+      autocomplete: "<|fim_prefix|>{{{prefix}}}<|fim_suffix|>{{{suffix}}}<|fim_middle|>"
 
 contextProviders:
   - name: code

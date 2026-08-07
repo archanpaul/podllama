@@ -234,6 +234,8 @@ models:
     apiKey: sk-local
     roles:
       - autocomplete
+    promptTemplates:
+      autocomplete: "<|fim_prefix|>{{{prefix}}}<|fim_suffix|>{{{suffix}}}<|fim_middle|>"
 ```
 
 ### 4.2 Cline / Roo Code Extension Configuration
