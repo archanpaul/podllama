@@ -239,6 +239,8 @@ class ProxyHandler(BaseHTTPRequestHandler):
         # Ensure active model is running and auto-swapped if needed
         ensure_model_running(requested_model)
 
+        print(f"[Swapper] [Proxy Request] [{self.command} {self.path}] Model: '{requested_model}' -> Serving with: '{current_model}'", flush=True)
+
         # Forward request to internal llama-server
         target_url = f"http://127.0.0.1:{LLAMA_PORT}{self.path}"
         headers = {k: v for k, v in self.headers.items() if k.lower() != 'host'}

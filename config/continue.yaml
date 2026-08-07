@@ -16,7 +16,7 @@ models:
       - chat
       - edit
 
-  - name: PodLlama Thinking (DeepSeek-R1 Local Vulkan)
+  - name: PodLlama Thinking (Local Vulkan)
     provider: openai
     model: podllama-thinking
     apiBase: http://localhost:4000/v1
