@@ -198,10 +198,10 @@ def test_autocomplete_model():
     log("API TEST 6: Text Completions / Autocomplete (POST /v1/completions - 'podllama-autocomplete')")
     payload = {
         "model": "podllama-autocomplete",
-        "prompt": "def fibonacci(n: int) -> int:\n    if n <= 1:\n        return n\n    return ",
+        "prompt": "<|fim_prefix|>def fibonacci(n: int) -> int:\n    if n <= 1:\n        return n\n    return <|fim_suffix|>\n<|fim_middle|>",
         "max_tokens": 32,
         "temperature": 0.1,
-        "stop": ["\n\n"]
+        "stop": ["\n\n", "<|file_separator|>", "<|endoftext|>"]
     }
     url = f"{BASE_URL}/completions"
     headers = {

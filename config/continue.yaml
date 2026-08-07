@@ -34,7 +34,7 @@ models:
     roles:
       - autocomplete
     promptTemplates:
-      autocomplete: "{{{prefix}}}{{{middle}}}{{{suffix}}}"
+      autocomplete: "<|fim_prefix|>{{{prefix}}}<|fim_suffix|>{{{suffix}}}<|fim_middle|>"
 
 contextProviders:
   - name: code

@@ -60,7 +60,7 @@ general_settings:
   disable_master_key_auth: true
 
 router_settings:
-  num_retries: 3
+  num_retries: 0
   timeout: 120
 
 litellm_settings:
