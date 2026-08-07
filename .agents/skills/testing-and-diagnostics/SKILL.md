@@ -41,7 +41,7 @@ When diagnosing issues:
    - `python3 tests/unit_tests.py`
 
 2. **Check Vulkan GPU access inside server container**:
-   - `podman run --rm --device /dev/dri qwen-server:latest vulkaninfo --summary`
+   - `podman run --rm --device /dev/dri podllama-server:latest vulkaninfo --summary`
 
 3. **Check container logs**:
    - `make service-logs`

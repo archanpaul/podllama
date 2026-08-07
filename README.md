@@ -1,6 +1,6 @@
-# Qwen Code Podman Container Environment
+# PodLlama Container Environment
 
-A high-performance, containerized AI coding environment powered by Qwen2.5-Coder GGUF models running in Podman, with Vulkan GPU Acceleration, LiteLLM Unified Proxy API, Podman Compose Orchestration, and Official QwenLM/qwen-code CLI Integration.
+A high-performance, containerized AI coding environment powered by PodLlama running in Podman, with Vulkan GPU Acceleration, LiteLLM Unified Proxy API, Podman Compose Orchestration, and Official QwenLM/qwen-code CLI Integration.
 
 ---
 
@@ -25,7 +25,7 @@ This project addresses these challenges by delivering an enterprise-ready, self-
 - **Dual Model Support (Chat & Autocomplete)**: Run dedicated Chat (`qwen2.5-coder-7b-instruct`) and Autocomplete (`qwen2.5-coder-0.5b` or `1.5b`) models simultaneously on separate ports.
 - **Unified LiteLLM Proxy API (Port 4000)**: Exposes a single, multithreaded OpenAI-compatible API endpoint on port 4000 (`http://localhost:4000/v1`) that dynamically routes requests to the appropriate model server backend based on the model name in API requests.
 - **Official QwenLM/qwen-code CLI Integration**: The workspace agent container (`Containerfile.qwencoder`) automatically installs the latest release of [QwenLM/qwen-code](https://github.com/QwenLM/qwen-code) directly from GitHub releases without API rate limits or hardcoded versions. Supports build-time version pinning via `QWEN_CODE_VERSION`.
-- **Podman Compose Orchestration**: Easily manage the entire stack (`qwen_server_chat`, `qwen_server_autocomplete`, `litellm_proxy`) with a single command (`make compose-up`).
+- **Podman Compose Orchestration**: Easily manage the entire stack (`podllama_chat`, `podllama_autocomplete`, `podllama_proxy`) with a single command (`make compose-up`).
 - **YAML Model Configuration (`config/model_conf.yaml`)**: Centralized model registry specifying download URLs, active chat/autocomplete model selections, ports, context sizes, and SHA256 checksums.
 
 ---
@@ -193,9 +193,9 @@ curl http://localhost:4000/v1/completions \
 
 | Request Model Name | Backend Target Server | Loaded GGUF Model |
 | :--- | :--- | :--- |
-| `qwen-chat`, `qwen2.5-coder-7b-instruct`, `gpt-3.5-turbo` | `qwen_server_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` |
-| `qwen-autocomplete`, `qwen2.5-coder-0.5b` | `qwen_server_autocomplete:8081` | `qwen2.5-coder-0.5b-q4_k_m.gguf` |
-| `qwen2.5-coder-1.5b` | `qwen_server_autocomplete:8081` | `qwen2.5-coder-1.5b-q4_k_m.gguf` |
+| `qwen-chat`, `qwen2.5-coder-7b-instruct`, `gpt-3.5-turbo` | `podllama_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` |
+| `qwen-autocomplete`, `qwen2.5-coder-0.5b` | `podllama_autocomplete:8081` | `qwen2.5-coder-0.5b-q4_k_m.gguf` |
+| `qwen2.5-coder-1.5b` | `podllama_autocomplete:8081` | `qwen2.5-coder-1.5b-q4_k_m.gguf` |
 
 ---
 
@@ -312,7 +312,7 @@ The workspace agent container (`Containerfile.qwencoder`) is launched with:
 | Command | Description |
 | :--- | :--- |
 | `make check-infra` | Verifies host build and runtime infrastructure (Podman, Python 3, PyYAML, curl, DRI) |
-| `make build` | Builds `qwen-server` and `qwen-client` Podman images |
+| `make build` | Builds `podllama-server` and `qwen-client` Podman images |
 | `make service-up` | Launches Chat Server, Autocomplete Server & LiteLLM Proxy via Podman Compose |
 | `make service-down` | Stops Podman Compose stack |
 | `make service-logs` | Displays live logs from all running containers |

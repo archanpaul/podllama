@@ -10,9 +10,9 @@ This skill provides guidelines and operational procedures for managing the Podma
 ## Overview
 
 The repository manages two main container images and a Podman Compose service stack:
-- **Server Image (`qwen-server:latest`)**: Built via `containers/Containerfile.server`. Runs `llama-server` with Vulkan GPU acceleration on Fedora minimal.
+- **Server Image (`podllama-server:latest`)**: Built via `containers/Containerfile.server`. Runs `llama-server` with Vulkan GPU acceleration on Fedora minimal.
 - **Client Image (`qwen-client:latest`)**: Built via `containers/Containerfile.qwencoder`. Houses the Qwen CLI agent.
-- **Compose Stack (`containers/compose.yaml`)**: Manages `qwen_server_chat` (port 8080), `qwen_server_autocomplete` (port 8081), and `litellm_proxy` (port 4000).
+- **Compose Stack (`containers/compose.yaml`)**: Manages `podllama_chat` (port 8080), `podllama_autocomplete` (port 8081), and `podllama_proxy` (port 4000).
 
 ## Common Workflow Tasks
 
@@ -68,4 +68,4 @@ When diagnosing container or API issues:
 1. Verify container status: `podman ps --filter "name=qwen" --filter "name=litellm"`
 2. Check LiteLLM health endpoint: `curl -s http://127.0.0.1:4000/health/liveliness`
 3. Inspect model server health endpoints directly: `curl -s http://127.0.0.1:8080/health` and `http://127.0.0.1:8081/health`
-4. Check GPU device availability inside container: `podman run --rm --device /dev/dri qwen-server:latest vulkaninfo --summary`
+4. Check GPU device availability inside container: `podman run --rm --device /dev/dri podllama-server:latest vulkaninfo --summary`

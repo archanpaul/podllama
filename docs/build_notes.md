@@ -1,6 +1,6 @@
 # Build Notes and Container Architecture
 
-This document details the multi-stage build system, container layer caching strategies, and hardware acceleration options for the Qwen Code Podman container environment.
+This document details the multi-stage build system, container layer caching strategies, and hardware acceleration options for the PodLlama container environment.
 
 ---
 
@@ -40,7 +40,7 @@ RUN if [ -n "${LLAMA_CPP_TAG}" ]; then \
 - **Offline / Rate-Limit Fallback**: If GitHub API is offline or rate-limited, `make build-server` automatically falls back to an empty tag (`LLAMA_CPP_TAG=""`), cloning the latest `main` branch directly.
 - **Custom Tag Override**: You can target a specific `llama.cpp` release tag:
   ```bash
-  podman build --build-arg LLAMA_CPP_TAG="b6153" -t qwen-server:latest -f containers/Containerfile.llamacpp .
+  podman build --build-arg LLAMA_CPP_TAG="b6153" -t podllama-server:latest -f containers/Containerfile.llamacpp .
   ```
 
 ---
@@ -64,7 +64,7 @@ The workspace agent container packages the official standalone release binary of
 | Command | Description |
 | :--- | :--- |
 | `make check-infra` | Verifies host build and runtime infrastructure (Podman, Python 3, PyYAML, curl, DRI) |
-| `make build` | Builds both `qwen-server:latest` and `qwen-client:latest` images |
+| `make build` | Builds both `podllama-server:latest` and `qwen-client:latest` images |
 | `make build-server` | Builds only the model server container image |
 | `make build-client` | Builds only the workspace encoder agent container image |
 | `make test` | Executes unit test suite verifying configs and file permissions |

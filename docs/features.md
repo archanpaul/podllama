@@ -1,6 +1,6 @@
 # Features Overview
 
-The **Qwen Code Podman Container Environment** provides a local, GPU-accelerated, containerized AI coding workspace. Below is a breakdown of the primary features and technical capabilities.
+The **PodLlama Container Environment** provides a local, GPU-accelerated, containerized AI coding workspace. Below is a breakdown of the primary features and technical capabilities.
 
 ---
 
@@ -21,7 +21,9 @@ The **Qwen Code Podman Container Environment** provides a local, GPU-accelerated
 
 ## 3. Dual-Model Architecture
 
-- **Dedicated Chat Model**: Runs `qwen2.5-coder-7b-instruct-q4_k_m.gguf` on port `8080` for high-reasoning tasks, refactoring, code explanation, and workspace agent commands.
+- **Dedicated Chat Model Supervisor**: Runs `containers/chat_swapper.py` on port `8080` for high-reasoning tasks, refactoring, code explanation, and workspace agent commands.
+- **On-Demand Model Auto-Swapping**: Automatically intercepts incoming model requests (e.g. swapping between 7B and 3B chat models), stops the current `llama-server` process, loads the target GGUF model into Vulkan VRAM, and streams back responses.
+- **Auto-Stop After 10 Mins Idle (0 MB LLM RAM/VRAM)**: Automatically terminates the underlying `llama-server` process after 10 minutes of inactivity, releasing 100% of LLM VRAM and RAM back to the host system until the next request triggers a cold-start.
 - **Low-Latency Autocomplete Model**: Runs `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` or `1.5b` on port `8081` for low-latency inline code completions.
 - **Resource Optimization**: CPU and RAM allocations are managed independently for chat (`8 CPUs / 8GB RAM`) and autocomplete (`2 CPUs / 4GB RAM`) services in Podman Compose.
 

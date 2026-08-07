@@ -9,7 +9,7 @@ This skill covers configuring, operating, and troubleshooting the LiteLLM Proxy 
 
 ## Overview
 
-The LiteLLM Proxy serves as the central gateway on port 4000 (`http://localhost:4000/v1`). It receives OpenAI-compatible requests and routes them to either `qwen_server_chat:8080` or `qwen_server_autocomplete:8081` based on the requested model name.
+The LiteLLM Proxy serves as the central gateway on port 4000 (`http://localhost:4000/v1`). It receives OpenAI-compatible requests and routes them to either `podllama_chat:8080` or `podllama_autocomplete:8081` based on the requested model name.
 
 Configuration file: `config/litellm_config.yaml`
 
@@ -17,9 +17,9 @@ Configuration file: `config/litellm_config.yaml`
 
 | Model Name Alias | Target Endpoint | Backend Server |
 | :--- | :--- | :--- |
-| `qwen-chat`, `qwen2.5-coder-7b-instruct`, `gpt-3.5-turbo` | `http://qwen_server_chat:8080/v1` | Chat Server |
-| `qwen-autocomplete`, `qwen2.5-coder-0.5b` | `http://qwen_server_autocomplete:8081/v1` | Autocomplete Server |
-| `qwen2.5-coder-1.5b` | `http://qwen_server_autocomplete:8081/v1` | Autocomplete Server |
+| `qwen-chat`, `qwen2.5-coder-7b-instruct`, `gpt-3.5-turbo` | `http://podllama_chat:8080/v1` | Chat Server |
+| `qwen-autocomplete`, `qwen2.5-coder-0.5b` | `http://podllama_autocomplete:8081/v1` | Autocomplete Server |
+| `qwen2.5-coder-1.5b` | `http://podllama_autocomplete:8081/v1` | Autocomplete Server |
 
 ## API Testing Examples
 

@@ -1,6 +1,6 @@
 # API Specification & Integration Guide
 
-The Qwen Code Container Environment exposes an OpenAI-compatible HTTP API hosted by the **LiteLLM Proxy** on port **4000** (`http://localhost:4000/v1`). 
+The PodLlama Container Environment exposes an OpenAI-compatible HTTP API hosted by the **LiteLLM Proxy** on port **4000** (`http://localhost:4000/v1`). 
 
 ---
 
@@ -125,12 +125,12 @@ curl http://localhost:4000/health/liveliness
 
 | Model Alias / ID | Backend Route | Default Model File | Intended Use Case |
 | :--- | :--- | :--- | :--- |
-| `qwen-chat` | `qwen_server_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` | Chat, Code Generation, Refactoring |
-| `qwen2.5-coder-7b-instruct` | `qwen_server_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` | Chat, High-Reasoning Tasks |
-| `gpt-3.5-turbo` | `qwen_server_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` | Legacy API Compatibility Fallback |
-| `qwen-autocomplete` | `qwen_server_autocomplete:8081` | `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` | Low-latency Inline Code Completion |
-| `qwen2.5-coder-0.5b` | `qwen_server_autocomplete:8081` | `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` | Fast Autocomplete |
-| `qwen2.5-coder-1.5b` | `qwen_server_autocomplete:8081` | `qwen2.5-coder-1.5b-instruct-q4_k_m.gguf` | Balanced Autocomplete |
+| `qwen-chat` | `podllama_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` | Chat, Code Generation, Refactoring |
+| `qwen2.5-coder-7b-instruct` | `podllama_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` | Chat, High-Reasoning Tasks |
+| `gpt-3.5-turbo` | `podllama_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` | Legacy API Compatibility Fallback |
+| `qwen-autocomplete` | `podllama_autocomplete:8081` | `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` | Low-latency Inline Code Completion |
+| `qwen2.5-coder-0.5b` | `podllama_autocomplete:8081` | `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` | Fast Autocomplete |
+| `qwen2.5-coder-1.5b` | `podllama_autocomplete:8081` | `qwen2.5-coder-1.5b-instruct-q4_k_m.gguf` | Balanced Autocomplete |
 
 ---
 
