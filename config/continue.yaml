@@ -25,15 +25,16 @@ models:
     roles:
       - chat
 
-  - name: Qwen Autocomplete (Local Vulkan)
+  - name: PodLlama Autocomplete (Local Vulkan)
     provider: openai
     model: podllama-autocomplete
     apiBase: http://localhost:4000/v1
     apiKey: sk-local
+    useLegacyCompletionsEndpoint: true
     roles:
       - autocomplete
     promptTemplates:
-      autocomplete: "<|fim_prefix|>{{{prefix}}}<|fim_suffix|>{{{suffix}}}<|fim_middle|>"
+      autocomplete: "{{{prefix}}}{{{middle}}}{{{suffix}}}"
 
 contextProviders:
   - name: code

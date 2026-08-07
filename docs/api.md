@@ -232,6 +232,7 @@ models:
     model: podllama-autocomplete
     apiBase: http://localhost:4000/v1
     apiKey: sk-local
+    useLegacyCompletionsEndpoint: true
     roles:
       - autocomplete
     promptTemplates:
