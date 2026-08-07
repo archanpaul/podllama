@@ -31,13 +31,19 @@
     "onCommand:podllama.refactorCode",
     "onCommand:podllama.fixCode",
     "onCommand:podllama.generateTests",
-    "onCommand:podllama.openSettings"
+    "onCommand:podllama.openSettings",
+    "onCommand:podllama.installCustomEndpoints"
   ],
   "contributes": {
     "commands": [
       {
         "command": "podllama.openSettings",
         "title": "PodLlama: Open Settings",
+        "category": "PodLlama"
+      },
+      {
+        "command": "podllama.installCustomEndpoints",
+        "title": "PodLlama: Register Custom LM Endpoints JSON in Settings",
         "category": "PodLlama"
       },
       {
@@ -163,7 +169,8 @@
     "languageModelProviders": [
       {
         "id": "podllama",
-        "name": "PodLlama Local Language Models"
+        "name": "Podllama",
+        "vendor": "customendpoint"
       }
     ],
     "configuration": {
