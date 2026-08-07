@@ -748,6 +748,94 @@ function deactivate() {
     statusBarManager.dispose();
   }
 }
+function getPodLlamaModelProviderDef(apiKey) {
+  return {
+    name: "Podllama",
+    vendor: "customendpoint",
+    apiKey: apiKey || "sk-local",
+    apiType: "chat-completions",
+    models: [
+      {
+        id: "podllama-chat",
+        name: "PodLlama Chat (Qwen 2.5 Coder 7B)",
+        url: "http://localhost:4000/v1/chat/completions",
+        toolCalling: true,
+        vision: false,
+        maxInputTokens: 16384,
+        maxOutputTokens: 4096
+      },
+      {
+        id: "podllama-thinking",
+        name: "PodLlama Thinking (DeepSeek-R1 Distill 7B/14B)",
+        url: "http://localhost:4000/v1/chat/completions",
+        toolCalling: true,
+        vision: false,
+        maxInputTokens: 16384,
+        maxOutputTokens: 4096
+      },
+      {
+        id: "podllama-autocomplete",
+        name: "PodLlama Autocomplete (Qwen 2.5 Coder 0.5B)",
+        url: "http://localhost:4000/v1/completions",
+        toolCalling: false,
+        vision: false,
+        maxInputTokens: 4096,
+        maxOutputTokens: 512
+      }
+    ]
+  };
+}
+function syncModelProvidersToDisk(podllamaEndpointDef) {
+  const home = os.homedir();
+  const settingsPaths = [
+    path.join(home, ".config", "Code", "User", "settings.json"),
+    path.join(home, ".config", "Code - Insiders", "User", "settings.json"),
+    path.join(home, ".config", "VSCodium", "User", "settings.json"),
+    path.join(home, ".config", "Cursor", "User", "settings.json"),
+    path.join(home, "Library", "Application Support", "Code", "User", "settings.json"),
+    path.join(home, "Library", "Application Support", "Cursor", "User", "settings.json"),
+    path.join(process.env.APPDATA || "", "Code", "User", "settings.json"),
+    path.join(process.env.APPDATA || "", "Cursor", "User", "settings.json")
+  ];
+  for (const sPath of settingsPaths) {
+    if (fs.existsSync(sPath)) {
+      try {
+        const raw = fs.readFileSync(sPath, "utf8");
+        let cleaned = raw.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, "$1");
+        const json = JSON.parse(cleaned);
+        let customEndpoints = json["github.copilot.chat.customEndpoints"] || json["chat.customEndpoints"] || [];
+        if (!Array.isArray(customEndpoints)) {
+          customEndpoints = [];
+        }
+        const hasPodllama = customEndpoints.some(
+          (e) => e && (e.name === "Podllama" || e.name === "PodLlama")
+        );
+        if (!hasPodllama) {
+          customEndpoints.push(podllamaEndpointDef);
+          json["github.copilot.chat.customEndpoints"] = customEndpoints;
+          json["chat.customEndpoints"] = customEndpoints;
+        }
+        let agentProviders = json["chat.agent.providers"] || json["chat.agent.customProviders"] || [];
+        if (!Array.isArray(agentProviders)) {
+          agentProviders = [];
+        }
+        if (!agentProviders.some((p) => typeof p === "string" && p === "PodLlama" || p?.name === "PodLlama")) {
+          agentProviders.push({
+            id: "podllama",
+            name: "PodLlama",
+            provider: "customendpoint",
+            url: "http://localhost:4000/v1"
+          });
+          json["chat.agent.providers"] = agentProviders;
+          json["chat.agent.customProviders"] = agentProviders;
+        }
+        fs.writeFileSync(sPath, JSON.stringify(json, null, 2), "utf8");
+        console.log(`PodLlama Model Provider & Agent dropdown synced to ${sPath}`);
+      } catch {
+      }
+    }
+  }
+}
 async function initializeLocalEndpoints(context) {
   const isInitialized = context.globalState.get("podllamaInitialized", false);
   const cfg = vscode6.workspace.getConfiguration("podllama");
@@ -768,42 +856,9 @@ async function initializeLocalEndpoints(context) {
   if (!cfg.get("autocompleteModel")) {
     await cfg.update("autocompleteModel", "podllama-autocomplete", vscode6.ConfigurationTarget.Global);
   }
+  const podllamaEndpointDef = getPodLlamaModelProviderDef(targetApiKey);
+  syncModelProvidersToDisk(podllamaEndpointDef);
   try {
-    const podllamaEndpointDef = {
-      name: "Podllama",
-      vendor: "customendpoint",
-      apiKey: targetApiKey || "sk-local",
-      apiType: "chat-completions",
-      models: [
-        {
-          id: "podllama-chat",
-          name: "PodLlama Chat (Qwen 2.5 Coder 7B)",
-          url: "http://localhost:4000/v1/chat/completions",
-          toolCalling: true,
-          vision: false,
-          maxInputTokens: 16384,
-          maxOutputTokens: 4096
-        },
-        {
-          id: "podllama-thinking",
-          name: "PodLlama Thinking (DeepSeek-R1 Distill 7B/14B)",
-          url: "http://localhost:4000/v1/chat/completions",
-          toolCalling: true,
-          vision: false,
-          maxInputTokens: 16384,
-          maxOutputTokens: 4096
-        },
-        {
-          id: "podllama-autocomplete",
-          name: "PodLlama Autocomplete (Qwen 2.5 Coder 0.5B)",
-          url: "http://localhost:4000/v1/completions",
-          toolCalling: false,
-          vision: false,
-          maxInputTokens: 4096,
-          maxOutputTokens: 512
-        }
-      ]
-    };
     const copilotCfg = vscode6.workspace.getConfiguration("github.copilot.chat");
     const existingCustom = copilotCfg.get("customEndpoints") || [];
     const hasPodllama = existingCustom.some((e) => e && (e.name === "Podllama" || e.name === "PodLlama"));
@@ -853,7 +908,7 @@ async function initializeLocalEndpoints(context) {
   if (!isInitialized) {
     await context.globalState.update("podllamaInitialized", true);
     vscode6.window.showInformationMessage(
-      `PodLlama Local Endpoints configured at ${targetApiBase}!`,
+      `PodLlama Model Provider configured at ${targetApiBase}!`,
       "Check Health",
       "Select Model"
     ).then((choice) => {
@@ -881,6 +936,23 @@ function registerExtensionCommands(context) {
   context.subscriptions.push(
     vscode6.commands.registerCommand("podllama.openSettings", () => {
       vscode6.commands.executeCommand("workbench.action.openSettings", "@ext:podllama.podllama-vscode");
+    })
+  );
+  context.subscriptions.push(
+    vscode6.commands.registerCommand("podllama.installCustomEndpoints", async () => {
+      const cfg = vscode6.workspace.getConfiguration("podllama");
+      const apiKey = cfg.get("apiKey", "sk-local");
+      const podllamaEndpointDef = getPodLlamaModelProviderDef(apiKey);
+      syncModelProvidersToDisk(podllamaEndpointDef);
+      try {
+        const copilotCfg = vscode6.workspace.getConfiguration("github.copilot.chat");
+        const existing = copilotCfg.get("customEndpoints") || [];
+        if (!existing.some((e) => e && (e.name === "Podllama" || e.name === "PodLlama"))) {
+          await copilotCfg.update("customEndpoints", [...existing, podllamaEndpointDef], vscode6.ConfigurationTarget.Global);
+        }
+      } catch {
+      }
+      vscode6.window.showInformationMessage("PodLlama Model Provider successfully registered in VS Code settings!");
     })
   );
   context.subscriptions.push(
