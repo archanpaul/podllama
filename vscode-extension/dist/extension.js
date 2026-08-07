@@ -658,50 +658,53 @@ var PodLlamaLanguageModelProvider = class {
   register(context) {
     const disposables = [];
     if (typeof vscode5.lm.registerLanguageModelChatProvider === "function") {
-      try {
-        const providerDisposable = vscode5.lm.registerLanguageModelChatProvider(
-          "podllama",
-          {
-            provideLanguageModelResponse: async (modelId, messages, options, extensionId, progress, token) => {
-              const formattedMessages = [];
-              for (const msg of messages) {
-                let role = "user";
-                if (msg.role === vscode5.LanguageModelChatMessageRole.Assistant) {
-                  role = "assistant";
-                } else if (msg.role === vscode5.LanguageModelChatMessageRole.User) {
-                  role = "user";
+      const vendorIds = ["podllama", "customendpoint"];
+      for (const vendorId of vendorIds) {
+        try {
+          const providerDisposable = vscode5.lm.registerLanguageModelChatProvider(
+            vendorId,
+            {
+              provideLanguageModelResponse: async (modelId, messages, options, extensionId, progress, token) => {
+                const formattedMessages = [];
+                for (const msg of messages) {
+                  let role = "user";
+                  if (msg.role === vscode5.LanguageModelChatMessageRole.Assistant) {
+                    role = "assistant";
+                  } else if (msg.role === vscode5.LanguageModelChatMessageRole.User) {
+                    role = "user";
+                  }
+                  let text = "";
+                  if (typeof msg.content === "string") {
+                    text = msg.content;
+                  } else if (Array.isArray(msg.content)) {
+                    text = msg.content.map((part) => typeof part.value === "string" ? part.value : part.text || "").join("");
+                  }
+                  formattedMessages.push({ role, content: text });
                 }
-                let text = "";
-                if (typeof msg.content === "string") {
-                  text = msg.content;
-                } else if (Array.isArray(msg.content)) {
-                  text = msg.content.map((part) => typeof part.value === "string" ? part.value : part.text || "").join("");
-                }
-                formattedMessages.push({ role, content: text });
+                const targetModel = modelId || this.client.currentConfig.chatModel;
+                const abortController = new AbortController();
+                token.onCancellationRequested(() => abortController.abort());
+                await this.client.streamChatCompletion(
+                  {
+                    model: targetModel,
+                    messages: formattedMessages,
+                    temperature: this.client.currentConfig.temperature
+                  },
+                  (chunk) => {
+                    progress.report({
+                      index: 0,
+                      part: new vscode5.LanguageModelTextPart(chunk)
+                    });
+                  },
+                  abortController.signal
+                );
               }
-              const targetModel = modelId || this.client.currentConfig.chatModel;
-              const abortController = new AbortController();
-              token.onCancellationRequested(() => abortController.abort());
-              await this.client.streamChatCompletion(
-                {
-                  model: targetModel,
-                  messages: formattedMessages,
-                  temperature: this.client.currentConfig.temperature
-                },
-                (chunk) => {
-                  progress.report({
-                    index: 0,
-                    part: new vscode5.LanguageModelTextPart(chunk)
-                  });
-                },
-                abortController.signal
-              );
             }
-          }
-        );
-        disposables.push(providerDisposable);
-      } catch (err) {
-        console.warn("PodLlama LM Provider registration warning:", err);
+          );
+          disposables.push(providerDisposable);
+        } catch (err) {
+          console.warn(`PodLlama LM Provider registration warning for ${vendorId}:`, err);
+        }
       }
     }
     return disposables;

@@ -129,6 +129,7 @@
         "displayName": "Get Workspace Diagnostics",
         "description": "Retrieve active workspace compiler diagnostics, warnings, and lints",
         "modelDescription": "Fetches current editor lints and errors from VS Code diagnostics collection.",
+        "tags": ["copilot", "agent", "podllama"],
         "inputSchema": {
           "type": "object",
           "properties": {}
@@ -140,6 +141,7 @@
         "displayName": "Read Active Editor Context",
         "description": "Retrieve current active document content, language ID, and selection",
         "modelDescription": "Fetches document path, language, cursor selection, and source text.",
+        "tags": ["copilot", "agent", "podllama"],
         "inputSchema": {
           "type": "object",
           "properties": {}
@@ -151,6 +153,7 @@
         "displayName": "Check PodLlama Container Status",
         "description": "Check PodLlama container liveliness and active backend models",
         "modelDescription": "Queries PodLlama local endpoint for server status and model inventory.",
+        "tags": ["copilot", "agent", "podllama"],
         "inputSchema": {
           "type": "object",
           "properties": {}
@@ -162,6 +165,7 @@
         "displayName": "Switch Active Model",
         "description": "Switch PodLlama active chat or thinking model",
         "modelDescription": "Swaps active model between chat and thinking role on PodLlama backend.",
+        "tags": ["copilot", "agent", "podllama"],
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -180,6 +184,11 @@
       {
         "id": "podllama",
         "name": "Podllama",
+        "vendor": "customendpoint"
+      },
+      {
+        "id": "customendpoint",
+        "name": "PodLlama Custom Endpoint",
         "vendor": "customendpoint"
       }
     ],
