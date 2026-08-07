@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <!-- Background Squircle Charcoal/Graphite Gradient for Universal Theme Contrast -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18181b" />
+      <stop offset="50%" stop-color="#27272a" />
+      <stop offset="100%" stop-color="#3f3f46" />
+    </linearGradient>
+
+    <!-- Silver / Platinum Line Gradient for Monitor -->
+    <linearGradient id="silverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="50%" stop-color="#e4e4e7" />
+      <stop offset="100%" stop-color="#a1a1aa" />
+    </linearGradient>
+
+    <!-- Dark Screen Fill Gradient -->
+    <linearGradient id="screenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#09090b" />
+      <stop offset="100%" stop-color="#18181b" />
+    </linearGradient>
+
+    <!-- Star Emblem Platinum White Gradient -->
+    <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="50%" stop-color="#f4f4f5" />
+      <stop offset="100%" stop-color="#d4d4d8" />
+    </linearGradient>
+
+    <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.5" />
+    </filter>
+  </defs>
+
+  <!-- Squircle Base Tile (Grayscale Dark Charcoal for Perfect Light & Dark Theme Contrast) -->
+  <rect x="8" y="8" width="112" height="112" rx="26" ry="26" fill="url(#bgGrad)" filter="url(#dropShadow)" stroke="#71717a" stroke-width="1.5" />
+
+  <!-- Inner Subtle Bezel Trace -->
+  <rect x="14" y="14" width="100" height="100" rx="20" ry="20" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.12" />
+
+  <!-- Remote Explorer Style Computer Monitor Frame -->
+  <g transform="translate(0, -2)">
+    <!-- Monitor Outer Body -->
+    <rect x="24" y="26" width="80" height="52" rx="6" ry="6" fill="none" stroke="url(#silverGrad)" stroke-width="4.5" stroke-linejoin="round" filter="url(#dropShadow)" />
+    
+    <!-- Inner Screen Area -->
+    <rect x="29" y="31" width="70" height="42" rx="3" ry="3" fill="url(#screenGrad)" stroke="#52525b" stroke-width="1.5" opacity="0.9" />
+    
+    <!-- Subtle Grayscale Code Snippet Lines -->
+    <line x1="36" y1="40" x2="60" y2="40" stroke="#d4d4d8" stroke-width="2" stroke-linecap="round" opacity="0.8" />
+    <line x1="42" y1="47" x2="80" y2="47" stroke="#a1a1aa" stroke-width="2" stroke-linecap="round" opacity="0.7" />
+    <line x1="48" y1="54" x2="72" y2="54" stroke="#a1a1aa" stroke-width="2" stroke-linecap="round" opacity="0.7" />
+    <line x1="42" y1="61" x2="64" y2="61" stroke="#d4d4d8" stroke-width="2" stroke-linecap="round" opacity="0.8" />
+
+    <!-- Monitor Stand -->
+    <path d="M54 78 L74 78 L79 94 L49 94 Z" fill="none" stroke="url(#silverGrad)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" />
+    
+    <!-- Monitor Base Line -->
+    <line x1="42" y1="94" x2="86" y2="94" stroke="url(#silverGrad)" stroke-width="4.5" stroke-linecap="round" />
+  </g>
+
+  <!-- Bottom-Right Circular AI Sparkle Star Badge -->
+  <g transform="translate(84, 82)">
+    <!-- Badge Background Circle with Dark Border for Separation -->
+    <circle cx="0" cy="0" r="21" fill="#09090b" stroke="#ffffff" stroke-width="2" opacity="0.95" />
+    <circle cx="0" cy="0" r="19" fill="#18181b" stroke="url(#silverGrad)" stroke-width="3" />
+    
+    <!-- Primary 4-Point AI Chat Sparkle Star (Monochrome Silver/White) -->
+    <path d="M0 -13 C1 -6 6 -1 13 0 C6 1 1 6 0 13 C-1 6 -6 1 -13 0 C-6 -1 -1 -6 0 -13 Z" fill="url(#starGrad)" />
+    
+    <!-- Top-Right Accent Micro Sparkle -->
+    <path d="M10 -10 C10.4 -7.5 11.5 -6.4 14 -6 C11.5 -5.6 10.4 -4.5 10 -2 C9.6 -4.5 8.5 -5.6 6 -6 C8.5 -6.4 9.6 -7.5 10 -10 Z" fill="#ffffff" opacity="0.95" />
+  </g>
+</svg>

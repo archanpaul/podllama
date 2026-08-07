@@ -14,3 +14,9 @@ __pycache__/
 .cache/
 .npm/
 .qwen/
+
+# VS Code extension build artifacts
+*.vsix
+vscode-extension/out/
+vscode-extension/node_modules/
+
