@@ -1,0 +1,249 @@
+{
+  "name": "podllama-vscode",
+  "displayName": "PodLlama AI - Local Code Agent & Autocomplete",
+  "description": "Native VS Code integration for PodLlama local LLMs: Inline FIM Code Autocomplete, @podllama Agent Chat Participant, and Language Model Tools.",
+  "version": "0.1.0",
+  "publisher": "podllama",
+  "icon": "media/icon.png",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/archanpaul/qwen_code_container"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "AI",
+    "Programming Languages",
+    "Snippets",
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onLanguage",
+    "onCommand:podllama.checkHealth",
+    "onCommand:podllama.selectModel",
+    "onCommand:podllama.toggleAutocomplete",
+    "onCommand:podllama.explainCode",
+    "onCommand:podllama.refactorCode",
+    "onCommand:podllama.explainCode",
+    "onCommand:podllama.refactorCode",
+    "onCommand:podllama.fixCode",
+    "onCommand:podllama.generateTests",
+    "onCommand:podllama.openSettings"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "podllama.openSettings",
+        "title": "PodLlama: Open Settings",
+        "category": "PodLlama"
+      },
+      {
+        "command": "podllama.checkHealth",
+        "title": "PodLlama: Check Backend Health",
+        "category": "PodLlama"
+      },
+      {
+        "command": "podllama.selectModel",
+        "title": "PodLlama: Select Active Chat/Thinking Model",
+        "category": "PodLlama"
+      },
+      {
+        "command": "podllama.toggleAutocomplete",
+        "title": "PodLlama: Toggle Inline Code Autocomplete",
+        "category": "PodLlama"
+      },
+      {
+        "command": "podllama.explainCode",
+        "title": "PodLlama: Explain Selected Code",
+        "category": "PodLlama"
+      },
+      {
+        "command": "podllama.refactorCode",
+        "title": "PodLlama: Refactor Selected Code",
+        "category": "PodLlama"
+      },
+      {
+        "command": "podllama.fixCode",
+        "title": "PodLlama: Fix Errors in Current File",
+        "category": "PodLlama"
+      },
+      {
+        "command": "podllama.generateTests",
+        "title": "PodLlama: Generate Unit Tests",
+        "category": "PodLlama"
+      }
+    ],
+    "chatParticipants": [
+      {
+        "id": "podllama.chat",
+        "name": "podllama",
+        "description": "PodLlama Local Agent & AI Assistant (Vulkan GPU Accelerated)",
+        "isUnlisted": false,
+        "commands": [
+          {
+            "name": "explain",
+            "description": "Explain selected code structure and logic"
+          },
+          {
+            "name": "refactor",
+            "description": "Refactor code with clean architecture and modern patterns"
+          },
+          {
+            "name": "fix",
+            "description": "Diagnose active document lints/errors and generate fixes"
+          },
+          {
+            "name": "test",
+            "description": "Generate comprehensive unit tests for active code"
+          },
+          {
+            "name": "think",
+            "description": "Deep reasoning analysis using podllama-thinking model"
+          }
+        ]
+      }
+    ],
+    "languageModelTools": [
+      {
+        "id": "podllama_get_workspace_diagnostics",
+        "name": "podllama_get_workspace_diagnostics",
+        "displayName": "Get Workspace Diagnostics",
+        "description": "Retrieve active workspace compiler diagnostics, warnings, and lints",
+        "modelDescription": "Fetches current editor lints and errors from VS Code diagnostics collection.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "id": "podllama_read_active_editor",
+        "name": "podllama_read_active_editor",
+        "displayName": "Read Active Editor Context",
+        "description": "Retrieve current active document content, language ID, and selection",
+        "modelDescription": "Fetches document path, language, cursor selection, and source text.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "id": "podllama_container_status",
+        "name": "podllama_container_status",
+        "displayName": "Check PodLlama Container Status",
+        "description": "Check PodLlama container liveliness and active backend models",
+        "modelDescription": "Queries PodLlama local endpoint for server status and model inventory.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "id": "podllama_switch_model",
+        "name": "podllama_switch_model",
+        "displayName": "Switch Active Model",
+        "description": "Switch PodLlama active chat or thinking model",
+        "modelDescription": "Swaps active model between chat and thinking role on PodLlama backend.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "model": {
+              "type": "string",
+              "description": "Model alias or filename (e.g. podllama-chat, podllama-thinking)"
+            }
+          },
+          "required": [
+            "model"
+          ]
+        }
+      }
+    ],
+    "languageModelProviders": [
+      {
+        "id": "podllama",
+        "name": "PodLlama Local Language Models"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "PodLlama AI Settings",
+      "properties": {
+        "podllama.apiBase": {
+          "type": "string",
+          "default": "http://localhost:4000/v1",
+          "description": "Base URL of the PodLlama LiteLLM Proxy endpoint."
+        },
+        "podllama.apiKey": {
+          "type": "string",
+          "default": "sk-local",
+          "description": "API Bearer Token for PodLlama LiteLLM Proxy."
+        },
+        "podllama.chatModel": {
+          "type": "string",
+          "default": "podllama-chat",
+          "description": "Default model for multi-turn chat and coding tasks."
+        },
+        "podllama.thinkingModel": {
+          "type": "string",
+          "default": "podllama-thinking",
+          "description": "Default model for deep reasoning and complex logic."
+        },
+        "podllama.autocompleteModel": {
+          "type": "string",
+          "default": "podllama-autocomplete",
+          "description": "Default model for inline code completions (FIM)."
+        },
+        "podllama.enableAutocomplete": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable inline code completions."
+        },
+        "podllama.autocompleteDebounceMs": {
+          "type": "number",
+          "default": 150,
+          "description": "Delay in milliseconds before requesting autocomplete on keystrokes."
+        },
+        "podllama.autocompleteMaxTokens": {
+          "type": "number",
+          "default": 128,
+          "description": "Maximum number of tokens to generate for inline completions."
+        },
+        "podllama.temperature": {
+          "type": "number",
+          "default": 0.2,
+          "description": "Temperature setting for model completion generation."
+        },
+        "podllama.maxContextTokens": {
+          "type": "number",
+          "default": 16384,
+          "description": "Maximum context window token size for local model requests."
+        },
+        "podllama.systemPrompt": {
+          "type": "string",
+          "default": "You are PodLlama, an expert AI software engineering assistant running on local GPU hardware.",
+          "description": "Custom default system prompt for @podllama chat participant."
+        },
+        "podllama.autoSyncContinue": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically register PodLlama local endpoints in ~/.continue/config.json if present."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "compile": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "build": "node esbuild.js",
+    "test": "node ./test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.90.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.3"
+  }
+}
