@@ -36,7 +36,11 @@ MODEL_URL=$(parse_yaml_val "print(c['models']['${ACTIVE_MODEL}']['url'])" "")
 EXPECTED_SHA256=$(parse_yaml_val "print(c['models']['${ACTIVE_MODEL}']['sha256'])" "")
 GPU_LAYERS=$(parse_yaml_val "print(c.get('vulkan_gpu_layers', 99))" "99")
 CPU_THREADS="${CPU_THREADS:-${DEFAULT_THREADS}}"
-CTX_SIZE=$(parse_yaml_val "print(c.get('context_size', 16384))" "16384")
+if [ "${MODEL_ROLE}" = "autocomplete" ]; then
+    CTX_SIZE=$(parse_yaml_val "print(c.get('autocomplete_context_size', 4096))" "4096")
+else
+    CTX_SIZE=$(parse_yaml_val "print(c.get('context_size', 16384))" "16384")
+fi
 
 TARGET_MODEL_PATH="${MODELS_DIR}/${ACTIVE_MODEL}"
 
