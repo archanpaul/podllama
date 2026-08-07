@@ -144,6 +144,8 @@ def start_llama_server(target_model_file):
     gpu_layers = check_gpu_availability()
     cpu_threads = config_data.get("chat_cpu_threads", config_data.get("cpu_threads", 8))
     ctx_size = config_data.get("context_size", 16384)
+    batch_size = config_data.get("batch_size", 512)
+    ubatch_size = config_data.get("ubatch_size", 256)
 
     llama_bin = "/usr/bin/llama-server"
     if not os.path.exists(llama_bin):
@@ -157,6 +159,8 @@ def start_llama_server(target_model_file):
         "-ngl", str(gpu_layers),
         "-t", str(cpu_threads),
         "-c", str(ctx_size),
+        "-b", str(batch_size),
+        "-ub", str(ubatch_size),
         "--flash-attn",
         "--jinja",
         "--alias", "qwen2.5-coder"

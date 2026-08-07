@@ -36,6 +36,8 @@ MODEL_URL=$(parse_yaml_val "print(c['models']['${ACTIVE_MODEL}']['url'])" "")
 EXPECTED_SHA256=$(parse_yaml_val "print(c['models']['${ACTIVE_MODEL}']['sha256'])" "")
 GPU_LAYERS=$(parse_yaml_val "print(c.get('vulkan_gpu_layers', 99))" "99")
 CPU_THREADS="${CPU_THREADS:-${DEFAULT_THREADS}}"
+BATCH_SIZE=$(parse_yaml_val "print(c.get('batch_size', 512))" "512")
+UBATCH_SIZE=$(parse_yaml_val "print(c.get('ubatch_size', 256))" "256")
 if [ "${MODEL_ROLE}" = "autocomplete" ]; then
     CTX_SIZE=$(parse_yaml_val "print(c.get('autocomplete_context_size', 4096))" "4096")
 else
@@ -48,6 +50,7 @@ echo "Active Model (${MODEL_ROLE}): ${ACTIVE_MODEL}"
 echo "Server Port: ${SERVER_PORT}"
 echo "Model Path: ${TARGET_MODEL_PATH}"
 echo "Expected SHA256: ${EXPECTED_SHA256}"
+echo "Batch Size (-b): ${BATCH_SIZE}, Micro Batch Size (-ub): ${UBATCH_SIZE}"
 
 # Function to verify checksum
 verify_checksum() {
@@ -149,6 +152,8 @@ exec "${LLAMA_SERVER_BIN}" \
     -ngl "${GPU_LAYERS}" \
     -t "${CPU_THREADS}" \
     -c "${CTX_SIZE}" \
+    -b "${BATCH_SIZE}" \
+    -ub "${UBATCH_SIZE}" \
     --flash-attn \
     --jinja \
     --alias "qwen2.5-coder"
