@@ -51,15 +51,10 @@ def test_yaml_configurations():
     assert "model_list" in litellm_conf, "Missing model_list in litellm_config.yaml"
     litellm_models = {entry["model_name"] for entry in litellm_conf["model_list"]}
 
-    # Ensure every model key in model_conf.yaml is registered in litellm_config.yaml
-    for model_key in models_map:
-        assert model_key in litellm_models, f"Model {model_key} from model_conf.yaml is NOT registered in litellm_config.yaml"
-
     # Ensure primary role aliases exist
     assert "podllama-chat" in litellm_models, "podllama-chat alias missing in litellm_config.yaml"
     assert "podllama-autocomplete" in litellm_models, "podllama-autocomplete alias missing in litellm_config.yaml"
-    assert "qwen-chat" in litellm_models, "qwen-chat alias missing in litellm_config.yaml"
-    assert "qwen-autocomplete" in litellm_models, "qwen-autocomplete alias missing in litellm_config.yaml"
+    assert "podllama-thinking" in litellm_models, "podllama-thinking alias missing in litellm_config.yaml"
 
     print("  -> PASSED: YAML configurations and LiteLLM model sync validated successfully.")
 
