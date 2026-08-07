@@ -33,9 +33,9 @@ def test_proxy_health():
 
 
 def test_prompt_processing():
-    log("Testing Prompt Processing & Token Accounting ('qwen-chat')...")
+    log("Testing Prompt Processing & Token Accounting ('podllama-chat')...")
     payload = {
-        "model": "qwen-chat",
+        "model": "podllama-chat",
         "messages": [
             {"role": "system", "content": "You are a code analyzer."},
             {"role": "user", "content": "Analyze snippet:\ndef add(a: int, b: int) -> int:\n    return a + b\nSummarize function purpose."}
@@ -70,9 +70,9 @@ def test_prompt_processing():
 
 
 def test_chat_model_streaming():
-    log("Testing Chat Model ('qwen-chat') streaming response...")
+    log("Testing Chat Model ('podllama-chat') streaming response...")
     payload = {
-        "model": "qwen-chat",
+        "model": "podllama-chat",
         "messages": [
             {"role": "system", "content": "You are a helpful coding assistant."},
             {"role": "user", "content": "Write a one-line Python function to reverse a string."}
@@ -123,9 +123,9 @@ def test_chat_model_streaming():
 
 
 def test_autocomplete_model():
-    log("Testing Autocomplete Model ('qwen-autocomplete') prompt processing & completion...")
+    log("Testing Autocomplete Model ('podllama-autocomplete') prompt processing & completion...")
     payload = {
-        "model": "qwen-autocomplete",
+        "model": "podllama-autocomplete",
         "prompt": "def fibonacci(n: int) -> int:\n    if n <= 1:\n        return n\n    return ",
         "max_tokens": 32,
         "temperature": 0.1,
@@ -157,9 +157,9 @@ def test_autocomplete_model():
 
 
 def test_tool_calling():
-    log("Testing Tool Calling on Chat Model ('qwen-chat')...")
+    log("Testing Tool Calling on Chat Model ('podllama-chat')...")
     payload = {
-        "model": "qwen-chat",
+        "model": "podllama-chat",
         "messages": [
             {"role": "user", "content": "What is the weather in Tokyo?"}
         ],

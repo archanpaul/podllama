@@ -153,17 +153,26 @@ Centralized YAML schema specifying active models, URLs, ports, and checksums:
 
 ```yaml
 active_chat_model: qwen2.5-coder-7b-instruct-q4_k_m.gguf
-active_autocomplete_model: qwen2.5-coder-0.5b-q4_k_m.gguf
+active_autocomplete_model: qwen2.5-coder-0.5b-instruct-q4_k_m.gguf
+active_thinking_model: DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf
 chat_server_port: 8080
 autocomplete_server_port: 8081
 idle_timeout_seconds: 600
 vulkan_gpu_layers: 99
-context_size: 16384
+context_size: 65536
 
 models:
   qwen2.5-coder-7b-instruct-q4_k_m.gguf:
     url: https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF/resolve/main/qwen2.5-coder-7b-instruct-q4_k_m.gguf
     sha256: 509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c
+
+  DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf:
+    url: https://huggingface.co/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf
+    sha256: auto-verify-on-download
+
+  DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf:
+    url: https://huggingface.co/unsloth/DeepSeek-R1-Distill-Qwen-14B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf
+    sha256: auto-verify-on-download
 ```
 
 ### 5.2 `config/litellm_config.yaml`
@@ -171,18 +180,35 @@ LiteLLM model aliases and routing table:
 
 ```yaml
 model_list:
-  - model_name: qwen-chat
+  - model_name: podllama-chat
     litellm_params:
-      model: openai/qwen2.5-coder
+      model: custom_openai/qwen2.5-coder
       api_base: http://podllama_chat:8080/v1
       api_key: sk-local
 
-  - model_name: qwen-autocomplete
+  - model_name: podllama-autocomplete
     litellm_params:
       model: custom_openai/qwen2.5-coder
       api_base: http://podllama_autocomplete:8081/v1
       api_key: sk-local
 
+  - model_name: podllama-thinking
+    litellm_params:
+      model: custom_openai/qwen2.5-coder
+      api_base: http://podllama_chat:8080/v1
+      api_key: sk-local
+
 general_settings:
   master_key: sk-local
+  disable_master_key_auth: true
+
+router_settings:
+  num_retries: 3
+  timeout: 120
+
+litellm_settings:
+  max_tokens: 65536
+  max_input_tokens: 65536
+  truncate_input_tokens: true
+  drop_params: true
 ```

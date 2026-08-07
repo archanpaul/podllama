@@ -1,24 +1,33 @@
 # Continue Extension Configuration (config.yaml)
 # Place this file at ~/.continue/config.yaml or .continue/config.yaml
 
-name: Qwen Code Local (Vulkan GPU Accelerated)
+name: PodLlama Local (Vulkan GPU Accelerated)
 version: 0.0.1
 schema: v1
 
 models:
-  - name: Qwen Chat (Local Vulkan)
+  - name: PodLlama Chat (Local Vulkan)
     provider: openai
-    model: qwen-chat
+    model: podllama-chat
     apiBase: http://localhost:4000/v1
     apiKey: sk-local
-    contextLength: 16384
+    contextLength: 65536
     roles:
       - chat
       - edit
 
+  - name: PodLlama Thinking (DeepSeek-R1 Local Vulkan)
+    provider: openai
+    model: podllama-thinking
+    apiBase: http://localhost:4000/v1
+    apiKey: sk-local
+    contextLength: 65536
+    roles:
+      - chat
+
   - name: Qwen Autocomplete (Local Vulkan)
     provider: openai
-    model: qwen-autocomplete
+    model: podllama-autocomplete
     apiBase: http://localhost:4000/v1
     apiKey: sk-local
     roles:
