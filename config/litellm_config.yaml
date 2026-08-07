@@ -1,9 +1,35 @@
 model_list:
   # Primary Role Aliases
+  - model_name: podllama-chat
+    litellm_params:
+      model: custom_openai/qwen2.5-coder
+      api_base: http://podllama_chat:8080/v1
+      api_key: sk-local
+      max_tokens: 65536
+    model_info:
+      max_tokens: 65536
+      max_input_tokens: 65536
+
+  - model_name: podllama-autocomplete
+    litellm_params:
+      model: custom_openai/qwen2.5-coder
+      api_base: http://podllama_autocomplete:8081/v1
+      api_key: sk-local
+      max_tokens: 65536
+    model_info:
+      max_tokens: 65536
+      max_input_tokens: 65536
+
+  - model_name: podllama
+    litellm_params:
+      model: custom_openai/qwen2.5-coder
+      api_base: http://podllama_chat:8080/v1
+      api_key: sk-local
+
   - model_name: qwen-chat
     litellm_params:
       model: custom_openai/qwen2.5-coder
-      api_base: http://qwen_server_chat:8080/v1
+      api_base: http://podllama_chat:8080/v1
       api_key: sk-local
       max_tokens: 65536
     model_info:
@@ -13,7 +39,7 @@ model_list:
   - model_name: qwen-autocomplete
     litellm_params:
       model: custom_openai/qwen2.5-coder
-      api_base: http://qwen_server_autocomplete:8081/v1
+      api_base: http://podllama_autocomplete:8081/v1
       api_key: sk-local
       max_tokens: 65536
     model_info:
@@ -24,70 +50,70 @@ model_list:
   - model_name: qwen2.5-coder-7b-instruct-q4_k_m.gguf
     litellm_params:
       model: custom_openai/qwen2.5-coder
-      api_base: http://qwen_server_chat:8080/v1
+      api_base: http://podllama_chat:8080/v1
       api_key: sk-local
 
   - model_name: qwen2.5-coder-7b-instruct
     litellm_params:
       model: custom_openai/qwen2.5-coder
-      api_base: http://qwen_server_chat:8080/v1
+      api_base: http://podllama_chat:8080/v1
       api_key: sk-local
 
   - model_name: qwen2.5-coder-3b-instruct-q4_k_m.gguf
     litellm_params:
       model: custom_openai/qwen2.5-coder
-      api_base: http://qwen_server_chat:8080/v1
+      api_base: http://podllama_chat:8080/v1
       api_key: sk-local
 
   - model_name: qwen2.5-coder-3b-instruct
     litellm_params:
       model: custom_openai/qwen2.5-coder
-      api_base: http://qwen_server_chat:8080/v1
+      api_base: http://podllama_chat:8080/v1
       api_key: sk-local
 
   # 0.5B Models (Autocomplete Server - Port 8081)
   - model_name: qwen2.5-coder-0.5b-instruct-q4_k_m.gguf
     litellm_params:
       model: custom_openai/qwen2.5-coder
-      api_base: http://qwen_server_autocomplete:8081/v1
+      api_base: http://podllama_autocomplete:8081/v1
       api_key: sk-local
 
   - model_name: qwen2.5-coder-0.5b-instruct
     litellm_params:
       model: custom_openai/qwen2.5-coder
-      api_base: http://qwen_server_autocomplete:8081/v1
+      api_base: http://podllama_autocomplete:8081/v1
       api_key: sk-local
 
   - model_name: qwen2.5-coder-0.5b
     litellm_params:
       model: custom_openai/qwen2.5-coder
-      api_base: http://qwen_server_autocomplete:8081/v1
+      api_base: http://podllama_autocomplete:8081/v1
       api_key: sk-local
 
   # 1.5B Models (Autocomplete Server - Port 8081)
   - model_name: qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
     litellm_params:
       model: custom_openai/qwen2.5-coder
-      api_base: http://qwen_server_autocomplete:8081/v1
+      api_base: http://podllama_autocomplete:8081/v1
       api_key: sk-local
 
   - model_name: qwen2.5-coder-1.5b-instruct
     litellm_params:
       model: custom_openai/qwen2.5-coder
-      api_base: http://qwen_server_autocomplete:8081/v1
+      api_base: http://podllama_autocomplete:8081/v1
       api_key: sk-local
 
   # General Fallbacks
   - model_name: qwen2.5-coder
     litellm_params:
       model: custom_openai/qwen2.5-coder
-      api_base: http://qwen_server_chat:8080/v1
+      api_base: http://podllama_chat:8080/v1
       api_key: sk-local
 
   - model_name: gpt-3.5-turbo
     litellm_params:
       model: custom_openai/qwen2.5-coder
-      api_base: http://qwen_server_chat:8080/v1
+      api_base: http://podllama_chat:8080/v1
       api_key: sk-local
 
 general_settings:

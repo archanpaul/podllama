@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Smoke Test Suite for Qwen Code Podman Environment.
+Smoke Test Suite for PodLlama Container Environment.
 Verifies live endpoint connectivity, Prompt processing token evaluation, Chat model streaming, Autocomplete model completion, and Tool calling.
 """
 
@@ -201,7 +201,7 @@ def test_tool_calling():
 
 def main():
     print("==================================================")
-    print("       Qwen Code Environment Smoke Test          ")
+    print("       PodLlama Environment Smoke Test           ")
     print("==================================================")
     test_proxy_health()
     test_autocomplete_model()

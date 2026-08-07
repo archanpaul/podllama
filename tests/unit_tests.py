@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Automated Test Suite for Qwen Code Podman Container Environment.
+Automated Test Suite for PodLlama Container Environment.
 Validates YAML configs, executable script permissions, and container files.
 """
 
@@ -54,6 +54,8 @@ def test_yaml_configurations():
         assert model_key in litellm_models, f"Model {model_key} from model_conf.yaml is NOT registered in litellm_config.yaml"
 
     # Ensure primary role aliases exist
+    assert "podllama-chat" in litellm_models, "podllama-chat alias missing in litellm_config.yaml"
+    assert "podllama-autocomplete" in litellm_models, "podllama-autocomplete alias missing in litellm_config.yaml"
     assert "qwen-chat" in litellm_models, "qwen-chat alias missing in litellm_config.yaml"
     assert "qwen-autocomplete" in litellm_models, "qwen-autocomplete alias missing in litellm_config.yaml"
 
@@ -82,6 +84,7 @@ def test_container_definitions():
         os.path.join(PROJECT_ROOT, "containers", "Containerfile.llamacpp"),
         os.path.join(PROJECT_ROOT, "containers", "Containerfile.qwencoder"),
         os.path.join(PROJECT_ROOT, "containers", "compose.yaml"),
+        os.path.join(PROJECT_ROOT, "containers", "chat_swapper.py"),
     ]
 
     for cfile in container_files:
@@ -91,7 +94,7 @@ def test_container_definitions():
 
 def run_all_tests():
     print("==================================================")
-    print("       Qwen Code Automated Test Suite            ")
+    print("       PodLlama Automated Test Suite             ")
     print("==================================================")
     test_yaml_configurations()
     test_script_permissions()
