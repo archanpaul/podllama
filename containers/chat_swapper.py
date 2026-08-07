@@ -266,7 +266,39 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({"error": f"Model server proxy error: {str(e)}"}).encode("utf-8"))
 
     def do_GET(self):
-        self.handle_proxy()
+        if self.path == "/v1/models" or self.path == "/models":
+            self.send_models_list()
+        else:
+            self.handle_proxy()
+
+    def send_models_list(self):
+        load_config()
+        models = config_data.get("models", {})
+        active_chat = config_data.get("active_chat_model", "")
+        active_thinking = config_data.get("active_thinking_model", "")
+        active_autocomplete = config_data.get("active_autocomplete_model", "")
+
+        model_entries = []
+        # Add registered role aliases
+        model_entries.append({"id": "podllama-chat", "object": "model", "owned_by": "podllama-swapper", "active_target": active_chat})
+        model_entries.append({"id": "podllama-thinking", "object": "model", "owned_by": "podllama-swapper", "active_target": active_thinking})
+        model_entries.append({"id": "podllama-autocomplete", "object": "model", "owned_by": "podllama-swapper", "active_target": active_autocomplete})
+
+        # Add all configured GGUF files
+        for model_file, meta in models.items():
+            model_entries.append({
+                "id": model_file,
+                "object": "model",
+                "owned_by": "podllama-registry",
+                "details": meta
+            })
+
+        response_body = json.dumps({"object": "list", "data": model_entries}, indent=2).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(response_body)))
+        self.end_headers()
+        self.wfile.write(response_body)
 
     def do_POST(self):
         self.handle_proxy()
