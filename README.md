@@ -203,13 +203,40 @@ curl http://localhost:4000/v1/completions \
   }'
 ```
 
-### 4. Model Aliases Map
+### 4. Query Available Models API (`GET /v1/models`)
 
-| Request Model Name | Role | Backend Target Server | Loaded GGUF Model | Concurrency Behavior |
+Query available role aliases and all registered backend GGUF models directly from the Proxy frontend:
+
+```bash
+curl http://localhost:4000/v1/models \
+  -H "Authorization: Bearer sk-local"
+```
+
+```json
+{
+  "object": "list",
+  "data": [
+    { "id": "podllama-chat", "object": "model", "owned_by": "litellm" },
+    { "id": "podllama-thinking", "object": "model", "owned_by": "litellm" },
+    { "id": "podllama-autocomplete", "object": "model", "owned_by": "litellm" },
+    { "id": "qwen2.5-coder-0.5b-instruct-q4_k_m.gguf", "object": "model", "owned_by": "litellm" },
+    { "id": "qwen2.5-coder-1.5b-instruct-q4_k_m.gguf", "object": "model", "owned_by": "litellm" },
+    { "id": "qwen2.5-coder-3b-instruct-q4_k_m.gguf", "object": "model", "owned_by": "litellm" },
+    { "id": "qwen2.5-coder-7b-instruct-q4_k_m.gguf", "object": "model", "owned_by": "litellm" },
+    { "id": "DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf", "object": "model", "owned_by": "litellm" },
+    { "id": "DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf", "object": "model", "owned_by": "litellm" }
+  ]
+}
+```
+
+### 5. Model Aliases & Registry Map
+
+| Request Model Name / ID | Role | Backend Target Server | Loaded GGUF Model | Concurrency Behavior |
 | :--- | :--- | :--- | :--- | :--- |
 | `podllama-chat` | Chat | `podllama_chat:8080` | `active_chat_model` (`qwen2.5-coder-7b`) | Auto-swaps on port 8080 (Single active instance) |
 | `podllama-thinking` | Thinking / Reasoning | `podllama_chat:8080` | `active_thinking_model` (`DeepSeek-R1-Distill-7B/14B`) | Auto-swaps on port 8080 (Single active instance) |
 | `podllama-autocomplete` | Autocomplete | `podllama_autocomplete:8081` | `active_autocomplete_model` (`qwen2.5-coder-0.5b`) | Dedicated port 8081 (Runs in parallel) |
+| `*.gguf` (e.g. `DeepSeek-R1-Distill-Qwen-14B...`) | Direct Model File | `podllama_chat:8080` | Explicit GGUF file | Auto-swaps on port 8080 (Single active instance) |
 
 ---
 
