@@ -192,11 +192,60 @@ curl http://localhost:4000/v1/completions \
 
 ### 3. Model Aliases Map
 
-| Request Model Name | Backend Target Server | Loaded GGUF Model |
-| :--- | :--- | :--- |
-| `qwen-chat`, `qwen2.5-coder-7b-instruct`, `gpt-3.5-turbo` | `podllama_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` |
-| `qwen-autocomplete`, `qwen2.5-coder-0.5b` | `podllama_autocomplete:8081` | `qwen2.5-coder-0.5b-q4_k_m.gguf` |
-| `qwen2.5-coder-1.5b` | `podllama_autocomplete:8081` | `qwen2.5-coder-1.5b-q4_k_m.gguf` |
+| Request Model Name | Role | Backend Target Server | Loaded GGUF Model |
+| :--- | :--- | :--- | :--- |
+| `podllama-chat`, `qwen-chat`, `gpt-3.5-turbo` | Chat | `podllama_chat:8080` | `active_chat_model` (`qwen2.5-coder-7b-instruct-q4_k_m.gguf`) |
+| `podllama-thinking`, `deepseek-r1` | Thinking / Reasoning | `podllama_chat:8080` | `active_thinking_model` (`DeepSeek-R1-Distill-Qwen-7B` or `14B`) |
+| `podllama-autocomplete`, `qwen-autocomplete` | Autocomplete | `podllama_autocomplete:8081` | `active_autocomplete_model` (`qwen2.5-coder-0.5b-instruct-q4_k_m.gguf`) |
+
+---
+
+## How to Switch Models
+
+You can switch models dynamically in two ways:
+
+### Method 1: Change Default Active Models in `config/model_conf.yaml`
+Edit `config/model_conf.yaml` to select which GGUF model file is loaded for Chat, Autocomplete, or Thinking roles:
+
+```yaml
+# Set active model selections:
+active_chat_model: qwen2.5-coder-7b-instruct-q4_k_m.gguf
+active_autocomplete_model: qwen2.5-coder-0.5b-instruct-q4_k_m.gguf
+
+# Switch thinking model between 7B and 14B:
+active_thinking_model: DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf
+# active_thinking_model: DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf
+```
+
+Then download active models and restart/reload:
+```bash
+make download-active-models
+```
+
+### Method 2: On-Demand API Model Selection (Instant Auto-Swapping)
+Send requests directly specifying the exact GGUF model name or alias in your API payload. The `podllama_chat` swapper proxy will automatically stop the current model, load the target GGUF file into Vulkan VRAM, and serve the request:
+
+- **Switch to DeepSeek-R1 14B Thinking**:
+  ```bash
+  curl http://localhost:4000/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer sk-local" \
+    -d '{
+      "model": "DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf",
+      "messages": [{"role": "user", "content": "Prove prime number distribution theorem."}]
+    }'
+  ```
+
+- **Switch to Qwen 3B Chat**:
+  ```bash
+  curl http://localhost:4000/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer sk-local" \
+    -d '{
+      "model": "qwen2.5-coder-3b-instruct-q4_k_m.gguf",
+      "messages": [{"role": "user", "content": "Explain async await in Python."}]
+    }'
+  ```
 
 ---
 
@@ -207,26 +256,31 @@ Edit `config/model_conf.yaml` to change default models or settings:
 ```yaml
 active_chat_model: qwen2.5-coder-7b-instruct-q4_k_m.gguf
 active_autocomplete_model: qwen2.5-coder-0.5b-instruct-q4_k_m.gguf
+active_thinking_model: DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf
 chat_server_port: 8080
 autocomplete_server_port: 8081
 idle_timeout_seconds: 600
 models_dir: /models
 workspace_dir: /workspace
 vulkan_gpu_layers: 99
-context_size: 16384
+context_size: 65536
 
 models:
   qwen2.5-coder-0.5b-instruct-q4_k_m.gguf:
     url: https://huggingface.co/Qwen/Qwen2.5-Coder-0.5B-Instruct-GGUF/resolve/main/qwen2.5-coder-0.5b-instruct-q4_k_m.gguf
     sha256: 1d9614638d18024d0fbb36575a15f1302a3adf044df10345688ec4f6e1c4ff32
 
-  qwen2.5-coder-0.5b-q4_k_m.gguf:
-    url: https://huggingface.co/Qwen/Qwen2.5-Coder-0.5B-GGUF/resolve/main/qwen2.5-coder-0.5b-q4_k_m.gguf
-    sha256: auto-verify-on-download
-
   qwen2.5-coder-7b-instruct-q4_k_m.gguf:
     url: https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF/resolve/main/qwen2.5-coder-7b-instruct-q4_k_m.gguf
     sha256: 509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c
+
+  DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf:
+    url: https://huggingface.co/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf
+    sha256: auto-verify-on-download
+
+  DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf:
+    url: https://huggingface.co/unsloth/DeepSeek-R1-Distill-Qwen-14B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf
+    sha256: auto-verify-on-download
 ```
 
 ---

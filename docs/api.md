@@ -134,7 +134,31 @@ curl http://localhost:4000/health/liveliness
 
 ---
 
-## 4. IDE Integration Configurations
+## 3. On-Demand Model Switching & Selection
+
+The LiteLLM Proxy (`http://localhost:4000/v1`) forwards requests to backend supervisors that support on-demand model swapping. You can switch models on the fly by changing the `"model"` field in API requests:
+
+### Available Model Roles & Identifiers
+- **Chat Role**: `podllama-chat` or `qwen2.5-coder-7b-instruct-q4_k_m.gguf`
+- **Thinking Role**: `podllama-thinking`, `DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf`, or `DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf`
+- **Autocomplete Role**: `podllama-autocomplete` or `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf`
+
+### Example: On-Demand Thinking Model Swap
+```bash
+curl http://localhost:4000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer sk-local" \
+  -d '{
+    "model": "podllama-thinking",
+    "messages": [
+      {"role": "user", "content": "Analyze time complexity of red-black tree insertion."}
+    ]
+  }'
+```
+
+---
+
+## 4. IDE Integration Guide
 
 ### 4.1 Continue Extension (`config/continue.yaml` / `~/.continue/config.yaml`)
 

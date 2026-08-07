@@ -89,8 +89,9 @@ graph LR
 
 ---
 
-## 4. Initialization & Pre-flight Diagnostics Flow
+## 4. Initialization & Model Auto-Swapping Flow
 
+### 4.1 Server Startup Diagnostics
 ```mermaid
 sequenceDiagram
     autonumber
@@ -106,13 +107,41 @@ sequenceDiagram
         C->>C: Set vulkan_gpu_layers = 0
     end
 
-    C->>M: Parse active model role (chat vs autocomplete)
+    C->>M: Parse active model role (chat, autocomplete, thinking)
     C->>C: Check SHA256 checksum in /models/
     alt Model file missing / invalid
         C->>C: Auto-download GGUF model via curl
     end
 
     C->>S: Launch llama-server --model <file> --port <port> --n-gpu-layers 99
+```
+
+### 4.2 On-Demand Model Switching Mechanism (`chat_swapper.py`)
+
+When an incoming API request targets a different model (e.g., switching from `podllama-chat` to `podllama-thinking` or requesting `DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf` directly), the proxy automatically performs an on-demand model swap:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Client as Client / IDE / Agent
+    participant Proxy as Proxy Swapper (Port 8080)
+    participant Llama as llama-server Process
+    participant VRAM as Host Vulkan VRAM
+
+    Client->>Proxy: POST /v1/chat/completions { model: "podllama-thinking" }
+    Proxy->>Proxy: Resolve requested model -> "DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf"
+    
+    alt Requested model != Currently running model
+        Proxy->>Llama: Terminate running llama-server process (SIGTERM)
+        Llama->>VRAM: Release 100% VRAM / RAM (0 MB idle mode)
+        Proxy->>Proxy: Ensure GGUF model file downloaded in /models
+        Proxy->>Llama: Launch llama-server with target GGUF model
+        Proxy->>Llama: Wait for http://127.0.0.1:8082/health readiness (up to 45s)
+    end
+
+    Proxy->>Llama: Forward HTTP request payload
+    Llama-->>Proxy: Stream response tokens / SSE chunks
+    Proxy-->>Client: Return completion stream
 ```
 
 ---

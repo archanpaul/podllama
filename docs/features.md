@@ -19,10 +19,11 @@ The **PodLlama Container Environment** provides a local, GPU-accelerated, contai
 
 ---
 
-## 3. Dual-Model Architecture
+## 3. Multi-Model Architecture & On-Demand Swapping
 
-- **Dedicated Chat Model Supervisor**: Runs `containers/chat_swapper.py` on port `8080` for high-reasoning tasks, refactoring, code explanation, and workspace agent commands.
-- **On-Demand Model Auto-Swapping**: Automatically intercepts incoming model requests (e.g. swapping between 7B and 3B chat models), stops the current `llama-server` process, loads the target GGUF model into Vulkan VRAM, and streams back responses.
+- **Dedicated Chat & Thinking Model Supervisor**: Runs `containers/chat_swapper.py` on port `8080` for chat, reasoning, refactoring, and thinking tasks (`podllama-chat` and `podllama-thinking`).
+- **On-Demand Model Auto-Swapping**: Automatically intercepts incoming model requests (e.g. swapping between `Qwen2.5-Coder-7B`, `DeepSeek-R1-Distill-Qwen-7B`, and `DeepSeek-R1-Distill-Qwen-14B`), stops the active `llama-server` process, loads the target GGUF model into Vulkan VRAM, and streams back responses.
+- **Configurable Thinking Model Selection**: Switch `active_thinking_model` in `config/model_conf.yaml` between `DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf` (7B) and `DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf` (14B) for high-tier reasoning.
 - **Auto-Stop After Idle (0 MB LLM RAM/VRAM)**: Automatically terminates the underlying `llama-server` process after a configurable idle threshold (`idle_timeout_seconds` in `config/model_conf.yaml` or `IDLE_TIMEOUT_SECONDS` env var, defaulting to 10 minutes / 600s), releasing 100% of LLM VRAM and RAM back to the host system until the next request triggers a cold-start.
 - **Low-Latency Autocomplete Model**: Runs `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` or `1.5b` on port `8081` for low-latency inline code completions.
 - **Resource Optimization**: CPU and RAM allocations are managed independently for chat (`8 CPUs / 8GB RAM`) and autocomplete (`2 CPUs / 4GB RAM`) services in Podman Compose.
