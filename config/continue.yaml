@@ -31,10 +31,15 @@ models:
     apiBase: http://localhost:4000/v1
     apiKey: sk-local
     useLegacyCompletionsEndpoint: true
+    maxTokens: 256
     roles:
       - autocomplete
     promptTemplates:
       autocomplete: "<|fim_prefix|>{{{prefix}}}<|fim_suffix|>{{{suffix}}}<|fim_middle|>"
+
+tabAutocompleteOptions:
+  multilineCompletions: "always"
+  useCache: true
 
 contextProviders:
   - name: code
