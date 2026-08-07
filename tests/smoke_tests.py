@@ -219,6 +219,7 @@ def test_autocomplete_model():
             choices = data.get("choices", [])
             assert len(choices) > 0, "No completion choices returned!"
             text = choices[0].get("text", "")
+            assert not text.strip().startswith("The function") and not text.strip().startswith("Certainly"), f"Autocomplete model returned conversational text instead of raw code: {text}"
             usage = data.get("usage", {})
             prompt_tokens = usage.get("prompt_tokens", 0)
             completion_tokens = usage.get("completion_tokens", 0)

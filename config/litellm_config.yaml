@@ -8,7 +8,7 @@ model_list:
 
   - model_name: podllama-autocomplete
     litellm_params:
-      model: custom_openai/qwen2.5-coder
+      model: text-completion-openai/qwen2.5-coder
       api_base: http://podllama_autocomplete:8081/v1
       api_key: sk-local
 
