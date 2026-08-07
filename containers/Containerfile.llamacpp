@@ -55,8 +55,9 @@ ENV LD_LIBRARY_PATH=/usr/bin:$LD_LIBRARY_PATH
 
 WORKDIR /app
 COPY config/model_conf.yaml /app/config/model_conf.yaml
+COPY containers/chat_swapper.py /app/chat_swapper.py
 COPY containers/entrypoint-llamacpp.sh /app/entrypoint-llamacpp.sh
-RUN chmod +x /app/entrypoint-llamacpp.sh /usr/bin/llama-server
+RUN chmod +x /app/entrypoint-llamacpp.sh /app/chat_swapper.py /usr/bin/llama-server
 
 EXPOSE 8080
 VOLUME ["/models"]

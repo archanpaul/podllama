@@ -1,4 +1,4 @@
-# Makefile for Qwen Code Podman Environment (Vulkan GPU Accelerated)
+# Makefile for PodLlama Container Environment (Vulkan GPU Accelerated)
 
 .PHONY: help build build-server build-client build-litellm build-proxy start-server stop-server compose-up compose-down compose-logs compose-start compose-stop compose-restart service-up service-down service-start service-stop service-restart service-logs service-status show-live-logs status unit-tests test smoke-tests smoke_tests smoke-test run-qwencode run-pod check-checksum download-active-models download-models clean
 
@@ -7,9 +7,9 @@ PODMAN ?= podman
 PODMAN_COMPOSE ?= podman compose
 MODELS_DIR ?= ./models
 WORKSPACE_DIR ?= $(shell pwd)
-SERVER_IMAGE ?= qwen-server:latest
-CLIENT_IMAGE ?= qwen-client:latest
-POD_NAME ?= qwen_code_pod
+SERVER_IMAGE ?= podllama-server:latest
+CLIENT_IMAGE ?= podllama-client:latest
+POD_NAME ?= podllama_pod
 
 help:
 	@echo "Available Makefile targets:"
@@ -66,7 +66,7 @@ build-client:
 
 build-litellm:
 	@echo "Building LiteLLM Proxy image (Fedora Minimal staged build)..."
-	$(PODMAN) build -t qwen-litellm:latest -f containers/Containerfile.litellm .
+	$(PODMAN) build -t podllama-litellm:latest -f containers/Containerfile.litellm .
 
 build-proxy: build-litellm
 
@@ -74,7 +74,7 @@ start-server:
 	@echo "Starting Vulkan Chat Model Server container (port 8080)..."
 	@mkdir -p $(MODELS_DIR)
 	$(PODMAN) run -d \
-		--name qwen_server_chat \
+		--name podllama_chat \
 		--replace \
 		--device /dev/dri \
 		-e MODEL_ROLE=chat \
@@ -87,7 +87,7 @@ start-autocomplete-server:
 	@echo "Starting Vulkan Autocomplete Model Server container (port 8081)..."
 	@mkdir -p $(MODELS_DIR)
 	$(PODMAN) run -d \
-		--name qwen_server_autocomplete \
+		--name podllama_autocomplete \
 		--replace \
 		--device /dev/dri \
 		-e MODEL_ROLE=autocomplete \
@@ -128,12 +128,12 @@ service-status: status
 
 stop-server:
 	@echo "Stopping Model Server containers..."
-	-$(PODMAN) stop qwen_server_chat qwen_server_autocomplete qwen_server || true
-	-$(PODMAN) rm qwen_server_chat qwen_server_autocomplete qwen_server || true
+	-$(PODMAN) stop podllama_chat podllama_autocomplete podllama qwen_server_chat qwen_server_autocomplete qwen_server || true
+	-$(PODMAN) rm podllama_chat podllama_autocomplete podllama qwen_server_chat qwen_server_autocomplete qwen_server || true
 
 status:
-	@echo "=== Checking Qwen Container Status ==="
-	@$(PODMAN) ps --filter "name=qwen" --filter "name=litellm"
+	@echo "=== Checking PodLlama Container Status ==="
+	@$(PODMAN) ps --filter "name=podllama" --filter "name=qwen" --filter "name=litellm"
 	@echo ""
 	@echo "=== Checking API Health Endpoint ==="
 	@for i in $$(seq 1 30); do \
@@ -180,4 +180,4 @@ download-models:
 	@$(MAKE) check-checksum
 
 clean:
-	-$(PODMAN) rmi $(SERVER_IMAGE) $(CLIENT_IMAGE) qwen-litellm:latest || true
+	-$(PODMAN) rmi $(SERVER_IMAGE) $(CLIENT_IMAGE) podllama-litellm:latest qwen-litellm:latest qwen-client:latest || true

@@ -10,9 +10,9 @@ echo "Config: ${CONFIG_FILE}"
 echo "Listening on: ${HOST}:${PORT}"
 
 # Wait for at least one backend model server to be reachable
-CHAT_HOST="${CHAT_SERVER_HOST:-qwen_server_chat}"
+CHAT_HOST="${CHAT_SERVER_HOST:-podllama_chat}"
 CHAT_PORT="${CHAT_SERVER_PORT:-8080}"
-AUTOCOMPLETE_HOST="${AUTOCOMPLETE_SERVER_HOST:-qwen_server_autocomplete}"
+AUTOCOMPLETE_HOST="${AUTOCOMPLETE_SERVER_HOST:-podllama_autocomplete}"
 AUTOCOMPLETE_PORT="${AUTOCOMPLETE_SERVER_PORT:-8080}"
 
 echo "Waiting for backend model servers..."

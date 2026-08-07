@@ -127,6 +127,14 @@ else
     echo "Vulkan GPU acceleration enabled (${GPU_LAYERS} layers offloaded to GPU)."
 fi
 
+if [ "${MODEL_ROLE}" = "chat" ] && [ -f "/app/chat_swapper.py" ]; then
+    echo "Starting Chat Swapper Supervisor Proxy on port ${SERVER_PORT}..."
+    export SERVER_PORT="${SERVER_PORT}"
+    export CONFIG_FILE="${CONFIG_FILE}"
+    export MODELS_DIR="${MODELS_DIR}"
+    exec python3 /app/chat_swapper.py
+fi
+
 LLAMA_SERVER_BIN=$(command -v llama-server || command -v llama.cpp-server || echo "/usr/bin/llama-server")
 
 echo "Launching ${LLAMA_SERVER_BIN} with ${CPU_THREADS} CPU threads..."

@@ -4,9 +4,9 @@ set -eo pipefail
 MODE="${1:-client}"
 WORKSPACE_DIR="${2:-$(pwd)}"
 MODELS_DIR="${MODELS_DIR:-$(dirname $(dirname $(realpath $0)))/models}"
-POD_NAME="qwen_code_pod"
-SERVER_CONTAINER_NAME="qwen_server"
-CLIENT_CONTAINER_NAME="qwen_code_client"
+POD_NAME="podllama_pod"
+SERVER_CONTAINER_NAME="podllama"
+CLIENT_CONTAINER_NAME="podllama_client"
 
 mkdir -p "${MODELS_DIR}"
 WORKSPACE_DIR=$(realpath "${WORKSPACE_DIR}")
@@ -17,33 +17,33 @@ echo "Models Cache: ${MODELS_DIR}"
 
 case "${MODE}" in
     server)
-        echo "Starting Qwen Model Server Container..."
+        echo "Starting PodLlama Model Server Container..."
         podman run -d \
             --name "${SERVER_CONTAINER_NAME}" \
             --replace \
             --device /dev/dri \
             -p 8080:8080 \
             -v "${MODELS_DIR}:/models:Z" \
-            qwen-server:latest
+            podllama-server:latest
         echo "Model server container started!"
         ;;
 
     client)
-        echo "Launching Qwen Code Workspace Client Container..."
+        echo "Launching PodLlama Workspace Client Container..."
         # Link to server if running on host network or podman network
         podman run -it --rm \
             --name "${CLIENT_CONTAINER_NAME}_$$" \
             --network host \
-            -e QWEN_SERVER_HOST="127.0.0.1" \
-            -e QWEN_SERVER_PORT="8080" \
+            -e PODLLAMA_SERVER_HOST="127.0.0.1" \
+            -e PODLLAMA_SERVER_PORT="8080" \
             -v "${WORKSPACE_DIR}:/workspace:Z" \
             -w /workspace \
             --userns=keep-id \
-            qwen-client:latest
+            podllama-client:latest
         ;;
 
     pod)
-        echo "Creating and running Qwen Code Pod..."
+        echo "Creating and running PodLlama Pod..."
         podman pod create --name "${POD_NAME}" -p 8080:8080 --replace
         
         echo "Launching Model Server in Pod..."
@@ -53,27 +53,27 @@ case "${MODE}" in
             --replace \
             --device /dev/dri \
             -v "${MODELS_DIR}:/models:Z" \
-            qwen-server:latest
+            podllama-server:latest
 
         echo "Launching Workspace Client in Pod..."
         podman run -it --rm \
             --pod "${POD_NAME}" \
             --name "${CLIENT_CONTAINER_NAME}" \
-            -e QWEN_SERVER_HOST="127.0.0.1" \
-            -e QWEN_SERVER_PORT="8080" \
+            -e PODLLAMA_SERVER_HOST="127.0.0.1" \
+            -e PODLLAMA_SERVER_PORT="8080" \
             -v "${WORKSPACE_DIR}:/workspace:Z" \
             -w /workspace \
             --userns=keep-id \
-            qwen-client:latest
+            podllama-client:latest
         ;;
 
     status)
-        echo "=== Qwen Podman Status ==="
-        podman ps --filter "name=qwen"
+        echo "=== PodLlama Podman Status ==="
+        podman ps --filter "name=podllama" --filter "name=qwen"
         ;;
 
     stop)
-        echo "Stopping Qwen Podman containers..."
+        echo "Stopping PodLlama Podman containers..."
         podman stop "${SERVER_CONTAINER_NAME}" || true
         podman pod stop "${POD_NAME}" || true
         podman pod rm "${POD_NAME}" || true
