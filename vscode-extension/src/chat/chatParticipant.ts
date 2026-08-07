@@ -13,8 +13,10 @@ export function registerChatParticipant(
   ): Promise<vscode.ChatResult> => {
     const config = vscode.workspace.getConfiguration('podllama');
     let targetModel = config.get<string>('chatModel', 'podllama-chat');
-    let systemInstruction =
-      'You are PodLlama, an autonomous local AI coding agent running on GPU-accelerated local hardware. Assist the user with precise code modifications, architectural guidance, and debugging.';
+    let systemInstruction = config.get<string>(
+      'systemPrompt',
+      'You are PodLlama, an autonomous local AI coding agent running on GPU-accelerated local hardware. Assist the user with precise code modifications, architectural guidance, and debugging.'
+    );
 
     // Check subcommand logic
     switch (request.command) {
@@ -54,7 +56,7 @@ export function registerChatParticipant(
           try {
             const doc = await vscode.workspace.openTextDocument(ref.value);
             const content = doc.getText();
-            referenceContext += `\n\n[Attached File Reference: ${ref.value.fsPath} (${doc.languageId})]:\n\`\`\`${doc.languageId}\n${content.length > 6000 ? content.substring(0, 6000) + '\n... [truncated]' : content}\n\`\`\``;
+            referenceContext += `\n\n[Attached File Reference: ${ref.value.fsPath} (${doc.languageId})]:\n\`\`\`${doc.languageId}\n${content.length > 8000 ? content.substring(0, 8000) + '\n... [truncated]' : content}\n\`\`\``;
           } catch {
             // ignore non-text files
           }
@@ -107,11 +109,11 @@ export function registerChatParticipant(
 
     // Append prior chat history turns
     for (const turn of chatContext.history) {
-      if (turn instanceof vscode.ChatUserTurn) {
-        messages.push({ role: 'user', content: turn.prompt });
-      } else if (turn instanceof vscode.ChatAssistantTurn) {
+      if ('prompt' in turn) {
+        messages.push({ role: 'user', content: (turn as any).prompt });
+      } else if ('response' in turn) {
         let textContent = '';
-        for (const part of turn.response) {
+        for (const part of (turn as any).response) {
           if (part instanceof vscode.ChatResponseMarkdownPart) {
             textContent += part.value.value;
           }
@@ -165,7 +167,11 @@ export function registerChatParticipant(
     }
   };
 
-  const participant = vscode.chat.createChatParticipant('podllama.chat', handler);
+  if (typeof (vscode as any).chat?.createChatParticipant !== 'function') {
+    throw new Error('VS Code chat participant API is not available in this environment.');
+  }
+
+  const participant = (vscode as any).chat.createChatParticipant('podllama.chat', handler);
   participant.iconPath = new vscode.ThemeIcon('server-environment');
   return participant;
 }

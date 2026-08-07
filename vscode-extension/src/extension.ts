@@ -8,6 +8,7 @@ import { registerChatParticipant } from './chat/chatParticipant';
 import { registerAgentTools } from './tools/agentTools';
 import { PodLlamaStatusBarManager } from './ui/statusBar';
 import { PodLlamaLanguageModelProvider } from './provider/languageModelProvider';
+import { detectLanguageModelApiSupport } from './utils/apiCompat';
 
 let podllamaClient: PodLlamaClient;
 let statusBarManager: PodLlamaStatusBarManager;
@@ -30,18 +31,32 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(inlineDisposable);
 
-  // 2. Register Native @podllama Chat Participant
-  const chatParticipant = registerChatParticipant(context, podllamaClient);
-  context.subscriptions.push(chatParticipant);
+  const apiSupport = detectLanguageModelApiSupport();
 
-  // 3. Register Language Model Tools
-  const toolDisposables = registerAgentTools(context, podllamaClient);
-  context.subscriptions.push(...toolDisposables);
+  // 2. Register Native @podllama Chat Participant when supported
+  if (apiSupport.hasChatParticipantApi) {
+    const chatParticipant = registerChatParticipant(context, podllamaClient);
+    context.subscriptions.push(chatParticipant);
+  } else {
+    console.warn('VS Code chat participant API is unavailable; skipping chat participant registration.');
+  }
 
-  // 4. Register Native Language Model Chat Provider
-  const lmProvider = new PodLlamaLanguageModelProvider(podllamaClient);
-  const lmDisposables = lmProvider.register(context);
-  context.subscriptions.push(...lmDisposables);
+  // 3. Register Language Model Tools when supported
+  if (apiSupport.hasLanguageModelToolApi) {
+    const toolDisposables = registerAgentTools(context, podllamaClient);
+    context.subscriptions.push(...toolDisposables);
+  } else {
+    console.warn('VS Code language model tool API is unavailable; skipping agent tool registration.');
+  }
+
+  // 4. Register Native Language Model Chat Provider when supported
+  if (apiSupport.hasLanguageModelProviderApi) {
+    const lmProvider = new PodLlamaLanguageModelProvider(podllamaClient);
+    const lmDisposables = lmProvider.register(context);
+    context.subscriptions.push(...lmDisposables);
+  } else {
+    console.warn('VS Code language model provider API is unavailable; skipping provider registration.');
+  }
 
   // 5. Initialize Status Bar Manager
   statusBarManager = new PodLlamaStatusBarManager(podllamaClient);
@@ -125,7 +140,7 @@ function syncModelProvidersToDisk(podllamaEndpointDef: any) {
     if (fs.existsSync(sPath)) {
       try {
         const raw = fs.readFileSync(sPath, 'utf8');
-        let cleaned = raw.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '$1');
+        let cleaned = raw.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^(\s*)(\/\/.*)$/gm, '$1');
         const json = JSON.parse(cleaned);
 
         let customEndpoints = json['github.copilot.chat.customEndpoints'] || json['chat.customEndpoints'] || [];
@@ -278,6 +293,8 @@ function getClientConfig(): PodLlamaConfig {
     autocompleteModel: cfg.get<string>('autocompleteModel', 'podllama-autocomplete'),
     temperature: cfg.get<number>('temperature', 0.2),
     autocompleteMaxTokens: cfg.get<number>('autocompleteMaxTokens', 128),
+    maxContextTokens: cfg.get<number>('maxContextTokens', 16384),
+    systemPrompt: cfg.get<string>('systemPrompt', 'You are PodLlama, an expert AI software engineering assistant running on local GPU hardware.'),
   };
 }
 
@@ -381,7 +398,15 @@ function registerExtensionCommands(context: vscode.ExtensionContext) {
 
   // Helper command launcher for chat subcommands
   const openChatWithCommand = async (command: string) => {
-    await vscode.commands.executeCommand('workbench.action.quickchat.toggle');
+    try {
+      // Try the modern chat.open API with query pre-population
+      await vscode.commands.executeCommand('workbench.action.chat.open', {
+        query: `@podllama /${command} `,
+      });
+    } catch {
+      // Fallback: just open quick chat if the query API isn't available
+      await vscode.commands.executeCommand('workbench.action.quickchat.toggle');
+    }
   };
 
   context.subscriptions.push(

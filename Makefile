@@ -191,11 +191,11 @@ vscode_extension-test:
 
 vscode_extension-package: vscode_extension-build
 	@echo "Packaging PodLlama VS Code Extension into .vsix file..."
-	@cd vscode-extension && npx -y @vscode/vsce package --no-git-tag-version --out podllama-vscode-0.1.0.vsix
+	@cd vscode-extension && npx -y @vscode/vsce package --no-git-tag-version --out podllama-vscode-0.2.0.vsix
 
 vscode_extension-install: vscode_extension-package
 	@echo "Installing/Updating PodLlama VS Code Extension into VS Code..."
-	@which code >/dev/null 2>&1 && code --install-extension vscode-extension/podllama-vscode-0.1.0.vsix --force || (which codium >/dev/null 2>&1 && codium --install-extension vscode-extension/podllama-vscode-0.1.0.vsix --force || (which cursor >/dev/null 2>&1 && cursor --install-extension vscode-extension/podllama-vscode-0.1.0.vsix --force || echo "NOTICE: Neither 'code', 'codium', nor 'cursor' CLI tools found on PATH. Install manually via: code --install-extension vscode-extension/podllama-vscode-0.1.0.vsix"))
+	@which code >/dev/null 2>&1 && code --install-extension vscode-extension/podllama-vscode-0.2.0.vsix --force || (which codium >/dev/null 2>&1 && codium --install-extension vscode-extension/podllama-vscode-0.2.0.vsix --force || (which cursor >/dev/null 2>&1 && cursor --install-extension vscode-extension/podllama-vscode-0.2.0.vsix --force || echo "NOTICE: Neither 'code', 'codium', nor 'cursor' CLI tools found on PATH. Install manually via: code --install-extension vscode-extension/podllama-vscode-0.2.0.vsix"))
 
 vscode_extension-update: vscode_extension-install
 

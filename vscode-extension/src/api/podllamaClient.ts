@@ -10,6 +10,8 @@ export interface PodLlamaConfig {
   autocompleteModel: string;
   temperature: number;
   autocompleteMaxTokens: number;
+  maxContextTokens: number;
+  systemPrompt: string;
 }
 
 export interface ChatMessage {
@@ -53,7 +55,7 @@ export class PodLlamaClient {
   public async checkHealth(): Promise<boolean> {
     try {
       const liveUrl = this.config.apiBase.replace(/\/v1\/?$/, '/health/liveliness');
-      const res = await this.httpRequest('GET', liveUrl);
+      const res = await this.httpRequest('GET', liveUrl, undefined, undefined, 5000);
       if (res.statusCode === 200) {
         return true;
       }
@@ -65,7 +67,7 @@ export class PodLlamaClient {
       const modelsUrl = `${this.config.apiBase.replace(/\/$/, '')}/models`;
       const res = await this.httpRequest('GET', modelsUrl, undefined, {
         Authorization: `Bearer ${this.config.apiKey}`,
-      });
+      }, 5000);
       return res.statusCode === 200;
     } catch {
       return false;
@@ -76,7 +78,7 @@ export class PodLlamaClient {
     const modelsUrl = `${this.config.apiBase.replace(/\/$/, '')}/models`;
     const res = await this.httpRequest('GET', modelsUrl, undefined, {
       Authorization: `Bearer ${this.config.apiKey}`,
-    });
+    }, 10000);
     if (res.statusCode !== 200) {
       throw new Error(`Failed to list models: HTTP ${res.statusCode} ${res.body}`);
     }
@@ -100,7 +102,7 @@ export class PodLlamaClient {
     const res = await this.httpRequest('POST', url, body, {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${this.config.apiKey}`,
-    });
+    }, 30000);
 
     if (res.statusCode !== 200) {
       throw new Error(`Completion error HTTP ${res.statusCode}: ${res.body}`);
@@ -126,7 +128,7 @@ export class PodLlamaClient {
     const res = await this.httpRequest('POST', url, body, {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${this.config.apiKey}`,
-    });
+    }, 30000);
 
     if (res.statusCode !== 200) {
       throw new Error(`Chat error HTTP ${res.statusCode}: ${res.body}`);
@@ -241,7 +243,8 @@ export class PodLlamaClient {
     method: string,
     targetUrl: string,
     postData?: string,
-    headers?: Record<string, string>
+    headers?: Record<string, string>,
+    timeoutMs: number = 10000
   ): Promise<{ statusCode: number; body: string }> {
     const parsedUrl = new URL(targetUrl);
     const isHttps = parsedUrl.protocol === 'https:';
@@ -254,16 +257,22 @@ export class PodLlamaClient {
         path: parsedUrl.pathname + parsedUrl.search,
         method: method,
         headers: headers || {},
+        timeout: timeoutMs,
       };
 
       if (postData && headers && !headers['Content-Length']) {
-        options.headers!['Content-Length'] = Buffer.byteLength(postData);
+        (options.headers as Record<string, string | number>)['Content-Length'] = Buffer.byteLength(postData);
       }
 
       const req = transport.request(options, (res) => {
         let body = '';
         res.on('data', (chunk) => (body += chunk.toString()));
         res.on('end', () => resolve({ statusCode: res.statusCode || 500, body }));
+      });
+
+      req.on('timeout', () => {
+        req.destroy();
+        reject(new Error(`Request timed out after ${timeoutMs}ms: ${method} ${targetUrl}`));
       });
 
       req.on('error', (err) => reject(err));

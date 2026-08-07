@@ -8,7 +8,7 @@ export class PodLlamaLanguageModelProvider {
     const disposables: vscode.Disposable[] = [];
 
     // Check if VS Code lm provider registration API is available
-    if (typeof (vscode.lm as any).registerLanguageModelChatProvider === 'function') {
+    if (typeof (vscode.lm as any)?.registerLanguageModelChatProvider === 'function') {
       const vendorIds = ['podllama', 'customendpoint'];
 
       for (const vendorId of vendorIds) {

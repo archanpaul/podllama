@@ -4,6 +4,20 @@ Official native VS Code extension for the **PodLlama** GPU-accelerated local con
 
 ---
 
+## What's New in 0.2.0
+
+- **Fixed**: Chat subcommands (`/explain`, `/refactor`, `/fix`, `/test`) now properly route to `@podllama` participant instead of just opening an empty chat panel.
+- **Fixed**: HTTP request timeouts prevent indefinite hangs when backend is unresponsive (5s health, 30s completions).
+- **Fixed**: JSON comment stripping no longer corrupts URL strings in `settings.json`.
+- **Fixed**: Removed duplicate `activationEvents` entries in package manifest.
+- **Enhanced**: Status bar polling reduced from 10s → 30s with exponential backoff when offline (30s → 60s → 120s).
+- **Enhanced**: `systemPrompt` setting is now wired into the `@podllama` chat participant — customize the agent personality.
+- **Enhanced**: `maxContextTokens` setting is now read from configuration.
+- **Enhanced**: File context truncation increased from 6000 → 8000 chars to better utilize the 16K context window.
+- **Enhanced**: Expanded unit test coverage with FIM post-processing tests.
+
+---
+
 ## Features
 
 - **Native Inline Code Autocomplete**: Real-time Fill-In-Middle (FIM) tab completions powered by `podllama-autocomplete` (`qwen2.5-coder-0.5b-instruct`).
@@ -14,7 +28,7 @@ Official native VS Code extension for the **PodLlama** GPU-accelerated local con
   - `@podllama /test` - Generate unit test suites.
   - `@podllama /think` - Deep reasoning analysis via `podllama-thinking` (`DeepSeek-R1-Distill-Qwen`).
 - **Language Model Agent Tools API**: Integrates custom tools (`podllama_get_workspace_diagnostics`, `podllama_read_active_editor`, `podllama_container_status`, `podllama_switch_model`) with VS Code Agent workflows.
-- **Status Bar Control & Telemetry**: Dynamic live status bar monitoring container liveliness, current active model, and autocomplete state.
+- **Status Bar Control & Telemetry**: Dynamic live status bar monitoring container liveliness, current active model, and autocomplete state — with smart exponential backoff to reduce unnecessary network load.
 
 ---
 
@@ -41,7 +55,7 @@ To install directly into VS Code:
 ```bash
 cd vscode-extension
 npx @vscode/vsce package
-code --install-extension podllama-vscode-0.1.0.vsix
+code --install-extension podllama-vscode-0.2.0.vsix
 ```
 
 ---
@@ -57,6 +71,13 @@ code --install-extension podllama-vscode-0.1.0.vsix
 | `podllama.autocompleteModel` | `podllama-autocomplete` | Default FIM completion model |
 | `podllama.enableAutocomplete` | `true` | Enable/disable inline autocomplete |
 | `podllama.autocompleteDebounceMs` | `150` | Keystroke debounce delay (ms) |
+| `podllama.autocompleteMaxTokens` | `128` | Max tokens for inline completions |
+| `podllama.temperature` | `0.2` | Temperature for model generation |
+| `podllama.maxContextTokens` | `16384` | Max context window token size |
+| `podllama.systemPrompt` | *(see default below)* | Custom system prompt for `@podllama` chat |
+| `podllama.autoSyncContinue` | `true` | Auto-register endpoints in `~/.continue/config.json` |
+
+**Default system prompt**: `"You are PodLlama, an expert AI software engineering assistant running on local GPU hardware."`
 
 ---
 
@@ -70,6 +91,7 @@ code --install-extension podllama-vscode-0.1.0.vsix
 - `PodLlama: Refactor Selected Code` (`podllama.refactorCode`)
 - `PodLlama: Fix Errors in Current File` (`podllama.fixCode`)
 - `PodLlama: Generate Unit Tests` (`podllama.generateTests`)
+- `PodLlama: Register Custom LM Endpoints JSON in Settings` (`podllama.installCustomEndpoints`)
 
 ---
 
@@ -116,4 +138,3 @@ To configure PodLlama as a Custom LM Endpoint in VS Code:
   }
 ]
 ```
-

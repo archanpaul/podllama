@@ -1,9 +1,15 @@
 import * as vscode from 'vscode';
 import { PodLlamaClient } from '../api/podllamaClient';
 
+const POLL_INTERVAL_MS = 30000;         // 30s normal polling
+const BACKOFF_MAX_MS = 120000;          // 2min max backoff when offline
+const BACKOFF_MULTIPLIER = 2;
+
 export class PodLlamaStatusBarManager implements vscode.Disposable {
   private statusBarItem: vscode.StatusBarItem;
-  private pollInterval: NodeJS.Timeout | undefined;
+  private pollTimer: ReturnType<typeof setTimeout> | undefined;
+  private currentIntervalMs: number = POLL_INTERVAL_MS;
+  private wasOffline: boolean = false;
 
   constructor(private client: PodLlamaClient) {
     this.statusBarItem = vscode.window.createStatusBarItem(
@@ -14,8 +20,14 @@ export class PodLlamaStatusBarManager implements vscode.Disposable {
     this.updateStatus();
     this.statusBarItem.show();
 
-    // Poll health status every 10 seconds
-    this.pollInterval = setInterval(() => this.updateStatus(), 10000);
+    // Start poll loop
+    this.schedulePoll();
+  }
+
+  private schedulePoll(): void {
+    this.pollTimer = setTimeout(() => {
+      this.updateStatus().finally(() => this.schedulePoll());
+    }, this.currentIntervalMs);
   }
 
   public async updateStatus(): Promise<void> {
@@ -30,16 +42,29 @@ export class PodLlamaStatusBarManager implements vscode.Disposable {
       this.statusBarItem.text = `$(server) PodLlama: Ready (${chatModel} | ${autoTag})`;
       this.statusBarItem.tooltip = `PodLlama Local Service is Online\nBase URL: ${this.client.currentConfig.apiBase}\nActive Chat Model: ${chatModel}\nInline Autocomplete: ${enabled ? 'Enabled' : 'Disabled'}\nClick to configure or switch models.`;
       this.statusBarItem.backgroundColor = undefined;
+
+      // Reset backoff on recovery
+      if (this.wasOffline) {
+        this.wasOffline = false;
+        this.currentIntervalMs = POLL_INTERVAL_MS;
+      }
     } else {
       this.statusBarItem.text = `$(error) PodLlama: Offline`;
       this.statusBarItem.tooltip = `PodLlama Local Service is Offline\nCannot connect to ${this.client.currentConfig.apiBase}.\nRun 'make service-up' to start containers.\nClick to re-check status or switch configuration.`;
       this.statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
+
+      // Exponential backoff when offline
+      this.wasOffline = true;
+      this.currentIntervalMs = Math.min(
+        this.currentIntervalMs * BACKOFF_MULTIPLIER,
+        BACKOFF_MAX_MS
+      );
     }
   }
 
   public dispose() {
-    if (this.pollInterval) {
-      clearInterval(this.pollInterval);
+    if (this.pollTimer) {
+      clearTimeout(this.pollTimer);
     }
     this.statusBarItem.dispose();
   }

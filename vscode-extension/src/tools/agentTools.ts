@@ -8,8 +8,12 @@ export function registerAgentTools(
   const disposables: vscode.Disposable[] = [];
 
   // Tool 1: Workspace Diagnostics
+  if (typeof (vscode.lm as any)?.registerTool !== 'function') {
+    return disposables;
+  }
+
   disposables.push(
-    vscode.lm.registerTool('podllama_get_workspace_diagnostics', {
+    (vscode.lm as any).registerTool('podllama_get_workspace_diagnostics', {
       async invoke(
         options: vscode.LanguageModelToolInvocationOptions<any>,
         token: vscode.CancellationToken
@@ -38,7 +42,7 @@ export function registerAgentTools(
 
   // Tool 2: Read Active Editor Context
   disposables.push(
-    vscode.lm.registerTool('podllama_read_active_editor', {
+    (vscode.lm as any).registerTool('podllama_read_active_editor', {
       async invoke(
         options: vscode.LanguageModelToolInvocationOptions<any>,
         token: vscode.CancellationToken
@@ -72,7 +76,7 @@ export function registerAgentTools(
 
   // Tool 3: Container Status Telemetry
   disposables.push(
-    vscode.lm.registerTool('podllama_container_status', {
+    (vscode.lm as any).registerTool('podllama_container_status', {
       async invoke(
         options: vscode.LanguageModelToolInvocationOptions<any>,
         token: vscode.CancellationToken
@@ -105,7 +109,7 @@ export function registerAgentTools(
 
   // Tool 4: Switch Active Backend Model
   disposables.push(
-    vscode.lm.registerTool('podllama_switch_model', {
+    (vscode.lm as any).registerTool('podllama_switch_model', {
       async invoke(
         options: vscode.LanguageModelToolInvocationOptions<{ model: string }>,
         token: vscode.CancellationToken

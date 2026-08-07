@@ -34,7 +34,7 @@ __export(extension_exports, {
   deactivate: () => deactivate
 });
 module.exports = __toCommonJS(extension_exports);
-var vscode6 = __toESM(require("vscode"));
+var vscode7 = __toESM(require("vscode"));
 var fs = __toESM(require("fs"));
 var path = __toESM(require("path"));
 var os = __toESM(require("os"));
@@ -47,7 +47,6 @@ var PodLlamaClient = class {
   constructor(config) {
     this.config = config;
   }
-  config;
   updateConfig(config) {
     this.config = config;
   }
@@ -57,7 +56,7 @@ var PodLlamaClient = class {
   async checkHealth() {
     try {
       const liveUrl = this.config.apiBase.replace(/\/v1\/?$/, "/health/liveliness");
-      const res = await this.httpRequest("GET", liveUrl);
+      const res = await this.httpRequest("GET", liveUrl, void 0, void 0, 5e3);
       if (res.statusCode === 200) {
         return true;
       }
@@ -67,7 +66,7 @@ var PodLlamaClient = class {
       const modelsUrl = `${this.config.apiBase.replace(/\/$/, "")}/models`;
       const res = await this.httpRequest("GET", modelsUrl, void 0, {
         Authorization: `Bearer ${this.config.apiKey}`
-      });
+      }, 5e3);
       return res.statusCode === 200;
     } catch {
       return false;
@@ -77,7 +76,7 @@ var PodLlamaClient = class {
     const modelsUrl = `${this.config.apiBase.replace(/\/$/, "")}/models`;
     const res = await this.httpRequest("GET", modelsUrl, void 0, {
       Authorization: `Bearer ${this.config.apiKey}`
-    });
+    }, 1e4);
     if (res.statusCode !== 200) {
       throw new Error(`Failed to list models: HTTP ${res.statusCode} ${res.body}`);
     }
@@ -99,7 +98,7 @@ var PodLlamaClient = class {
     const res = await this.httpRequest("POST", url, body, {
       "Content-Type": "application/json",
       Authorization: `Bearer ${this.config.apiKey}`
-    });
+    }, 3e4);
     if (res.statusCode !== 200) {
       throw new Error(`Completion error HTTP ${res.statusCode}: ${res.body}`);
     }
@@ -121,7 +120,7 @@ var PodLlamaClient = class {
     const res = await this.httpRequest("POST", url, body, {
       "Content-Type": "application/json",
       Authorization: `Bearer ${this.config.apiKey}`
-    });
+    }, 3e4);
     if (res.statusCode !== 200) {
       throw new Error(`Chat error HTTP ${res.statusCode}: ${res.body}`);
     }
@@ -172,8 +171,10 @@ var PodLlamaClient = class {
           buffer = lines.pop() || "";
           for (const line of lines) {
             const trimmed = line.trim();
-            if (!trimmed || trimmed.startsWith(":")) continue;
-            if (trimmed === "data: [DONE]") continue;
+            if (!trimmed || trimmed.startsWith(":"))
+              continue;
+            if (trimmed === "data: [DONE]")
+              continue;
             if (trimmed.startsWith("data: ")) {
               try {
                 const data = JSON.parse(trimmed.slice(6));
@@ -212,7 +213,7 @@ var PodLlamaClient = class {
       reqClient.end();
     });
   }
-  httpRequest(method, targetUrl, postData, headers) {
+  httpRequest(method, targetUrl, postData, headers, timeoutMs = 1e4) {
     const parsedUrl = new import_url.URL(targetUrl);
     const isHttps = parsedUrl.protocol === "https:";
     const transport = isHttps ? https : http;
@@ -222,7 +223,8 @@ var PodLlamaClient = class {
         port: parsedUrl.port || (isHttps ? 443 : 80),
         path: parsedUrl.pathname + parsedUrl.search,
         method,
-        headers: headers || {}
+        headers: headers || {},
+        timeout: timeoutMs
       };
       if (postData && headers && !headers["Content-Length"]) {
         options.headers["Content-Length"] = Buffer.byteLength(postData);
@@ -231,6 +233,10 @@ var PodLlamaClient = class {
         let body = "";
         res.on("data", (chunk) => body += chunk.toString());
         res.on("end", () => resolve({ statusCode: res.statusCode || 500, body }));
+      });
+      req.on("timeout", () => {
+        req.destroy();
+        reject(new Error(`Request timed out after ${timeoutMs}ms: ${method} ${targetUrl}`));
       });
       req.on("error", (err) => reject(err));
       if (postData) {
@@ -247,7 +253,6 @@ var PodLlamaInlineCompletionProvider = class {
   constructor(client) {
     this.client = client;
   }
-  client;
   debounceTimer;
   async provideInlineCompletionItems(document, position, context, token) {
     const config = vscode.workspace.getConfiguration("podllama");
@@ -338,7 +343,10 @@ function registerChatParticipant(context, client) {
   const handler = async (request, chatContext, streamResponse, token) => {
     const config = vscode2.workspace.getConfiguration("podllama");
     let targetModel = config.get("chatModel", "podllama-chat");
-    let systemInstruction = "You are PodLlama, an autonomous local AI coding agent running on GPU-accelerated local hardware. Assist the user with precise code modifications, architectural guidance, and debugging.";
+    let systemInstruction = config.get(
+      "systemPrompt",
+      "You are PodLlama, an autonomous local AI coding agent running on GPU-accelerated local hardware. Assist the user with precise code modifications, architectural guidance, and debugging."
+    );
     switch (request.command) {
       case "explain":
         systemInstruction = "You are PodLlama. Explain the provided code clearly and concisely, focusing on architecture, edge cases, and functionality.";
@@ -371,7 +379,7 @@ function registerChatParticipant(context, client) {
 
 [Attached File Reference: ${ref.value.fsPath} (${doc.languageId})]:
 \`\`\`${doc.languageId}
-${content.length > 6e3 ? content.substring(0, 6e3) + "\n... [truncated]" : content}
+${content.length > 8e3 ? content.substring(0, 8e3) + "\n... [truncated]" : content}
 \`\`\``;
           } catch {
           }
@@ -433,9 +441,9 @@ ${diagStr}`;
       }
     }
     for (const turn of chatContext.history) {
-      if (turn instanceof vscode2.ChatUserTurn) {
+      if ("prompt" in turn) {
         messages.push({ role: "user", content: turn.prompt });
-      } else if (turn instanceof vscode2.ChatAssistantTurn) {
+      } else if ("response" in turn) {
         let textContent = "";
         for (const part of turn.response) {
           if (part instanceof vscode2.ChatResponseMarkdownPart) {
@@ -485,6 +493,9 @@ ${diagStr}`;
       return { metadata: { error: errorMsg } };
     }
   };
+  if (typeof vscode2.chat?.createChatParticipant !== "function") {
+    throw new Error("VS Code chat participant API is not available in this environment.");
+  }
   const participant = vscode2.chat.createChatParticipant("podllama.chat", handler);
   participant.iconPath = new vscode2.ThemeIcon("server-environment");
   return participant;
@@ -494,13 +505,17 @@ ${diagStr}`;
 var vscode3 = __toESM(require("vscode"));
 function registerAgentTools(context, client) {
   const disposables = [];
+  if (typeof vscode3.lm?.registerTool !== "function") {
+    return disposables;
+  }
   disposables.push(
     vscode3.lm.registerTool("podllama_get_workspace_diagnostics", {
       async invoke(options, token) {
         const diagnosticsMap = [];
         const allDiags = vscode3.languages.getDiagnostics();
         for (const [uri, diags] of allDiags) {
-          if (diags.length === 0) continue;
+          if (diags.length === 0)
+            continue;
           const formatted = diags.map(
             (d) => `Line ${d.range.start.line + 1}: [${vscode3.DiagnosticSeverity[d.severity]}] ${d.message}`
           );
@@ -602,6 +617,9 @@ function registerAgentTools(context, client) {
 
 // src/ui/statusBar.ts
 var vscode4 = __toESM(require("vscode"));
+var POLL_INTERVAL_MS = 3e4;
+var BACKOFF_MAX_MS = 12e4;
+var BACKOFF_MULTIPLIER = 2;
 var PodLlamaStatusBarManager = class {
   constructor(client) {
     this.client = client;
@@ -612,11 +630,17 @@ var PodLlamaStatusBarManager = class {
     this.statusBarItem.command = "podllama.selectModel";
     this.updateStatus();
     this.statusBarItem.show();
-    this.pollInterval = setInterval(() => this.updateStatus(), 1e4);
+    this.schedulePoll();
   }
-  client;
   statusBarItem;
-  pollInterval;
+  pollTimer;
+  currentIntervalMs = POLL_INTERVAL_MS;
+  wasOffline = false;
+  schedulePoll() {
+    this.pollTimer = setTimeout(() => {
+      this.updateStatus().finally(() => this.schedulePoll());
+    }, this.currentIntervalMs);
+  }
   async updateStatus() {
     const config = vscode4.workspace.getConfiguration("podllama");
     const enabled = config.get("enableAutocomplete", true);
@@ -631,6 +655,10 @@ Active Chat Model: ${chatModel}
 Inline Autocomplete: ${enabled ? "Enabled" : "Disabled"}
 Click to configure or switch models.`;
       this.statusBarItem.backgroundColor = void 0;
+      if (this.wasOffline) {
+        this.wasOffline = false;
+        this.currentIntervalMs = POLL_INTERVAL_MS;
+      }
     } else {
       this.statusBarItem.text = `$(error) PodLlama: Offline`;
       this.statusBarItem.tooltip = `PodLlama Local Service is Offline
@@ -638,11 +666,16 @@ Cannot connect to ${this.client.currentConfig.apiBase}.
 Run 'make service-up' to start containers.
 Click to re-check status or switch configuration.`;
       this.statusBarItem.backgroundColor = new vscode4.ThemeColor("statusBarItem.errorBackground");
+      this.wasOffline = true;
+      this.currentIntervalMs = Math.min(
+        this.currentIntervalMs * BACKOFF_MULTIPLIER,
+        BACKOFF_MAX_MS
+      );
     }
   }
   dispose() {
-    if (this.pollInterval) {
-      clearInterval(this.pollInterval);
+    if (this.pollTimer) {
+      clearTimeout(this.pollTimer);
     }
     this.statusBarItem.dispose();
   }
@@ -654,10 +687,9 @@ var PodLlamaLanguageModelProvider = class {
   constructor(client) {
     this.client = client;
   }
-  client;
   register(context) {
     const disposables = [];
-    if (typeof vscode5.lm.registerLanguageModelChatProvider === "function") {
+    if (typeof vscode5.lm?.registerLanguageModelChatProvider === "function") {
       const vendorIds = ["podllama", "customendpoint"];
       for (const vendorId of vendorIds) {
         try {
@@ -711,6 +743,16 @@ var PodLlamaLanguageModelProvider = class {
   }
 };
 
+// src/utils/apiCompat.ts
+var vscode6 = __toESM(require("vscode"));
+function detectLanguageModelApiSupport(vscodeApi = vscode6, lmApi = vscodeApi.lm) {
+  return {
+    hasChatParticipantApi: typeof vscodeApi.chat?.createChatParticipant === "function",
+    hasLanguageModelToolApi: typeof lmApi?.registerTool === "function",
+    hasLanguageModelProviderApi: typeof lmApi?.registerLanguageModelChatProvider === "function"
+  };
+}
+
 // src/extension.ts
 var podllamaClient;
 var statusBarManager;
@@ -720,23 +762,36 @@ function activate(context) {
   const config = getClientConfig();
   podllamaClient = new PodLlamaClient(config);
   const inlineProvider = new PodLlamaInlineCompletionProvider(podllamaClient);
-  const inlineDisposable = vscode6.languages.registerInlineCompletionItemProvider(
+  const inlineDisposable = vscode7.languages.registerInlineCompletionItemProvider(
     { pattern: "**" },
     inlineProvider
   );
   context.subscriptions.push(inlineDisposable);
-  const chatParticipant = registerChatParticipant(context, podllamaClient);
-  context.subscriptions.push(chatParticipant);
-  const toolDisposables = registerAgentTools(context, podllamaClient);
-  context.subscriptions.push(...toolDisposables);
-  const lmProvider = new PodLlamaLanguageModelProvider(podllamaClient);
-  const lmDisposables = lmProvider.register(context);
-  context.subscriptions.push(...lmDisposables);
+  const apiSupport = detectLanguageModelApiSupport();
+  if (apiSupport.hasChatParticipantApi) {
+    const chatParticipant = registerChatParticipant(context, podllamaClient);
+    context.subscriptions.push(chatParticipant);
+  } else {
+    console.warn("VS Code chat participant API is unavailable; skipping chat participant registration.");
+  }
+  if (apiSupport.hasLanguageModelToolApi) {
+    const toolDisposables = registerAgentTools(context, podllamaClient);
+    context.subscriptions.push(...toolDisposables);
+  } else {
+    console.warn("VS Code language model tool API is unavailable; skipping agent tool registration.");
+  }
+  if (apiSupport.hasLanguageModelProviderApi) {
+    const lmProvider = new PodLlamaLanguageModelProvider(podllamaClient);
+    const lmDisposables = lmProvider.register(context);
+    context.subscriptions.push(...lmDisposables);
+  } else {
+    console.warn("VS Code language model provider API is unavailable; skipping provider registration.");
+  }
   statusBarManager = new PodLlamaStatusBarManager(podllamaClient);
   context.subscriptions.push(statusBarManager);
   registerExtensionCommands(context);
   context.subscriptions.push(
-    vscode6.workspace.onDidChangeConfiguration((e) => {
+    vscode7.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("podllama")) {
         const newConfig = getClientConfig();
         podllamaClient.updateConfig(newConfig);
@@ -804,7 +859,7 @@ function syncModelProvidersToDisk(podllamaEndpointDef) {
     if (fs.existsSync(sPath)) {
       try {
         const raw = fs.readFileSync(sPath, "utf8");
-        let cleaned = raw.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, "$1");
+        let cleaned = raw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^(\s*)(\/\/.*)$/gm, "$1");
         const json = JSON.parse(cleaned);
         let customEndpoints = json["github.copilot.chat.customEndpoints"] || json["chat.customEndpoints"] || [];
         if (!Array.isArray(customEndpoints)) {
@@ -841,33 +896,33 @@ function syncModelProvidersToDisk(podllamaEndpointDef) {
 }
 async function initializeLocalEndpoints(context) {
   const isInitialized = context.globalState.get("podllamaInitialized", false);
-  const cfg = vscode6.workspace.getConfiguration("podllama");
+  const cfg = vscode7.workspace.getConfiguration("podllama");
   const targetApiBase = cfg.get("apiBase", "http://localhost:4000/v1");
   const targetApiKey = cfg.get("apiKey", "sk-local");
   if (!cfg.get("apiBase")) {
-    await cfg.update("apiBase", "http://localhost:4000/v1", vscode6.ConfigurationTarget.Global);
+    await cfg.update("apiBase", "http://localhost:4000/v1", vscode7.ConfigurationTarget.Global);
   }
   if (!cfg.get("apiKey")) {
-    await cfg.update("apiKey", "sk-local", vscode6.ConfigurationTarget.Global);
+    await cfg.update("apiKey", "sk-local", vscode7.ConfigurationTarget.Global);
   }
   if (!cfg.get("chatModel")) {
-    await cfg.update("chatModel", "podllama-chat", vscode6.ConfigurationTarget.Global);
+    await cfg.update("chatModel", "podllama-chat", vscode7.ConfigurationTarget.Global);
   }
   if (!cfg.get("thinkingModel")) {
-    await cfg.update("thinkingModel", "podllama-thinking", vscode6.ConfigurationTarget.Global);
+    await cfg.update("thinkingModel", "podllama-thinking", vscode7.ConfigurationTarget.Global);
   }
   if (!cfg.get("autocompleteModel")) {
-    await cfg.update("autocompleteModel", "podllama-autocomplete", vscode6.ConfigurationTarget.Global);
+    await cfg.update("autocompleteModel", "podllama-autocomplete", vscode7.ConfigurationTarget.Global);
   }
   const podllamaEndpointDef = getPodLlamaModelProviderDef(targetApiKey);
   syncModelProvidersToDisk(podllamaEndpointDef);
   try {
-    const copilotCfg = vscode6.workspace.getConfiguration("github.copilot.chat");
+    const copilotCfg = vscode7.workspace.getConfiguration("github.copilot.chat");
     const existingCustom = copilotCfg.get("customEndpoints") || [];
     const hasPodllama = existingCustom.some((e) => e && (e.name === "Podllama" || e.name === "PodLlama"));
     if (!hasPodllama) {
       const updated = [...existingCustom, podllamaEndpointDef];
-      await copilotCfg.update("customEndpoints", updated, vscode6.ConfigurationTarget.Global);
+      await copilotCfg.update("customEndpoints", updated, vscode7.ConfigurationTarget.Global);
     }
   } catch (err) {
   }
@@ -910,21 +965,21 @@ async function initializeLocalEndpoints(context) {
   }
   if (!isInitialized) {
     await context.globalState.update("podllamaInitialized", true);
-    vscode6.window.showInformationMessage(
+    vscode7.window.showInformationMessage(
       `PodLlama Model Provider configured at ${targetApiBase}!`,
       "Check Health",
       "Select Model"
     ).then((choice) => {
       if (choice === "Check Health") {
-        vscode6.commands.executeCommand("podllama.checkHealth");
+        vscode7.commands.executeCommand("podllama.checkHealth");
       } else if (choice === "Select Model") {
-        vscode6.commands.executeCommand("podllama.selectModel");
+        vscode7.commands.executeCommand("podllama.selectModel");
       }
     });
   }
 }
 function getClientConfig() {
-  const cfg = vscode6.workspace.getConfiguration("podllama");
+  const cfg = vscode7.workspace.getConfiguration("podllama");
   return {
     apiBase: cfg.get("apiBase", "http://localhost:4000/v1"),
     apiKey: cfg.get("apiKey", "sk-local"),
@@ -932,46 +987,48 @@ function getClientConfig() {
     thinkingModel: cfg.get("thinkingModel", "podllama-thinking"),
     autocompleteModel: cfg.get("autocompleteModel", "podllama-autocomplete"),
     temperature: cfg.get("temperature", 0.2),
-    autocompleteMaxTokens: cfg.get("autocompleteMaxTokens", 128)
+    autocompleteMaxTokens: cfg.get("autocompleteMaxTokens", 128),
+    maxContextTokens: cfg.get("maxContextTokens", 16384),
+    systemPrompt: cfg.get("systemPrompt", "You are PodLlama, an expert AI software engineering assistant running on local GPU hardware.")
   };
 }
 function registerExtensionCommands(context) {
   context.subscriptions.push(
-    vscode6.commands.registerCommand("podllama.openSettings", () => {
-      vscode6.commands.executeCommand("workbench.action.openSettings", "@ext:podllama.podllama-vscode");
+    vscode7.commands.registerCommand("podllama.openSettings", () => {
+      vscode7.commands.executeCommand("workbench.action.openSettings", "@ext:podllama.podllama-vscode");
     })
   );
   context.subscriptions.push(
-    vscode6.commands.registerCommand("podllama.installCustomEndpoints", async () => {
-      const cfg = vscode6.workspace.getConfiguration("podllama");
+    vscode7.commands.registerCommand("podllama.installCustomEndpoints", async () => {
+      const cfg = vscode7.workspace.getConfiguration("podllama");
       const apiKey = cfg.get("apiKey", "sk-local");
       const podllamaEndpointDef = getPodLlamaModelProviderDef(apiKey);
       syncModelProvidersToDisk(podllamaEndpointDef);
       try {
-        const copilotCfg = vscode6.workspace.getConfiguration("github.copilot.chat");
+        const copilotCfg = vscode7.workspace.getConfiguration("github.copilot.chat");
         const existing = copilotCfg.get("customEndpoints") || [];
         if (!existing.some((e) => e && (e.name === "Podllama" || e.name === "PodLlama"))) {
-          await copilotCfg.update("customEndpoints", [...existing, podllamaEndpointDef], vscode6.ConfigurationTarget.Global);
+          await copilotCfg.update("customEndpoints", [...existing, podllamaEndpointDef], vscode7.ConfigurationTarget.Global);
         }
       } catch {
       }
-      vscode6.window.showInformationMessage("PodLlama Model Provider successfully registered in VS Code settings!");
+      vscode7.window.showInformationMessage("PodLlama Model Provider successfully registered in VS Code settings!");
     })
   );
   context.subscriptions.push(
-    vscode6.commands.registerCommand("podllama.checkHealth", async () => {
+    vscode7.commands.registerCommand("podllama.checkHealth", async () => {
       const isHealthy = await podllamaClient.checkHealth();
       if (isHealthy) {
         try {
           const models = await podllamaClient.listModels();
-          vscode6.window.showInformationMessage(
+          vscode7.window.showInformationMessage(
             `PodLlama Service Online! Active Models: ${models.join(", ")}`
           );
         } catch (e) {
-          vscode6.window.showInformationMessage(`PodLlama Service Online!`);
+          vscode7.window.showInformationMessage(`PodLlama Service Online!`);
         }
       } else {
-        vscode6.window.showErrorMessage(
+        vscode7.window.showErrorMessage(
           `PodLlama Service Offline (${podllamaClient.currentConfig.apiBase}). Run 'make service-up' to start local container stack.`
         );
       }
@@ -979,7 +1036,7 @@ function registerExtensionCommands(context) {
     })
   );
   context.subscriptions.push(
-    vscode6.commands.registerCommand("podllama.selectModel", async () => {
+    vscode7.commands.registerCommand("podllama.selectModel", async () => {
       let models = ["podllama-chat", "podllama-thinking", "podllama-autocomplete"];
       try {
         const fetched = await podllamaClient.listModels();
@@ -988,50 +1045,56 @@ function registerExtensionCommands(context) {
         }
       } catch {
       }
-      const selected = await vscode6.window.showQuickPick(models, {
+      const selected = await vscode7.window.showQuickPick(models, {
         placeHolder: "Select active PodLlama model role or model file"
       });
       if (selected) {
-        const cfg = vscode6.workspace.getConfiguration("podllama");
+        const cfg = vscode7.workspace.getConfiguration("podllama");
         if (selected.includes("thinking") || selected.includes("DeepSeek")) {
-          await cfg.update("thinkingModel", selected, vscode6.ConfigurationTarget.Global);
-          vscode6.window.showInformationMessage(`PodLlama Thinking model set to: ${selected}`);
+          await cfg.update("thinkingModel", selected, vscode7.ConfigurationTarget.Global);
+          vscode7.window.showInformationMessage(`PodLlama Thinking model set to: ${selected}`);
         } else if (selected.includes("autocomplete")) {
-          await cfg.update("autocompleteModel", selected, vscode6.ConfigurationTarget.Global);
-          vscode6.window.showInformationMessage(`PodLlama Autocomplete model set to: ${selected}`);
+          await cfg.update("autocompleteModel", selected, vscode7.ConfigurationTarget.Global);
+          vscode7.window.showInformationMessage(`PodLlama Autocomplete model set to: ${selected}`);
         } else {
-          await cfg.update("chatModel", selected, vscode6.ConfigurationTarget.Global);
-          vscode6.window.showInformationMessage(`PodLlama Chat model set to: ${selected}`);
+          await cfg.update("chatModel", selected, vscode7.ConfigurationTarget.Global);
+          vscode7.window.showInformationMessage(`PodLlama Chat model set to: ${selected}`);
         }
         statusBarManager.updateStatus();
       }
     })
   );
   context.subscriptions.push(
-    vscode6.commands.registerCommand("podllama.toggleAutocomplete", async () => {
-      const cfg = vscode6.workspace.getConfiguration("podllama");
+    vscode7.commands.registerCommand("podllama.toggleAutocomplete", async () => {
+      const cfg = vscode7.workspace.getConfiguration("podllama");
       const current = cfg.get("enableAutocomplete", true);
-      await cfg.update("enableAutocomplete", !current, vscode6.ConfigurationTarget.Global);
-      vscode6.window.showInformationMessage(
+      await cfg.update("enableAutocomplete", !current, vscode7.ConfigurationTarget.Global);
+      vscode7.window.showInformationMessage(
         `PodLlama Inline Autocomplete is now ${!current ? "ENABLED" : "DISABLED"}.`
       );
       statusBarManager.updateStatus();
     })
   );
   const openChatWithCommand = async (command) => {
-    await vscode6.commands.executeCommand("workbench.action.quickchat.toggle");
+    try {
+      await vscode7.commands.executeCommand("workbench.action.chat.open", {
+        query: `@podllama /${command} `
+      });
+    } catch {
+      await vscode7.commands.executeCommand("workbench.action.quickchat.toggle");
+    }
   };
   context.subscriptions.push(
-    vscode6.commands.registerCommand("podllama.explainCode", () => openChatWithCommand("explain"))
+    vscode7.commands.registerCommand("podllama.explainCode", () => openChatWithCommand("explain"))
   );
   context.subscriptions.push(
-    vscode6.commands.registerCommand("podllama.refactorCode", () => openChatWithCommand("refactor"))
+    vscode7.commands.registerCommand("podllama.refactorCode", () => openChatWithCommand("refactor"))
   );
   context.subscriptions.push(
-    vscode6.commands.registerCommand("podllama.fixCode", () => openChatWithCommand("fix"))
+    vscode7.commands.registerCommand("podllama.fixCode", () => openChatWithCommand("fix"))
   );
   context.subscriptions.push(
-    vscode6.commands.registerCommand("podllama.generateTests", () => openChatWithCommand("test"))
+    vscode7.commands.registerCommand("podllama.generateTests", () => openChatWithCommand("test"))
   );
 }
 // Annotate the CommonJS export names for ESM import in node:

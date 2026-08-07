@@ -2,7 +2,7 @@
   "name": "podllama-vscode",
   "displayName": "PodLlama AI - Local Code Agent & Autocomplete",
   "description": "Native VS Code integration for PodLlama local LLMs: Inline FIM Code Autocomplete, @podllama Agent Chat Participant, and Language Model Tools.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "podllama",
   "icon": "media/icon.png",
   "license": "Apache-2.0",
@@ -25,8 +25,6 @@
     "onCommand:podllama.checkHealth",
     "onCommand:podllama.selectModel",
     "onCommand:podllama.toggleAutocomplete",
-    "onCommand:podllama.explainCode",
-    "onCommand:podllama.refactorCode",
     "onCommand:podllama.explainCode",
     "onCommand:podllama.refactorCode",
     "onCommand:podllama.fixCode",
@@ -80,15 +78,6 @@
         "command": "podllama.generateTests",
         "title": "PodLlama: Generate Unit Tests",
         "category": "PodLlama"
-      }
-    ],
-    "chatAgents": [
-      {
-        "id": "podllama",
-        "name": "PodLlama",
-        "fullName": "PodLlama Local Agent",
-        "description": "PodLlama GPU-Accelerated Local Agent & AI Assistant",
-        "isUnlisted": false
       }
     ],
     "chatParticipants": [
