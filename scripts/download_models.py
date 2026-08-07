@@ -74,10 +74,10 @@ def main():
     os.makedirs(args.models_dir, exist_ok=True)
 
     if args.active_only:
-        active_models = [conf.get('active_chat_model'), conf.get('active_autocomplete_model')]
+        active_models = [conf.get('active_chat_model'), conf.get('active_autocomplete_model'), conf.get('active_thinking_model')]
         active_models = [m for m in active_models if m and m in conf['models']]
         targets = {m: conf['models'][m] for m in active_models}
-        print(f"Checking active chat and autocomplete models in {args.models_dir}...")
+        print(f"Checking active chat, autocomplete, and thinking models in {args.models_dir}...")
     else:
         targets = conf['models']
         print(f"Checking all configured GGUF models in {args.models_dir}...")
