@@ -149,7 +149,7 @@ exec "${LLAMA_SERVER_BIN}" \
     -ngl "${GPU_LAYERS}" \
     -t "${CPU_THREADS}" \
     -c "${CTX_SIZE}" \
-    --flash-attn auto \
+    --flash-attn \
     --jinja \
     --alias "qwen2.5-coder"
 

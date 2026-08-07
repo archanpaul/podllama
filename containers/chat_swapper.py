@@ -157,7 +157,7 @@ def start_llama_server(target_model_file):
         "-ngl", str(gpu_layers),
         "-t", str(cpu_threads),
         "-c", str(ctx_size),
-        "--flash-attn", "auto",
+        "--flash-attn",
         "--jinja",
         "--alias", "qwen2.5-coder"
     ]
