@@ -24,7 +24,18 @@ if not os.path.exists(CONFIG_FILE) and os.path.exists("/models/model_conf.yaml")
 MODELS_DIR = os.environ.get("MODELS_DIR", "/models")
 SERVER_PORT = int(os.environ.get("SERVER_PORT", "8080"))
 LLAMA_PORT = int(os.environ.get("LLAMA_PORT", "8082"))
-IDLE_TIMEOUT_SECONDS = int(os.environ.get("IDLE_TIMEOUT_SECONDS", "600"))  # 10 minutes
+DEFAULT_IDLE_TIMEOUT = 600  # 10 minutes default
+
+
+def get_idle_timeout():
+    load_config()
+    timeout = config_data.get("idle_timeout_seconds")
+    if timeout is not None:
+        try:
+            return int(timeout)
+        except ValueError:
+            pass
+    return int(os.environ.get("IDLE_TIMEOUT_SECONDS", str(DEFAULT_IDLE_TIMEOUT)))
 
 # Global Supervisor State
 state_lock = threading.Lock()
@@ -189,14 +200,15 @@ def ensure_model_running(requested_model_name):
 
 
 def idle_supervisor_thread():
-    """Monitors idle time and stops llama-server after IDLE_TIMEOUT_SECONDS of inactivity."""
+    """Monitors idle time and stops llama-server after idle threshold of inactivity."""
     while True:
         time.sleep(10)
+        timeout_sec = get_idle_timeout()
         with state_lock:
             if llama_process is not None:
                 idle_duration = time.time() - last_request_time
-                if idle_duration >= IDLE_TIMEOUT_SECONDS:
-                    print(f"[Swapper] [Auto-Stop] No requests received for {int(idle_duration)}s (threshold: {IDLE_TIMEOUT_SECONDS}s).", flush=True)
+                if idle_duration >= timeout_sec:
+                    print(f"[Swapper] [Auto-Stop] No requests received for {int(idle_duration)}s (threshold: {timeout_sec}s).", flush=True)
                     stop_llama_server()
 
 
@@ -269,10 +281,11 @@ class ProxyHandler(BaseHTTPRequestHandler):
 
 
 def main():
+    timeout_sec = get_idle_timeout()
     print(f"=== Qwen Chat Swapper & Idle Supervisor Starting ===", flush=True)
     print(f"Listening Port: {SERVER_PORT}", flush=True)
     print(f"Internal Llama Port: {LLAMA_PORT}", flush=True)
-    print(f"Idle Timeout: {IDLE_TIMEOUT_SECONDS}s ({IDLE_TIMEOUT_SECONDS // 60} minutes)", flush=True)
+    print(f"Idle Timeout: {timeout_sec}s ({timeout_sec // 60} minutes)", flush=True)
 
     load_config()
     default_model = config_data.get("active_chat_model", "")

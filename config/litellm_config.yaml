@@ -5,20 +5,12 @@ model_list:
       model: custom_openai/qwen2.5-coder
       api_base: http://podllama_chat:8080/v1
       api_key: sk-local
-      max_tokens: 65536
-    model_info:
-      max_tokens: 65536
-      max_input_tokens: 65536
 
   - model_name: podllama-autocomplete
     litellm_params:
       model: custom_openai/qwen2.5-coder
       api_base: http://podllama_autocomplete:8081/v1
       api_key: sk-local
-      max_tokens: 65536
-    model_info:
-      max_tokens: 65536
-      max_input_tokens: 65536
 
   - model_name: podllama
     litellm_params:
@@ -31,22 +23,14 @@ model_list:
       model: custom_openai/qwen2.5-coder
       api_base: http://podllama_chat:8080/v1
       api_key: sk-local
-      max_tokens: 65536
-    model_info:
-      max_tokens: 65536
-      max_input_tokens: 65536
 
   - model_name: qwen-autocomplete
     litellm_params:
       model: custom_openai/qwen2.5-coder
       api_base: http://podllama_autocomplete:8081/v1
       api_key: sk-local
-      max_tokens: 65536
-    model_info:
-      max_tokens: 65536
-      max_input_tokens: 65536
 
-  # 7B & 3B Models (Chat Server - Port 8080)
+  # Chat Server Models (Port 8080)
   - model_name: qwen2.5-coder-7b-instruct-q4_k_m.gguf
     litellm_params:
       model: custom_openai/qwen2.5-coder
@@ -71,7 +55,7 @@ model_list:
       api_base: http://podllama_chat:8080/v1
       api_key: sk-local
 
-  # 0.5B Models (Autocomplete Server - Port 8081)
+  # Autocomplete Server Models (Port 8081)
   - model_name: qwen2.5-coder-0.5b-instruct-q4_k_m.gguf
     litellm_params:
       model: custom_openai/qwen2.5-coder
@@ -90,7 +74,6 @@ model_list:
       api_base: http://podllama_autocomplete:8081/v1
       api_key: sk-local
 
-  # 1.5B Models (Autocomplete Server - Port 8081)
   - model_name: qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
     litellm_params:
       model: custom_openai/qwen2.5-coder
@@ -103,7 +86,7 @@ model_list:
       api_base: http://podllama_autocomplete:8081/v1
       api_key: sk-local
 
-  # General Fallbacks
+  # General Fallbacks & Aliases
   - model_name: qwen2.5-coder
     litellm_params:
       model: custom_openai/qwen2.5-coder

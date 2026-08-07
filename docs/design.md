@@ -127,6 +127,7 @@ active_chat_model: qwen2.5-coder-7b-instruct-q4_k_m.gguf
 active_autocomplete_model: qwen2.5-coder-0.5b-q4_k_m.gguf
 chat_server_port: 8080
 autocomplete_server_port: 8081
+idle_timeout_seconds: 600
 vulkan_gpu_layers: 99
 context_size: 16384
 

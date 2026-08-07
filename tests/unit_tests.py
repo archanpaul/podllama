@@ -13,7 +13,7 @@ PROJECT_ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 
 def test_yaml_configurations():
     """Test model_conf.yaml and litellm_config.yaml parsing and required schema keys."""
-    print("[1/3] Testing YAML Configuration Files...")
+    print("[1/4] Testing YAML Configuration Files...")
     model_conf_path = os.path.join(PROJECT_ROOT, "config", "model_conf.yaml")
     litellm_conf_path = os.path.join(PROJECT_ROOT, "config", "litellm_config.yaml")
     continue_conf_path = os.path.join(PROJECT_ROOT, "config", "continue.yaml")
@@ -33,6 +33,8 @@ def test_yaml_configurations():
 
     assert "active_chat_model" in model_conf, "Missing active_chat_model in model_conf.yaml"
     assert "active_autocomplete_model" in model_conf, "Missing active_autocomplete_model in model_conf.yaml"
+    assert "idle_timeout_seconds" in model_conf, "Missing idle_timeout_seconds in model_conf.yaml"
+    assert isinstance(model_conf["idle_timeout_seconds"], int) and model_conf["idle_timeout_seconds"] > 0, "idle_timeout_seconds must be a positive integer"
     assert "models" in model_conf, "Missing models section in model_conf.yaml"
 
     models_map = model_conf["models"]
@@ -64,7 +66,7 @@ def test_yaml_configurations():
 
 def test_script_permissions():
     """Test executable bit permissions on shell scripts."""
-    print("[2/3] Testing Shell Script Executable Permissions...")
+    print("[2/4] Testing Shell Script Executable Permissions...")
     scripts = [
         os.path.join(PROJECT_ROOT, "scripts", "run_podman.sh"),
         os.path.join(PROJECT_ROOT, "containers", "entrypoint-llamacpp.sh"),
@@ -79,7 +81,7 @@ def test_script_permissions():
 
 def test_container_definitions():
     """Test presence of Containerfiles and Compose file."""
-    print("[3/3] Testing Container Definitions & Compose YAML...")
+    print("[3/4] Testing Container Definitions & Compose YAML...")
     container_files = [
         os.path.join(PROJECT_ROOT, "containers", "Containerfile.llamacpp"),
         os.path.join(PROJECT_ROOT, "containers", "Containerfile.qwencoder"),
@@ -92,6 +94,29 @@ def test_container_definitions():
     print("  -> PASSED: All container definition files present.")
 
 
+def test_chat_swapper_idle_config():
+    """Test chat_swapper idle timeout resolution from YAML and environment override."""
+    print("[4/4] Testing Chat Swapper Idle Timeout Configuration Resolution...")
+    sys.path.insert(0, os.path.join(PROJECT_ROOT, "containers"))
+    try:
+        import chat_swapper
+        timeout = chat_swapper.get_idle_timeout()
+        assert isinstance(timeout, int) and timeout > 0, f"Expected positive integer idle timeout, got {timeout}"
+
+        # Test environment variable override
+        os.environ["IDLE_TIMEOUT_SECONDS"] = "300"
+        # Temporarily mock config_data without idle_timeout_seconds to test env fallback
+        old_data = dict(chat_swapper.config_data)
+        chat_swapper.config_data.pop("idle_timeout_seconds", None)
+        assert chat_swapper.get_idle_timeout() == 300, "Env override for IDLE_TIMEOUT_SECONDS failed"
+        chat_swapper.config_data = old_data
+        del os.environ["IDLE_TIMEOUT_SECONDS"]
+        print("  -> PASSED: Chat swapper idle timeout configuration resolved successfully.")
+    except Exception as e:
+        print(f"  -> FAILED: Chat swapper idle config test failed: {e}")
+        raise
+
+
 def run_all_tests():
     print("==================================================")
     print("       PodLlama Automated Test Suite             ")
@@ -99,6 +124,7 @@ def run_all_tests():
     test_yaml_configurations()
     test_script_permissions()
     test_container_definitions()
+    test_chat_swapper_idle_config()
     print("==================================================")
     print(" SUCCESS: All automated unit tests passed!       ")
     print("==================================================")
