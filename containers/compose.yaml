@@ -8,7 +8,7 @@ services:
       - /dev/dri:/dev/dri
     volumes:
       - ${MODELS_DIR:-../models}:/models:z
-      - ../config/model_conf.yaml:/app/config/model_conf.yaml:ro,Z
+      - ../config/model_conf.yaml:/app/config/model_conf.yaml:ro,z
     mem_limit: 16g
     mem_reservation: 4g
     cpus: "8.0"
@@ -23,7 +23,7 @@ services:
       - /dev/dri:/dev/dri
     volumes:
       - ${MODELS_DIR:-../models}:/models:z
-      - ../config/model_conf.yaml:/app/config/model_conf.yaml:ro,Z
+      - ../config/model_conf.yaml:/app/config/model_conf.yaml:ro,z
     mem_limit: 4g
     mem_reservation: 1g
     cpus: "2.0"
