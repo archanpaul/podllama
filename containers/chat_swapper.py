@@ -249,15 +249,27 @@ class ProxyHandler(BaseHTTPRequestHandler):
             req = urllib.request.Request(target_url, data=body if body else None, headers=headers, method=self.command)
             with urllib.request.urlopen(req, timeout=120) as resp:
                 self.send_response(resp.status)
+                is_streaming = False
                 for k, v in resp.getheaders():
                     if k.lower() not in ['transfer-encoding', 'content-length']:
                         self.send_header(k, v)
-                
-                # Copy body chunks for streaming SSE compatibility
-                resp_body = resp.read()
-                self.send_header('Content-Length', str(len(resp_body)))
-                self.end_headers()
-                self.wfile.write(resp_body)
+                    if k.lower() == 'content-type' and 'text/event-stream' in v.lower():
+                        is_streaming = True
+
+                if is_streaming:
+                    self.send_header('Cache-Control', 'no-cache')
+                    self.end_headers()
+                    while True:
+                        chunk = resp.read(256)
+                        if not chunk:
+                            break
+                        self.wfile.write(chunk)
+                        self.wfile.flush()
+                else:
+                    resp_body = resp.read()
+                    self.send_header('Content-Length', str(len(resp_body)))
+                    self.end_headers()
+                    self.wfile.write(resp_body)
         except urllib.error.HTTPError as e:
             self.send_response(e.code)
             self.end_headers()
