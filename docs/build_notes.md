@@ -34,13 +34,15 @@ RUN if [ -n "${LLAMA_CPP_TAG}" ]; then \
     cmake --build build --config Release -j$(nproc) --target llama-server
 ```
 
-#### Cache Behavior & Automated Tag Resolution:
-- **Automated Tag Detection (`make build-server`)**: `make build-server` automatically queries the human-readable GitHub API endpoint (`https://api.github.com/repos/ggml-org/llama.cpp/tags`) for the latest release tag and passes it as `--build-arg LLAMA_CPP_TAG="..."`.
-- **Deterministic Layer Caching**: When a tag is detected, Podman reuses cached compilation layers (`--> Using cache`), skipping source compilation completely on subsequent builds (takes 0 seconds).
-- **Offline / Rate-Limit Fallback**: If GitHub API is offline or rate-limited, `make build-server` automatically falls back to an empty tag (`LLAMA_CPP_TAG=""`), cloning the latest `main` branch directly.
-- **Custom Tag Override**: You can target a specific `llama.cpp` release tag:
+#### Cache Behavior & Tag Resolution:
+- **Pinned Default Tag (`make build-server`)**: `make build-server` defaults to a pinned release tag (`LLAMA_CPP_TAG ?= b6070`) defined in `Makefile`. This ensures build caching is preserved and prevents source recompilation on consecutive runs.
+- **Fetching Latest Tag**: To explicitly query GitHub API for the newest `llama.cpp` release tag:
   ```bash
-  podman build --build-arg LLAMA_CPP_TAG="b6153" -t podllama-server:latest -f containers/Containerfile.llamacpp .
+  make build-server LLAMA_CPP_TAG=latest
+  ```
+- **Custom Tag Override**: You can target any specific `llama.cpp` release tag:
+  ```bash
+  make build-server LLAMA_CPP_TAG=b6153
   ```
 
 ---

@@ -10,6 +10,7 @@ WORKSPACE_DIR ?= $(shell pwd)
 SERVER_IMAGE ?= podllama-server:latest
 CLIENT_IMAGE ?= podllama-client:latest
 POD_NAME ?= podllama_pod
+LLAMA_CPP_TAG ?= b6070
 
 help:
 	@echo "Available Makefile targets:"
@@ -47,17 +48,23 @@ check-infra:
 build: check-infra build-server build-client build-litellm
 
 build-server:
-	@echo "Building Qwen Model Server image (Fedora 44 Minimal + Vulkan)..."
-	@LLAMA_TAG=$$(curl -sL https://api.github.com/repos/ggml-org/llama.cpp/releases/latest 2>/dev/null | grep -o '"tag_name": "[^"]*"' | head -n 1 | cut -d'"' -f4); \
-	if [ -z "$${LLAMA_TAG}" ]; then \
-		LLAMA_TAG=$$(curl -sL https://api.github.com/repos/ggml-org/llama.cpp/tags 2>/dev/null | grep -o '"name": "b[0-9]*"' | head -n 1 | cut -d'"' -f4); \
-	fi; \
-	if [ -n "$${LLAMA_TAG}" ]; then \
-		echo "Detected stable llama.cpp release tag: $${LLAMA_TAG}"; \
+	@echo "Building Qwen Model Server image (Fedora 44 Minimal + Vulkan, LLAMA_CPP_TAG=$(LLAMA_CPP_TAG))..."
+	@if [ "$(LLAMA_CPP_TAG)" = "latest" ] || [ "$(LLAMA_CPP_TAG)" = "fetch" ]; then \
+		DETECTED_TAG=$$(curl -sL https://api.github.com/repos/ggml-org/llama.cpp/releases/latest 2>/dev/null | grep -o '"tag_name": "[^"]*"' | head -n 1 | cut -d'"' -f4); \
+		if [ -z "$${DETECTED_TAG}" ]; then \
+			DETECTED_TAG=$$(curl -sL https://api.github.com/repos/ggml-org/llama.cpp/tags 2>/dev/null | grep -o '"name": "b[0-9]*"' | head -n 1 | cut -d'"' -f4); \
+		fi; \
+		if [ -n "$${DETECTED_TAG}" ]; then \
+			echo "Fetched latest release tag from GitHub API: $${DETECTED_TAG}"; \
+			TAG_TO_PASS="$${DETECTED_TAG}"; \
+		else \
+			echo "GitHub API unavailable or rate-limited. Falling back to latest main branch..."; \
+			TAG_TO_PASS=""; \
+		fi; \
 	else \
-		echo "GitHub API unavailable or rate-limited. Falling back to latest main branch (LLAMA_CPP_TAG=\"\")..."; \
+		TAG_TO_PASS="$(LLAMA_CPP_TAG)"; \
 	fi; \
-	$(PODMAN) build --build-arg LLAMA_CPP_TAG="$${LLAMA_TAG}" -t $(SERVER_IMAGE) -f containers/Containerfile.llamacpp .
+	$(PODMAN) build --build-arg LLAMA_CPP_TAG="$${TAG_TO_PASS}" -t $(SERVER_IMAGE) -f containers/Containerfile.llamacpp .
 
 build-client:
 	@echo "Building Qwen Encoder Agent image (Fedora 44 Minimal)..."
