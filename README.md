@@ -121,7 +121,7 @@ make service-up
 Check status:
 
 ```bash
-make status
+make service-status
 ```
 
 View live logs:
@@ -405,7 +405,7 @@ The workspace agent container (`Containerfile.qwencoder`) is launched with:
 | `make start-autocomplete-server` | Launches Autocomplete Model Server container standalone (Port 8081) |
 | `make start-all` | Launches both standalone model servers |
 | `make stop-server` | Stops all standalone server containers |
-| `make status` | Checks running container status and health endpoints |
+| `make service-status` | Checks running container status and health endpoints |
 | `make unit-tests` | Runs automated unit test suite (config schema, script permissions, container files) |
 | `make test` | Alias for `make unit-tests` |
 | `make smoke-tests` | Runs live smoke test on Chat (streaming), Autocomplete, and Tool Calling endpoints |

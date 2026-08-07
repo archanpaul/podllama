@@ -38,7 +38,7 @@ Manage the full stack via Podman Compose:
 make service-up
 
 # Check running container and endpoint status
-make status
+make service-status
 
 # View live service logs
 make service-logs

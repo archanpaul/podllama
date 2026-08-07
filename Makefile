@@ -19,13 +19,12 @@ help:
 	@echo "  make service-up          - Launch Chat, Autocomplete & LiteLLM Proxy via Podman Compose (Port 4000)"
 	@echo "  make service-down        - Stop Podman Compose services"
 	@echo "  make service-logs        - View live logs from all running services"
-	@echo "  make service-status      - Check running status and health of qwen services"
+	@echo "  make service-status      - Check running status and health of podllama services"
 	@echo "  make service-restart     - Restart all services (service-down then service-up)"
 	@echo "  make start-server        - Start Vulkan chat model server container on port 8080"
 	@echo "  make start-autocomplete-server - Start Vulkan autocomplete model server container on port 8081"
 	@echo "  make start-all           - Start both model server containers"
 	@echo "  make stop-server         - Stop model server containers"
-	@echo "  make status              - Check running status and health of qwen services"
 	@echo "  make unit-tests          - Run automated unit test suite (config schema, permissions, container files)"
 	@echo "  make tests               - Run all unit and smoke test suites"
 	@echo "  make smoke-tests         - Run live smoke test on Chat (streaming), Autocomplete, and Tool Calling"
@@ -124,14 +123,7 @@ service-logs:
 
 compose-logs: service-logs
 show-live-logs: service-logs
-service-status: status
-
-stop-server:
-	@echo "Stopping Model Server containers..."
-	-$(PODMAN) stop podllama_chat podllama_autocomplete podllama qwen_server_chat qwen_server_autocomplete qwen_server || true
-	-$(PODMAN) rm podllama_chat podllama_autocomplete podllama qwen_server_chat qwen_server_autocomplete qwen_server || true
-
-status:
+service-status:
 	@echo "=== Checking PodLlama Container Status ==="
 	@$(PODMAN) ps --filter "name=podllama" --filter "name=qwen" --filter "name=litellm"
 	@echo ""
@@ -139,12 +131,19 @@ status:
 	@for i in $$(seq 1 30); do \
 		OUTPUT=$$(curl -s -m 1 http://127.0.0.1:4000/health/liveliness || curl -s -m 1 -H "Authorization: Bearer sk-local" http://127.0.0.1:4000/v1/models || curl -s -m 1 http://127.0.0.1:8080/health); \
 		if [ -n "$$OUTPUT" ]; then \
-			echo "$$OUTPUT"; \
+			echo "  -> Service Health Endpoint Active: $$OUTPUT"; \
 			exit 0; \
 		fi; \
-		sleep 1; \
+		sleep 0.5; \
 	done; \
-	echo "API endpoint (http://127.0.0.1:4000 or 8080) is unreachable."
+	echo "  -> WARNING: Health endpoints not responding yet."
+
+status: service-status
+
+stop-server:
+	@echo "Stopping Model Server containers..."
+	-$(PODMAN) stop podllama_chat podllama_autocomplete podllama qwen_server_chat qwen_server_autocomplete qwen_server || true
+	-$(PODMAN) rm podllama_chat podllama_autocomplete podllama qwen_server_chat qwen_server_autocomplete qwen_server || true
 
 tests: unit-tests smoke-tests
 
