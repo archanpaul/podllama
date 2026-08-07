@@ -199,6 +199,42 @@ def test_makefile_targets():
     print("  -> PASSED: Makefile target parity and alias mappings verified.")
 
 
+def test_vscode_extension():
+    """Test VS Code Extension structure, manifest JSON, and dist bundle."""
+    import json
+    print("[7/7] Testing VS Code Extension Manifest & Bundled Output...")
+    ext_dir = os.path.join(PROJECT_ROOT, "vscode-extension")
+    pkg_path = os.path.join(ext_dir, "package.json")
+    dist_path = os.path.join(ext_dir, "dist", "extension.js")
+
+    assert os.path.exists(pkg_path), "vscode-extension/package.json missing!"
+    with open(pkg_path, "r", encoding="utf-8") as f:
+        pkg = json.load(f)
+
+    assert pkg.get("name") == "podllama-vscode", f"Unexpected name in package.json: {pkg.get('name')}"
+    assert "contributes" in pkg, "Missing contributes in package.json"
+    contributes = pkg["contributes"]
+
+    assert "chatParticipants" in contributes, "Missing chatParticipants in contributes"
+    participants = contributes["chatParticipants"]
+    assert any(p["id"] == "podllama.chat" for p in participants), "@podllama chat participant missing"
+
+    assert "languageModelTools" in contributes, "Missing languageModelTools in contributes"
+    tools = {t["id"] for t in contributes["languageModelTools"]}
+    expected_tools = {
+        "podllama_get_workspace_diagnostics",
+        "podllama_read_active_editor",
+        "podllama_container_status",
+        "podllama_switch_model",
+    }
+    assert expected_tools.issubset(tools), f"Missing language model tools in package.json. Found: {tools}"
+
+    assert os.path.exists(dist_path), "vscode-extension/dist/extension.js bundle missing! Run 'node vscode-extension/esbuild.js'"
+    assert os.path.getsize(dist_path) > 1024, "Extension bundle dist/extension.js is empty or too small"
+
+    print("  -> PASSED: VS Code Extension manifest and dist bundle verified.")
+
+
 def run_all_tests():
     print("==================================================")
     print("       PodLlama Comprehensive Unit Test Suite     ")
@@ -209,6 +245,7 @@ def run_all_tests():
     test_container_definitions()
     test_chat_swapper_idle_config()
     test_makefile_targets()
+    test_vscode_extension()
     print("==================================================")
     print(" SUCCESS: All automated unit tests passed!       ")
     print("==================================================")
@@ -216,4 +253,7 @@ def run_all_tests():
 
 if __name__ == "__main__":
     run_all_tests()
+
+
+
 
