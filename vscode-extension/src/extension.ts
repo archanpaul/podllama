@@ -139,15 +139,31 @@ function syncModelProvidersToDisk(podllamaEndpointDef: any) {
           customEndpoints = [];
         }
 
+        // Clean out any existing podllama-autocomplete entry from customEndpoints
+        customEndpoints = customEndpoints.map((e: any) => {
+          if (e && (e.name === 'Podllama' || e.name === 'PodLlama') && Array.isArray(e.models)) {
+            e.models = e.models.filter((m: any) => m.id !== 'podllama-autocomplete');
+          }
+          return e;
+        });
+
         const hasPodllama = customEndpoints.some(
           (e: any) => e && (e.name === 'Podllama' || e.name === 'PodLlama')
         );
 
         if (!hasPodllama) {
           customEndpoints.push(podllamaEndpointDef);
-          json['github.copilot.chat.customEndpoints'] = customEndpoints;
-          json['chat.customEndpoints'] = customEndpoints;
+        } else {
+          // Refresh definition
+          customEndpoints = customEndpoints.map((e: any) => {
+            if (e && (e.name === 'Podllama' || e.name === 'PodLlama')) {
+              return podllamaEndpointDef;
+            }
+            return e;
+          });
         }
+        json['github.copilot.chat.customEndpoints'] = customEndpoints;
+        json['chat.customEndpoints'] = customEndpoints;
 
         // Populate Agent dropdown menu settings (chat.agent.providers & customProviders)
         let agentProviders = json['chat.agent.providers'] || json['chat.agent.customProviders'] || [];
