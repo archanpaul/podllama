@@ -141,16 +141,23 @@ fi
 
 LLAMA_SERVER_BIN=$(command -v llama-server || command -v llama.cpp-server || echo "/usr/bin/llama-server")
 
-echo "Launching ${LLAMA_SERVER_BIN} with ${CPU_THREADS} CPU threads..."
-exec "${LLAMA_SERVER_BIN}" \
-    -m "${TARGET_MODEL_PATH}" \
-    --host 0.0.0.0 \
-    --port "${SERVER_PORT}" \
-    -ngl "${GPU_LAYERS}" \
-    -t "${CPU_THREADS}" \
-    -c "${CTX_SIZE}" \
-    --flash-attn auto \
-    --jinja \
+LLAMA_FLAGS=(
+    -m "${TARGET_MODEL_PATH}"
+    --host 0.0.0.0
+    --port "${SERVER_PORT}"
+    -ngl "${GPU_LAYERS}"
+    -t "${CPU_THREADS}"
+    -c "${CTX_SIZE}"
+    --flash-attn auto
     --alias "qwen2.5-coder"
+)
+
+if [ "${MODEL_ROLE}" != "autocomplete" ]; then
+    LLAMA_FLAGS+=(--jinja)
+fi
+
+echo "Launching ${LLAMA_SERVER_BIN} with ${CPU_THREADS} CPU threads..."
+exec "${LLAMA_SERVER_BIN}" "${LLAMA_FLAGS[@]}"
+
 
 

@@ -61,9 +61,13 @@ def resolve_model_filename(requested_name):
     models = config_data.get("models", {})
     default_model = config_data.get("active_chat_model", "")
     thinking_model = config_data.get("active_thinking_model", "")
+    autocomplete_model = config_data.get("active_autocomplete_model", "")
 
     if requested_name in ["podllama-thinking", "deepseek-r1", "thinking"]:
         return thinking_model or default_model
+
+    if requested_name in ["podllama-autocomplete", "autocomplete"]:
+        return autocomplete_model or default_model
 
     if not requested_name or requested_name in ["podllama-chat", "podllama", "qwen-chat", "qwen2.5-coder", "gpt-3.5-turbo", "default"]:
         return default_model

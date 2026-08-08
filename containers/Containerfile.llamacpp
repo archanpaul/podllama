@@ -17,15 +17,15 @@ RUN microdnf update -y && \
 # Stage 2: Compile llama-server with Vulkan GPU support (cached compilation layer)
 FROM builder_deps AS builder
 
-ARG LLAMA_CPP_TAG=""
+ARG LLAMA_CPP_TAG="b10327"
 
 WORKDIR /build
 RUN if [ -n "${LLAMA_CPP_TAG}" ]; then \
-        echo "Cloning llama.cpp pinned release: ${LLAMA_CPP_TAG}"; \
-        git clone --depth 1 --branch "${LLAMA_CPP_TAG}" https://github.com/ggml-org/llama.cpp.git .; \
+    echo "Cloning llama.cpp pinned release: ${LLAMA_CPP_TAG}"; \
+    git clone --depth 1 --branch "${LLAMA_CPP_TAG}" https://github.com/ggml-org/llama.cpp.git .; \
     else \
-        echo "Cloning llama.cpp latest main branch..."; \
-        git clone --depth 1 https://github.com/ggml-org/llama.cpp.git .; \
+    echo "Cloning llama.cpp latest main branch..."; \
+    git clone --depth 1 https://github.com/ggml-org/llama.cpp.git .; \
     fi && \
     cmake -B build -DGGML_VULKAN=ON -DCMAKE_BUILD_TYPE=Release && \
     cmake --build build --config Release -j$(nproc) --target llama-server

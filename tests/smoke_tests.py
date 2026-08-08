@@ -198,10 +198,10 @@ def test_autocomplete_model():
     log("API TEST 6: Text Completions / Autocomplete (POST /v1/completions - 'podllama-autocomplete')")
     payload = {
         "model": "podllama-autocomplete",
-        "prompt": "def fibonacci(n: int) -> int:\n    if n <= 1:\n        return n\n    return ",
+        "prompt": "<|fim_prefix|>def fibonacci(n: int) -> int:\n    if n <= 1:\n        return n\n    return <|fim_suffix|>\n<|fim_middle|>",
         "max_tokens": 32,
         "temperature": 0.1,
-        "stop": ["\n\n"]
+        "stop": ["\n", "\n\n", "<|endoftext|>", "<|file_separator|>", "```", "# Explanation", "# Note", "def "]
     }
     url = f"{BASE_URL}/completions"
     headers = {
@@ -226,6 +226,10 @@ def test_autocomplete_model():
             log(f"  Prompt Tokens Evaluated: {prompt_tokens}")
             log(f"  Completion Tokens Generated: {completion_tokens}")
             log(f"  Inline Completion Text: {repr(text.strip())}")
+            
+            clean_text = text.strip()
+            assert not clean_text.startswith("The function"), f"Completion returned natural language explanation instead of code: {repr(clean_text)}"
+            assert "calculates" not in clean_text.lower(), f"Completion returned conversational text: {repr(clean_text)}"
             log("  -> PASSED: Autocomplete model prompt processing & completion verified.")
     except Exception as e:
         log(f"  -> FAILED: Autocomplete model completion request failed: {e}")
