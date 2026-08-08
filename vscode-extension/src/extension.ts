@@ -110,15 +110,6 @@ function getPodLlamaModelProviderDef(apiKey: string) {
         maxInputTokens: 16384,
         maxOutputTokens: 4096,
       },
-      {
-        id: 'podllama-autocomplete',
-        name: 'PodLlama Autocomplete (Qwen 2.5 Coder 0.5B)',
-        url: 'http://localhost:4000/v1/completions',
-        toolCalling: false,
-        vision: false,
-        maxInputTokens: 4096,
-        maxOutputTokens: 512,
-      },
     ],
   };
 }
