@@ -1,0 +1,49 @@
+{
+  "editor.inlineSuggest.enabled": true,
+  "github.copilot.enable": {
+    "*": false,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false,
+    "python": false
+  },
+  "github.copilot.chat.customEndpoints": [
+    {
+      "name": "PodLlama",
+      "vendor": "customendpoint",
+      "apiKey": "sk-local",
+      "apiType": "chat-completions",
+      "models": [
+        {
+          "id": "podllama-chat",
+          "name": "PodLlama Chat (Qwen 2.5 Coder 7B)",
+          "url": "http://localhost:4000/v1/chat/completions",
+          "toolCalling": true,
+          "vision": false,
+          "maxInputTokens": 16384,
+          "maxOutputTokens": 4096
+        },
+        {
+          "id": "podllama-thinking",
+          "name": "PodLlama Thinking (DeepSeek-R1 Distill 7B/14B)",
+          "url": "http://localhost:4000/v1/chat/completions",
+          "toolCalling": true,
+          "vision": false,
+          "maxInputTokens": 16384,
+          "maxOutputTokens": 4096
+        }
+      ]
+    }
+  ],
+  "chat.agent.providers": [
+    {
+      "id": "podllama",
+      "name": "PodLlama",
+      "provider": "customendpoint",
+      "url": "http://localhost:4000/v1"
+    }
+  ],
+  "podllama.chatModel": "podllama-chat",
+  "podllama.thinkingModel": "podllama-thinking",
+  "podllama.autocompleteModel": "podllama-autocomplete"
+}
