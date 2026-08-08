@@ -367,8 +367,9 @@ def main():
     print(f"Idle Timeout: {timeout_sec}s ({timeout_sec // 60} minutes)", flush=True)
 
     load_config()
-    default_model = config_data.get("active_chat_model", "")
-    print(f"Default Active Chat Model: {default_model}", flush=True)
+    model_role = os.environ.get("MODEL_ROLE", "chat")
+    default_model = config_data.get("active_autocomplete_model" if model_role == "autocomplete" else "active_chat_model", "")
+    print(f"Default Active Model ({model_role}): {default_model}", flush=True)
 
     # Initial start of default model
     if default_model:
