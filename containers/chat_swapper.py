@@ -171,9 +171,8 @@ def start_llama_server(target_model_file):
         "--alias", "qwen2.5-coder"
     ]
 
-    model_role = os.environ.get("MODEL_ROLE", "chat")
     if model_role != "autocomplete":
-        cmd.append("--jinja")
+        cmd.extend(["--chat-template", "qwen2.5-coder"])
 
     print(f"[Swapper] Launching llama-server with model '{target_model_file}' on internal port {LLAMA_PORT}...", flush=True)
     llama_process = subprocess.Popen(cmd)
