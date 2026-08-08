@@ -27,6 +27,7 @@ models:
     model: podllama-autocomplete
     apiBase: http://localhost:4000/v1
     apiKey: sk-local
+    template: fim
     roles:
       - autocomplete
     autocompleteOptions:
@@ -35,6 +36,14 @@ models:
       modelTimeout: 5000
       prefixPercentage: 0.8
       maxSuffixPercentage: 0.2
+
+tabAutocompleteModel:
+  title: PodLlama Autocomplete (Local Vulkan)
+  provider: openai
+  model: podllama-autocomplete
+  apiBase: http://localhost:4000/v1
+  apiKey: sk-local
+  template: fim
 
 contextProviders:
   - name: code
