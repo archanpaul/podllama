@@ -1,5 +1,7 @@
 {
   "editor.inlineSuggest.enabled": true,
+  "github.copilot.chat.fallbackToCloud": false,
+  "chat.defaultModel": "podllama-chat",
   "github.copilot.enable": {
     "*": false,
     "plaintext": false,
