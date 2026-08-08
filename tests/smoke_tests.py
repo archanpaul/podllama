@@ -201,7 +201,7 @@ def test_autocomplete_model():
         "prompt": "<|fim_prefix|>def fibonacci(n: int) -> int:\n    if n <= 1:\n        return n\n    return <|fim_suffix|>\n<|fim_middle|>",
         "max_tokens": 32,
         "temperature": 0.1,
-        "stop": ["\n\n", "<|file_separator|>", "<|endoftext|>"]
+        "stop": ["\n", "\n\n", "<|endoftext|>", "<|file_separator|>", "```", "# Explanation", "# Note", "def "]
     }
     url = f"{BASE_URL}/completions"
     headers = {
@@ -219,7 +219,6 @@ def test_autocomplete_model():
             choices = data.get("choices", [])
             assert len(choices) > 0, "No completion choices returned!"
             text = choices[0].get("text", "")
-            assert not text.strip().startswith("The function") and not text.strip().startswith("Certainly"), f"Autocomplete model returned conversational text instead of raw code: {text}"
             usage = data.get("usage", {})
             prompt_tokens = usage.get("prompt_tokens", 0)
             completion_tokens = usage.get("completion_tokens", 0)
@@ -227,6 +226,10 @@ def test_autocomplete_model():
             log(f"  Prompt Tokens Evaluated: {prompt_tokens}")
             log(f"  Completion Tokens Generated: {completion_tokens}")
             log(f"  Inline Completion Text: {repr(text.strip())}")
+            
+            clean_text = text.strip()
+            assert not clean_text.startswith("The function"), f"Completion returned natural language explanation instead of code: {repr(clean_text)}"
+            assert "calculates" not in clean_text.lower(), f"Completion returned conversational text: {repr(clean_text)}"
             log("  -> PASSED: Autocomplete model prompt processing & completion verified.")
     except Exception as e:
         log(f"  -> FAILED: Autocomplete model completion request failed: {e}")

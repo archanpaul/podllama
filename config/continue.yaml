@@ -1,6 +1,3 @@
-# Continue Extension Configuration (config.yaml)
-# Place this file at ~/.continue/config.yaml or .continue/config.yaml
-
 name: PodLlama Local (Vulkan GPU Accelerated)
 version: 0.0.1
 schema: v1
@@ -11,7 +8,7 @@ models:
     model: podllama-chat
     apiBase: http://localhost:4000/v1
     apiKey: sk-local
-    contextLength: 8192
+    contextLength: 16384
     roles:
       - chat
       - edit
@@ -21,7 +18,7 @@ models:
     model: podllama-thinking
     apiBase: http://localhost:4000/v1
     apiKey: sk-local
-    contextLength: 8192
+    contextLength: 16384
     roles:
       - chat
 
@@ -30,16 +27,8 @@ models:
     model: podllama-autocomplete
     apiBase: http://localhost:4000/v1
     apiKey: sk-local
-    useLegacyCompletionsEndpoint: true
-    maxTokens: 256
     roles:
       - autocomplete
-    promptTemplates:
-      autocomplete: "<|fim_prefix|>{{{prefix}}}<|fim_suffix|>{{{suffix}}}<|fim_middle|>"
-
-tabAutocompleteOptions:
-  multilineCompletions: "always"
-  useCache: true
 
 contextProviders:
   - name: code

@@ -36,8 +36,6 @@ MODEL_URL=$(parse_yaml_val "print(c['models']['${ACTIVE_MODEL}']['url'])" "")
 EXPECTED_SHA256=$(parse_yaml_val "print(c['models']['${ACTIVE_MODEL}']['sha256'])" "")
 GPU_LAYERS=$(parse_yaml_val "print(c.get('vulkan_gpu_layers', 99))" "99")
 CPU_THREADS="${CPU_THREADS:-${DEFAULT_THREADS}}"
-BATCH_SIZE=$(parse_yaml_val "print(c.get('batch_size', 512))" "512")
-UBATCH_SIZE=$(parse_yaml_val "print(c.get('ubatch_size', 256))" "256")
 if [ "${MODEL_ROLE}" = "autocomplete" ]; then
     CTX_SIZE=$(parse_yaml_val "print(c.get('autocomplete_context_size', 4096))" "4096")
 else
@@ -50,7 +48,6 @@ echo "Active Model (${MODEL_ROLE}): ${ACTIVE_MODEL}"
 echo "Server Port: ${SERVER_PORT}"
 echo "Model Path: ${TARGET_MODEL_PATH}"
 echo "Expected SHA256: ${EXPECTED_SHA256}"
-echo "Batch Size (-b): ${BATCH_SIZE}, Micro Batch Size (-ub): ${UBATCH_SIZE}"
 
 # Function to verify checksum
 verify_checksum() {
@@ -134,28 +131,34 @@ else
     echo "Vulkan GPU acceleration enabled (${GPU_LAYERS} layers offloaded to GPU)."
 fi
 
-if [ "${MODEL_ROLE}" = "chat" ] && [ -f "/app/chat_swapper.py" ]; then
-    echo "Starting Chat Swapper Supervisor Proxy on port ${SERVER_PORT}..."
+if [ -f "/app/chat_swapper.py" ]; then
+    echo "Starting Swapper Supervisor Proxy for role '${MODEL_ROLE}' on port ${SERVER_PORT}..."
     export SERVER_PORT="${SERVER_PORT}"
     export CONFIG_FILE="${CONFIG_FILE}"
     export MODELS_DIR="${MODELS_DIR}"
+    export MODEL_ROLE="${MODEL_ROLE}"
     exec python3 /app/chat_swapper.py
 fi
 
 LLAMA_SERVER_BIN=$(command -v llama-server || command -v llama.cpp-server || echo "/usr/bin/llama-server")
 
-echo "Launching ${LLAMA_SERVER_BIN} with ${CPU_THREADS} CPU threads..."
-exec "${LLAMA_SERVER_BIN}" \
-    -m "${TARGET_MODEL_PATH}" \
-    --host 0.0.0.0 \
-    --port "${SERVER_PORT}" \
-    -ngl "${GPU_LAYERS}" \
-    -t "${CPU_THREADS}" \
-    -c "${CTX_SIZE}" \
-    -b "${BATCH_SIZE}" \
-    -ub "${UBATCH_SIZE}" \
-    --flash-attn \
-    --jinja \
+LLAMA_FLAGS=(
+    -m "${TARGET_MODEL_PATH}"
+    --host 0.0.0.0
+    --port "${SERVER_PORT}"
+    -ngl "${GPU_LAYERS}"
+    -t "${CPU_THREADS}"
+    -c "${CTX_SIZE}"
+    --flash-attn auto
     --alias "qwen2.5-coder"
+)
+
+if [ "${MODEL_ROLE}" != "autocomplete" ]; then
+    LLAMA_FLAGS+=(--jinja)
+fi
+
+echo "Launching ${LLAMA_SERVER_BIN} with ${CPU_THREADS} CPU threads..."
+exec "${LLAMA_SERVER_BIN}" "${LLAMA_FLAGS[@]}"
+
 
 

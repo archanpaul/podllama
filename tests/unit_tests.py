@@ -94,7 +94,10 @@ def test_model_resolution_logic():
         sub_res = chat_swapper.resolve_model_filename("DeepSeek-R1-Distill-Qwen-14B")
         assert sub_res == "DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf", f"Substring lookup failed: '{sub_res}'"
 
-        print("  -> PASSED: Model resolution logic (podllama-chat, podllama-thinking, GGUF) verified.")
+        auto_res = chat_swapper.resolve_model_filename("podllama-autocomplete")
+        assert auto_res == "qwen2.5-coder-0.5b-instruct-q4_k_m.gguf", f"podllama-autocomplete resolved to unexpected '{auto_res}'"
+
+        print("  -> PASSED: Model resolution logic (podllama-chat, podllama-thinking, podllama-autocomplete, GGUF) verified.")
     except Exception as e:
         print(f"  -> FAILED: Model resolution logic test failed: {e}")
         raise
