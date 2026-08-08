@@ -29,6 +29,12 @@ models:
     apiKey: sk-local
     roles:
       - autocomplete
+    autocompleteOptions:
+      debounceDelay: 250
+      maxPromptTokens: 1024
+      modelTimeout: 5000
+      prefixPercentage: 0.8
+      maxSuffixPercentage: 0.2
 
 contextProviders:
   - name: code
