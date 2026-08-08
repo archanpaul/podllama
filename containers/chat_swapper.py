@@ -147,8 +147,13 @@ def start_llama_server(target_model_file):
             os.rename(tmp_path, model_path)
 
     gpu_layers = check_gpu_availability()
-    cpu_threads = config_data.get("chat_cpu_threads", config_data.get("cpu_threads", 8))
-    ctx_size = config_data.get("context_size", 16384)
+    model_role = os.environ.get("MODEL_ROLE", "chat")
+    if model_role == "autocomplete":
+        cpu_threads = config_data.get("autocomplete_cpu_threads", config_data.get("cpu_threads", 4))
+        ctx_size = config_data.get("autocomplete_context_size", 4096)
+    else:
+        cpu_threads = config_data.get("chat_cpu_threads", config_data.get("cpu_threads", 8))
+        ctx_size = config_data.get("context_size", 16384)
 
     llama_bin = "/usr/bin/llama-server"
     if not os.path.exists(llama_bin):
