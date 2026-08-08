@@ -172,7 +172,7 @@ def start_llama_server(target_model_file):
     ]
 
     if model_role != "autocomplete":
-        cmd.extend(["--chat-template", "qwen2.5-coder"])
+        cmd.append("--jinja")
 
     print(f"[Swapper] Launching llama-server with model '{target_model_file}' on internal port {LLAMA_PORT}...", flush=True)
     llama_process = subprocess.Popen(cmd)
@@ -247,6 +247,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
         body = self.rfile.read(content_length) if content_length > 0 else b""
 
         requested_model = ""
+        payload = {}
         if body:
             try:
                 payload = json.loads(body.decode("utf-8"))
@@ -259,35 +260,97 @@ class ProxyHandler(BaseHTTPRequestHandler):
 
         print(f"[Swapper] [Proxy Request] [{self.command} {self.path}] Model: '{requested_model}' -> Serving with: '{current_model}'", flush=True)
 
+        # LiteLLM converts POST /v1/completions -> POST /v1/chat/completions before forwarding.
+        # For autocomplete role, detect this transformation and re-convert back to raw /v1/completions
+        # so llama-server receives a proper FIM prompt instead of a chat-formatted request.
+        model_role = os.environ.get("MODEL_ROLE", "chat")
+        forward_path = self.path
+        forward_body = body
+        reconstruct_as_chat_response = False
+
+        if (model_role == "autocomplete"
+                and self.path.rstrip("/").endswith("/chat/completions")
+                and "messages" in payload):
+            # Extract FIM prompt from last user message
+            messages = payload.get("messages", [])
+            fim_prompt = ""
+            for msg in reversed(messages):
+                content = msg.get("content", "")
+                if content:
+                    fim_prompt = content
+                    break
+
+            # Rebuild body as a /v1/completions request
+            completions_payload = {k: v for k, v in payload.items() if k != "messages"}
+            completions_payload["prompt"] = fim_prompt
+            forward_body = json.dumps(completions_payload).encode("utf-8")
+            forward_path = self.path.rstrip("/").replace("/chat/completions", "/completions")
+            reconstruct_as_chat_response = True
+            print(f"[Swapper] [Autocomplete] LiteLLM chat→completions rewrite active. FIM prompt: {repr(fim_prompt[:60])}", flush=True)
+
         # Forward request to internal llama-server
-        target_url = f"http://127.0.0.1:{LLAMA_PORT}{self.path}"
-        headers = {k: v for k, v in self.headers.items() if k.lower() != 'host'}
+        target_url = f"http://127.0.0.1:{LLAMA_PORT}{forward_path}"
+        fwd_headers = {k: v for k, v in self.headers.items() if k.lower() not in ['host', 'content-length']}
+        fwd_headers['Content-Length'] = str(len(forward_body))
 
         try:
-            req = urllib.request.Request(target_url, data=body if body else None, headers=headers, method=self.command)
+            req = urllib.request.Request(target_url, data=forward_body if forward_body else None, headers=fwd_headers, method=self.command)
             with urllib.request.urlopen(req, timeout=120) as resp:
-                self.send_response(resp.status)
-                is_streaming = False
-                for k, v in resp.getheaders():
-                    if k.lower() not in ['transfer-encoding', 'content-length']:
-                        self.send_header(k, v)
-                    if k.lower() == 'content-type' and 'text/event-stream' in v.lower():
-                        is_streaming = True
+                resp_status = resp.status
+                resp_headers = resp.getheaders()
 
-                if is_streaming:
-                    self.send_header('Cache-Control', 'no-cache')
-                    self.end_headers()
-                    while True:
-                        chunk = resp.read(256)
-                        if not chunk:
-                            break
-                        self.wfile.write(chunk)
-                        self.wfile.flush()
-                else:
-                    resp_body = resp.read()
+                if reconstruct_as_chat_response:
+                    # Convert /v1/completions response → /v1/chat/completions format
+                    # so LiteLLM can convert it back to a completions response for the client
+                    raw = resp.read()
+                    try:
+                        comp_resp = json.loads(raw.decode("utf-8"))
+                        text = comp_resp.get("choices", [{}])[0].get("text", "")
+                        chat_resp = {
+                            "id": comp_resp.get("id", ""),
+                            "object": "chat.completion",
+                            "created": comp_resp.get("created", 0),
+                            "model": comp_resp.get("model", requested_model),
+                            "choices": [{
+                                "index": 0,
+                                "message": {"role": "assistant", "content": text},
+                                "finish_reason": comp_resp.get("choices", [{}])[0].get("finish_reason", "stop")
+                            }],
+                            "usage": comp_resp.get("usage", {})
+                        }
+                        resp_body = json.dumps(chat_resp).encode("utf-8")
+                    except Exception as ex:
+                        print(f"[Swapper] Error reconstructing chat response: {ex}", flush=True)
+                        resp_body = raw
+
+                    self.send_response(resp_status)
+                    self.send_header('Content-Type', 'application/json')
                     self.send_header('Content-Length', str(len(resp_body)))
                     self.end_headers()
                     self.wfile.write(resp_body)
+                else:
+                    self.send_response(resp_status)
+                    is_streaming = False
+                    for k, v in resp_headers:
+                        if k.lower() not in ['transfer-encoding', 'content-length']:
+                            self.send_header(k, v)
+                        if k.lower() == 'content-type' and 'text/event-stream' in v.lower():
+                            is_streaming = True
+
+                    if is_streaming:
+                        self.send_header('Cache-Control', 'no-cache')
+                        self.end_headers()
+                        while True:
+                            chunk = resp.read(256)
+                            if not chunk:
+                                break
+                            self.wfile.write(chunk)
+                            self.wfile.flush()
+                    else:
+                        resp_body = resp.read()
+                        self.send_header('Content-Length', str(len(resp_body)))
+                        self.end_headers()
+                        self.wfile.write(resp_body)
         except (BrokenPipeError, ConnectionResetError):
             # Client disconnected before request completed (e.g. user stopped generation in UI)
             print("[Swapper] Client disconnected during proxy streaming.", flush=True)
