@@ -300,34 +300,49 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 resp_headers = resp.getheaders()
 
                 if reconstruct_as_chat_response:
-                    # Convert /v1/completions response → /v1/chat/completions format
-                    # so LiteLLM can convert it back to a completions response for the client
-                    raw = resp.read()
-                    try:
-                        comp_resp = json.loads(raw.decode("utf-8"))
-                        text = comp_resp.get("choices", [{}])[0].get("text", "")
-                        chat_resp = {
-                            "id": comp_resp.get("id", ""),
-                            "object": "chat.completion",
-                            "created": comp_resp.get("created", 0),
-                            "model": comp_resp.get("model", requested_model),
-                            "choices": [{
-                                "index": 0,
-                                "message": {"role": "assistant", "content": text},
-                                "finish_reason": comp_resp.get("choices", [{}])[0].get("finish_reason", "stop")
-                            }],
-                            "usage": comp_resp.get("usage", {})
-                        }
-                        resp_body = json.dumps(chat_resp).encode("utf-8")
-                    except Exception as ex:
-                        print(f"[Swapper] Error reconstructing chat response: {ex}", flush=True)
-                        resp_body = raw
+                    is_streaming = False
+                    for k, v in resp_headers:
+                        if k.lower() == 'content-type' and 'text/event-stream' in v.lower():
+                            is_streaming = True
 
-                    self.send_response(resp_status)
-                    self.send_header('Content-Type', 'application/json')
-                    self.send_header('Content-Length', str(len(resp_body)))
-                    self.end_headers()
-                    self.wfile.write(resp_body)
+                    if is_streaming:
+                        self.send_response(resp_status)
+                        self.send_header('Content-Type', 'text/event-stream')
+                        self.send_header('Cache-Control', 'no-cache')
+                        self.end_headers()
+                        while True:
+                            chunk = resp.read(256)
+                            if not chunk:
+                                break
+                            self.wfile.write(chunk)
+                            self.wfile.flush()
+                    else:
+                        raw = resp.read()
+                        try:
+                            comp_resp = json.loads(raw.decode("utf-8"))
+                            text = comp_resp.get("choices", [{}])[0].get("text", "")
+                            chat_resp = {
+                                "id": comp_resp.get("id", "cmpl-auto"),
+                                "object": "chat.completion",
+                                "created": comp_resp.get("created", int(time.time())),
+                                "model": comp_resp.get("model", requested_model),
+                                "choices": [{
+                                    "index": 0,
+                                    "message": {"role": "assistant", "content": text},
+                                    "finish_reason": comp_resp.get("choices", [{}])[0].get("finish_reason", "stop")
+                                }],
+                                "usage": comp_resp.get("usage", {})
+                            }
+                            resp_body = json.dumps(chat_resp).encode("utf-8")
+                        except Exception as ex:
+                            print(f"[Swapper] Error reconstructing chat response: {ex} | raw response preview: {repr(raw[:100])}", flush=True)
+                            resp_body = raw
+
+                        self.send_response(resp_status)
+                        self.send_header('Content-Type', 'application/json')
+                        self.send_header('Content-Length', str(len(resp_body)))
+                        self.end_headers()
+                        self.wfile.write(resp_body)
                 else:
                     self.send_response(resp_status)
                     is_streaming = False
