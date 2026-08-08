@@ -175,10 +175,9 @@ function syncModelProvidersToDisk(podllamaEndpointDef: any) {
             id: 'podllama',
             name: 'PodLlama',
             provider: 'customendpoint',
-            url: 'http://localhost:4000/v1',
+            url: 'http://localhost:4000/v1/chat/completions',
           });
           json['chat.agent.providers'] = agentProviders;
-          json['chat.agent.customProviders'] = agentProviders;
         }
 
         fs.writeFileSync(sPath, JSON.stringify(json, null, 2), 'utf8');

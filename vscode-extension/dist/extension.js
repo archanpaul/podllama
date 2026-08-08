@@ -830,15 +830,6 @@ function getPodLlamaModelProviderDef(apiKey) {
         vision: false,
         maxInputTokens: 16384,
         maxOutputTokens: 4096
-      },
-      {
-        id: "podllama-autocomplete",
-        name: "PodLlama Autocomplete (Qwen 2.5 Coder 0.5B)",
-        url: "http://localhost:4000/v1/completions",
-        toolCalling: false,
-        vision: false,
-        maxInputTokens: 4096,
-        maxOutputTokens: 512
       }
     ]
   };
@@ -865,14 +856,27 @@ function syncModelProvidersToDisk(podllamaEndpointDef) {
         if (!Array.isArray(customEndpoints)) {
           customEndpoints = [];
         }
+        customEndpoints = customEndpoints.map((e) => {
+          if (e && (e.name === "Podllama" || e.name === "PodLlama") && Array.isArray(e.models)) {
+            e.models = e.models.filter((m) => m.id !== "podllama-autocomplete");
+          }
+          return e;
+        });
         const hasPodllama = customEndpoints.some(
           (e) => e && (e.name === "Podllama" || e.name === "PodLlama")
         );
         if (!hasPodllama) {
           customEndpoints.push(podllamaEndpointDef);
-          json["github.copilot.chat.customEndpoints"] = customEndpoints;
-          json["chat.customEndpoints"] = customEndpoints;
+        } else {
+          customEndpoints = customEndpoints.map((e) => {
+            if (e && (e.name === "Podllama" || e.name === "PodLlama")) {
+              return podllamaEndpointDef;
+            }
+            return e;
+          });
         }
+        json["github.copilot.chat.customEndpoints"] = customEndpoints;
+        json["chat.customEndpoints"] = customEndpoints;
         let agentProviders = json["chat.agent.providers"] || json["chat.agent.customProviders"] || [];
         if (!Array.isArray(agentProviders)) {
           agentProviders = [];
@@ -882,10 +886,9 @@ function syncModelProvidersToDisk(podllamaEndpointDef) {
             id: "podllama",
             name: "PodLlama",
             provider: "customendpoint",
-            url: "http://localhost:4000/v1"
+            url: "http://localhost:4000/v1/chat/completions"
           });
           json["chat.agent.providers"] = agentProviders;
-          json["chat.agent.customProviders"] = agentProviders;
         }
         fs.writeFileSync(sPath, JSON.stringify(json, null, 2), "utf8");
         console.log(`PodLlama Model Provider & Agent dropdown synced to ${sPath}`);
