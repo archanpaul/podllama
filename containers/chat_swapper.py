@@ -59,7 +59,8 @@ def resolve_model_filename(requested_name):
     """Resolves a model name/alias (e.g. 'podllama-thinking', 'qwen-chat', 'qwen2.5-coder-3b-instruct') to GGUF filename."""
     load_config()
     models = config_data.get("models", {})
-    default_model = config_data.get("active_chat_model", "")
+    model_role = os.environ.get("MODEL_ROLE", "chat")
+    default_model = config_data.get("active_autocomplete_model" if model_role == "autocomplete" else "active_chat_model", "")
     thinking_model = config_data.get("active_thinking_model", "")
     autocomplete_model = config_data.get("active_autocomplete_model", "")
 

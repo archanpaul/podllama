@@ -131,11 +131,12 @@ else
     echo "Vulkan GPU acceleration enabled (${GPU_LAYERS} layers offloaded to GPU)."
 fi
 
-if [ "${MODEL_ROLE}" = "chat" ] && [ -f "/app/chat_swapper.py" ]; then
-    echo "Starting Chat Swapper Supervisor Proxy on port ${SERVER_PORT}..."
+if [ -f "/app/chat_swapper.py" ]; then
+    echo "Starting Swapper Supervisor Proxy for role '${MODEL_ROLE}' on port ${SERVER_PORT}..."
     export SERVER_PORT="${SERVER_PORT}"
     export CONFIG_FILE="${CONFIG_FILE}"
     export MODELS_DIR="${MODELS_DIR}"
+    export MODEL_ROLE="${MODEL_ROLE}"
     exec python3 /app/chat_swapper.py
 fi
 
