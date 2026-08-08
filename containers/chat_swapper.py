@@ -261,12 +261,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
         print(f"[Swapper] [Proxy Request] [{self.command} {self.path}] Model: '{requested_model}' -> Serving with: '{current_model}'", flush=True)
 
         # Forward request to internal llama-server
-        forward_path = self.path
-        model_role = os.environ.get("MODEL_ROLE", "chat")
-        if model_role == "autocomplete" and forward_path.endswith("/chat/completions"):
-            forward_path = forward_path.replace("/chat/completions", "/completions")
-
-        target_url = f"http://127.0.0.1:{LLAMA_PORT}{forward_path}"
+        target_url = f"http://127.0.0.1:{LLAMA_PORT}{self.path}"
         headers = {k: v for k, v in self.headers.items() if k.lower() != 'host'}
 
         try:
