@@ -1,9 +1,9 @@
-# Continue Extension Configuration (config.yaml)
-# Place this file at ~/.continue/config.yaml or .continue/config.yaml
+name: PodLlama Local (Vulkan GPU Accelerated)
+version: 0.0.1
+schema: v1
 
 models:
   - name: PodLlama Chat (Local Vulkan)
-    title: PodLlama Chat (Local Vulkan)
     provider: openai
     model: podllama-chat
     apiBase: http://localhost:4000/v1
@@ -14,7 +14,6 @@ models:
       - edit
 
   - name: PodLlama Thinking (Local Vulkan)
-    title: PodLlama Thinking (Local Vulkan)
     provider: openai
     model: podllama-thinking
     apiBase: http://localhost:4000/v1
@@ -24,20 +23,12 @@ models:
       - chat
 
   - name: PodLlama Autocomplete (Local Vulkan)
-    title: PodLlama Autocomplete (Local Vulkan)
     provider: openai
     model: podllama-autocomplete
     apiBase: http://localhost:4000/v1
     apiKey: sk-local
     roles:
       - autocomplete
-
-tabAutocompleteModel:
-  title: PodLlama Autocomplete (Local Vulkan)
-  provider: openai
-  model: podllama-autocomplete
-  apiBase: http://localhost:4000/v1
-  apiKey: sk-local
 
 contextProviders:
   - name: code
