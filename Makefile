@@ -10,7 +10,7 @@ WORKSPACE_DIR ?= $(shell pwd)
 SERVER_IMAGE ?= podllama-server:latest
 CLIENT_IMAGE ?= podllama-client:latest
 POD_NAME ?= podllama_pod
-LLAMA_CPP_TAG ?= b6070
+LLAMA_CPP_TAG ?= b10327
 
 help:
 	@echo "Available Makefile targets:"
@@ -211,4 +211,3 @@ extension-test: vscode_extension-test
 extension-package: vscode_extension-package
 extension-install: vscode_extension-install
 extension-update: vscode_extension-install
-

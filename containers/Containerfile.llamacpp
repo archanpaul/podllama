@@ -18,7 +18,7 @@ RUN microdnf update -y && \
 # Stage 2: Compile llama-server with Vulkan GPU support (cached compilation layer)
 FROM builder_deps AS builder
 
-ARG LLAMA_CPP_TAG="b10327"
+ARG LLAMA_CPP_TAG=""
 
 WORKDIR /build
 RUN if [ -n "${LLAMA_CPP_TAG}" ]; then \
