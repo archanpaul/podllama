@@ -15,7 +15,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         private conversationManager: ConversationManager,
         private client: PodLlamaClient,
         private getSettings: () => { apiBase: string; apiKey: string; chatModel: string; thinkingModel: string }
-    ) {}
+    ) { }
 
     private abortCurrentRequest() {
         if (this.activeRequest) {
@@ -336,7 +336,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         </div>
         <div class="header-actions">
             <button class="icon-btn" id="new-chat-btn" title="New Conversation"><i class="fa-solid fa-plus"></i></button>
-            <button class="icon-btn" id="history-btn" title="Conversation History"><i class="fa-regular fa-clock"></i></button>
+            <button class="icon-btn" id="history-btn" title="Conversation History"><i class="fa-solid fa-clock-rotate-left"></i></button>
         </div>
     </div>
 
