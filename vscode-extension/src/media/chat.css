@@ -298,7 +298,7 @@ pre {
 code,
 pre code {
   font-family: var(--vscode-editor-font-family, "Fira Code Local", "Fira Code", Consolas, Monaco, monospace) !important;
-  font-size: var(--vscode-editor-font-size, 12px) !important;
+  font-size: calc(var(--vscode-font-size, 13px) - 1px) !important;
   background-color: transparent;
   font-variant-ligatures: common-ligatures;
   font-feature-settings: "liga" on, "calt" on;
