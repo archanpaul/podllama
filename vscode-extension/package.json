@@ -23,7 +23,7 @@
         {
           "id": "podllama-activitybar",
           "title": "PodLlama Code",
-          "icon": "resources/podllama-icon.png"
+          "icon": "resources/podllama-icon.svg"
         }
       ]
     },
