@@ -127,6 +127,7 @@
             activeStreamTurn = document.createElement('div');
             activeStreamTurn.className = 'message-turn assistant';
             activeStreamTurn.innerHTML = `
+                <div id="stream-thinking-placeholder" style="color: var(--text-muted, #888888); font-style: italic; margin-bottom: 8px;">Thinking...</div>
                 <details class="think-card" id="stream-think-card" style="display: none;">
                     <summary class="think-summary">Thinking...</summary>
                     <div class="think-content" id="stream-think-content"></div>
@@ -136,7 +137,12 @@
             messagesContainer.appendChild(activeStreamTurn);
         }
 
+        const placeholder = activeStreamTurn.querySelector('#stream-thinking-placeholder');
+
         if (thinking) {
+            if (placeholder) {
+                placeholder.style.display = 'none';
+            }
             const thinkCard = activeStreamTurn.querySelector('#stream-think-card');
             const thinkContent = activeStreamTurn.querySelector('#stream-think-content');
             if (thinkCard && thinkContent) {
@@ -146,6 +152,9 @@
         }
 
         if (text) {
+            if (placeholder) {
+                placeholder.style.display = 'none';
+            }
             const msgContent = activeStreamTurn.querySelector('#stream-message-content');
             if (msgContent) {
                 msgContent.dataset.raw = (msgContent.dataset.raw || '') + text;
@@ -158,6 +167,12 @@
     }
 
     function finalizeStreamResponse() {
+        if (activeStreamTurn) {
+            const placeholder = activeStreamTurn.querySelector('#stream-thinking-placeholder');
+            if (placeholder) {
+                placeholder.remove();
+            }
+        }
         activeStreamTurn = null;
         setGeneratingState(false);
     }

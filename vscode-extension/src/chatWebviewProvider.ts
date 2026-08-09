@@ -195,6 +195,13 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
             let assistantText = '';
             let assistantThinking = '';
 
+            // Send an empty token immediately to show the "Thinking..." placeholder in the UI while connecting
+            this._view?.webview.postMessage({
+                type: 'streamToken',
+                text: '',
+                thinking: ''
+            });
+
             const req = transport.request(options, (res) => {
                 res.on('data', (chunk: Buffer) => {
                     const lines = chunk.toString().split('\n');
