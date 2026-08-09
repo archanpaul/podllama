@@ -172,6 +172,8 @@
             if (placeholder) {
                 placeholder.remove();
             }
+            // Apply syntax highlight once token streaming has completely finalized
+            attachCodeBlockActions(activeStreamTurn, true);
         }
         activeStreamTurn = null;
         setGeneratingState(false);
@@ -188,15 +190,19 @@
         }
     }
 
-    function attachCodeBlockActions(container) {
+    function attachCodeBlockActions(container, forceHighlight = false) {
         const pres = container.querySelectorAll('pre');
         pres.forEach(pre => {
             if (pre.querySelector('.code-actions')) return;
 
-            // Apply syntax coloring highlight
+            // Apply syntax coloring highlight only if finalized or forced
             const codeEl = pre.querySelector('code');
-            if (codeEl && typeof hljs !== 'undefined') {
-                hljs.highlightElement(codeEl);
+            if (codeEl && typeof hljs !== 'undefined' && forceHighlight) {
+                try {
+                    hljs.highlightElement(codeEl);
+                } catch (e) {
+                    console.error('Highlight error:', e);
+                }
             }
 
             const actionsDiv = document.createElement('div');
