@@ -165,11 +165,11 @@
     function setGeneratingState(generating) {
         isGenerating = generating;
         if (generating) {
-            sendBtn.textContent = 'Stop';
-            sendBtn.style.backgroundColor = 'var(--vscode-errorForeground, #f48771)';
+            sendBtn.innerHTML = '<i class="fa-solid fa-circle-stop" style="font-size: 14px;"></i>';
+            sendBtn.style.color = 'var(--vscode-errorForeground, #f48771)';
         } else {
-            sendBtn.textContent = 'Send';
-            sendBtn.style.backgroundColor = 'var(--accent)';
+            sendBtn.innerHTML = '<i class="fa-solid fa-circle-play" style="font-size: 14px;"></i>';
+            sendBtn.style.color = 'var(--accent)';
         }
     }
 
