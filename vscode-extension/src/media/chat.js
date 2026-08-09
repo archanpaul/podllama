@@ -140,7 +140,7 @@
         const placeholder = activeStreamTurn.querySelector('#stream-thinking-placeholder');
 
         if (thinking) {
-            if (placeholder) {
+            if (placeholder && thinking.trim() !== '') {
                 placeholder.style.display = 'none';
             }
             const thinkCard = activeStreamTurn.querySelector('#stream-think-card');
@@ -152,7 +152,7 @@
         }
 
         if (text) {
-            if (placeholder) {
+            if (placeholder && text.trim() !== '') {
                 placeholder.style.display = 'none';
             }
             const msgContent = activeStreamTurn.querySelector('#stream-message-content');
