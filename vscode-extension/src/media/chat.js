@@ -47,7 +47,10 @@
         if (!modelSelect) return;
         modelSelect.innerHTML = '';
 
-        if (!models || models.length === 0) {
+        // Filter model list to only include IDs starting with 'podllama-'
+        const filteredModels = (models || []).filter(m => m.id && m.id.startsWith('podllama-'));
+
+        if (filteredModels.length === 0) {
             const opt = document.createElement('option');
             opt.value = 'podllama-chat';
             opt.textContent = 'podllama-chat';
@@ -55,7 +58,7 @@
             return;
         }
 
-        models.forEach(m => {
+        filteredModels.forEach(m => {
             const opt = document.createElement('option');
             opt.value = m.id;
             opt.textContent = m.id;
