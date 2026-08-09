@@ -158,7 +158,13 @@
             const msgContent = activeStreamTurn.querySelector('#stream-message-content');
             if (msgContent) {
                 msgContent.dataset.raw = (msgContent.dataset.raw || '') + text;
-                msgContent.innerHTML = formatMarkdown(msgContent.dataset.raw);
+                try {
+                    const formatted = formatMarkdown(msgContent.dataset.raw);
+                    msgContent.innerHTML = formatted || escapeHtml(msgContent.dataset.raw);
+                } catch (e) {
+                    console.error('Streaming rendering exception caught:', e);
+                    msgContent.textContent = msgContent.dataset.raw;
+                }
                 attachCodeBlockActions(msgContent);
             }
         }
