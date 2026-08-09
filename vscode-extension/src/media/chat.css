@@ -1,3 +1,31 @@
+@font-face {
+  font-family: 'Fira Sans';
+  font-weight: 300;
+  font-style: normal;
+  src: url('fonts/fira-sans-light.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Fira Sans';
+  font-weight: 400;
+  font-style: normal;
+  src: url('fonts/fira-sans-regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Fira Sans';
+  font-weight: 500;
+  font-style: normal;
+  src: url('fonts/fira-sans-medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Fira Code Local';
+  font-weight: 400;
+  font-style: normal;
+  src: url('fonts/fira-code-regular.woff2') format('woff2');
+}
+
 :root {
   --bg-primary: var(--vscode-sideBar-background, #1e1e1e);
   --bg-secondary: var(--vscode-editor-background, #252526);
@@ -18,7 +46,7 @@
 }
 
 body {
-  font-family: "Outfit", var(--vscode-font-family), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: "Fira Sans", var(--vscode-font-family), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-size: var(--vscode-font-size, 14px);
   background-color: var(--bg-primary);
   color: var(--text-main);
@@ -33,7 +61,7 @@ textarea,
 select,
 button,
 input {
-  font-family: "Outfit", var(--vscode-font-family), inherit;
+  font-family: "Fira Sans", var(--vscode-font-family), inherit;
 }
 
 /* Header Navbar */
@@ -268,9 +296,11 @@ pre {
 
 code,
 pre code {
-  font-family: var(--vscode-editor-font-family, "Fira Code", Consolas, Monaco, monospace) !important;
+  font-family: var(--vscode-editor-font-family, "Fira Code Local", "Fira Code", Consolas, Monaco, monospace) !important;
   font-size: var(--vscode-editor-font-size, 12px) !important;
   background-color: transparent;
+  font-variant-ligatures: common-ligatures;
+  font-feature-settings: "liga" on, "calt" on;
 }
 
 /* Map Highlight.js token tokens to native active VS Code theme editor colors */
