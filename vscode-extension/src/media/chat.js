@@ -111,21 +111,29 @@
     let streamDataBuffer = ''; // Raw streamed data accumulation buffer
     let viewBuffer = '';       // Rendered UI content buffer
     let streamRenderScheduled = false;
+    let uiTokenCount = 0;
 
     function renderStream() {
-        if (!activeStreamContentElement) return;
+        if (!activeStreamContentElement) {
+            console.warn('[PodLlama UI] renderStream skipped: activeStreamContentElement is null');
+            return;
+        }
 
         // Update viewBuffer with current raw streamed data directly via DOM reference
         viewBuffer = streamDataBuffer;
         activeStreamContentElement.style.whiteSpace = 'pre-wrap';
         activeStreamContentElement.textContent = viewBuffer;
 
+        console.log(`[PodLlama UI] Render frame: buffer len=${streamDataBuffer.length}, tail snippet="${viewBuffer.slice(-25).replace(/\n/g, '\\n')}"`);
+
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
         streamRenderScheduled = false;
     }
 
     function appendStreamToken(text, thinking) {
+        uiTokenCount++;
         if (!activeStreamTurn || !activeStreamContentElement) {
+            console.log('[PodLlama UI] Creating new assistant message turn DOM element');
             activeStreamTurn = document.createElement('div');
             activeStreamTurn.className = 'message-turn assistant';
             
@@ -137,10 +145,12 @@
 
             streamDataBuffer = '';
             viewBuffer = '';
+            uiTokenCount = 1;
         }
 
         if (text !== undefined && text !== null && text !== '') {
             streamDataBuffer += text;
+            console.log(`[PodLlama UI] Token #${uiTokenCount}: +${text.length} chars (total len=${streamDataBuffer.length}) -> snippet: ${JSON.stringify(text)}`);
             
             if (!streamRenderScheduled) {
                 streamRenderScheduled = true;
@@ -150,15 +160,23 @@
     }
 
     function finalizeStreamResponse() {
-        // Replace unformatted viewBuffer with formatted Markdown on stream end
+        console.log(`[PodLlama UI] finalizeStreamResponse called: total tokens=${uiTokenCount}, raw buffer len=${streamDataBuffer.length}`);
         if (activeStreamTurn && activeStreamContentElement) {
             if (streamDataBuffer) {
                 activeStreamContentElement.style.whiteSpace = '';
-                const html = formatMarkdown(streamDataBuffer, false);
-                if (html && html.trim().length > 0) {
-                    viewBuffer = html;
-                    activeStreamContentElement.innerHTML = viewBuffer;
-                } else {
+                try {
+                    const html = formatMarkdown(streamDataBuffer, false);
+                    if (html && html.trim().length > 0) {
+                        viewBuffer = html;
+                        activeStreamContentElement.innerHTML = viewBuffer;
+                        console.log(`[PodLlama UI] Final Markdown parse succeeded: HTML len=${html.length}`);
+                    } else {
+                        viewBuffer = fallbackMarkdown(streamDataBuffer);
+                        activeStreamContentElement.innerHTML = viewBuffer;
+                        console.warn('[PodLlama UI] Final Markdown parse returned empty string; used fallbackMarkdown.');
+                    }
+                } catch (e) {
+                    console.error('[PodLlama UI] Error in final formatMarkdown:', e);
                     viewBuffer = fallbackMarkdown(streamDataBuffer);
                     activeStreamContentElement.innerHTML = viewBuffer;
                 }
@@ -169,6 +187,7 @@
         activeStreamContentElement = null;
         streamDataBuffer = '';
         viewBuffer = '';
+        uiTokenCount = 0;
         setGeneratingState(false);
     }
 
