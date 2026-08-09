@@ -122,9 +122,8 @@
             const msgContent = activeStreamTurn.querySelector('#stream-message-content');
             if (msgContent) {
                 msgContent.dataset.raw = (msgContent.dataset.raw || '') + text;
-                // Use fallback basic parsing during streaming to guarantee text is always shown
-                msgContent.innerHTML = fallbackMarkdown(msgContent.dataset.raw);
-                attachCodeBlockActions(msgContent, false);
+                msgContent.innerHTML = formatMarkdown(msgContent.dataset.raw);
+                attachCodeBlockActions(msgContent);
             }
         }
 
@@ -132,15 +131,6 @@
     }
 
     function finalizeStreamResponse() {
-        if (activeStreamTurn) {
-            const msgContent = activeStreamTurn.querySelector('#stream-message-content');
-            if (msgContent && msgContent.dataset.raw) {
-                // Compile final markdown layout using marked.js once completely finished streaming
-                msgContent.innerHTML = formatMarkdown(msgContent.dataset.raw);
-            }
-            // Apply syntax highlight once token streaming has completely finalized
-            attachCodeBlockActions(activeStreamTurn, true);
-        }
         activeStreamTurn = null;
         setGeneratingState(false);
     }
@@ -148,27 +138,23 @@
     function setGeneratingState(generating) {
         isGenerating = generating;
         if (generating) {
-            sendBtn.innerHTML = '<i class="fa-solid fa-circle-stop" style="font-size: 22px;"></i>';
+            sendBtn.innerHTML = '<i class="fa-solid fa-circle-stop" style="font-size: 14px;"></i>';
             sendBtn.style.color = 'var(--vscode-errorForeground, #f48771)';
         } else {
-            sendBtn.innerHTML = '<i class="fa-solid fa-circle-play" style="font-size: 22px;"></i>';
+            sendBtn.innerHTML = '<i class="fa-solid fa-circle-play" style="font-size: 14px;"></i>';
             sendBtn.style.color = 'var(--accent)';
         }
     }
 
-    function attachCodeBlockActions(container, forceHighlight = false) {
+    function attachCodeBlockActions(container) {
         const pres = container.querySelectorAll('pre');
         pres.forEach(pre => {
             if (pre.querySelector('.code-actions')) return;
 
-            // Apply syntax coloring highlight only if finalized or forced
+            // Apply syntax coloring highlight
             const codeEl = pre.querySelector('code');
-            if (codeEl && typeof hljs !== 'undefined' && forceHighlight) {
-                try {
-                    hljs.highlightElement(codeEl);
-                } catch (e) {
-                    console.error('Highlight error:', e);
-                }
+            if (codeEl && typeof hljs !== 'undefined') {
+                hljs.highlightElement(codeEl);
             }
 
             const actionsDiv = document.createElement('div');
@@ -198,7 +184,18 @@
         });
     }
 
-    // Configure marked to use highlight.js for syntax coloring safely
+    // Configure marked to use highlight.js for syntax coloring
+    if (typeof marked !== 'undefined' && typeof hljs !== 'undefined') {
+        marked.setOptions({
+            highlight: function (code, lang) {
+                const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                return hljs.highlight(code, { language }).value;
+            },
+            langPrefix: 'hljs language-'
+        });
+    }
+
+    // Configure marked to use highlight.js safely if both are available
     if (typeof marked !== 'undefined' && typeof hljs !== 'undefined') {
         marked.setOptions({
             highlight: function (code, lang) {
@@ -206,7 +203,7 @@
                     const language = hljs.getLanguage(lang) ? lang : 'plaintext';
                     return hljs.highlight(code, { language }).value;
                 } catch (e) {
-                    return code; // Fallback plain text on syntax errors
+                    return code;
                 }
             },
             langPrefix: 'hljs language-'
@@ -215,9 +212,8 @@
 
     function formatMarkdown(text) {
         if (!text) return '';
-
+        
         try {
-            // Render markdown using marked.js if loaded
             if (typeof marked !== 'undefined' && marked.parse) {
                 let processedText = text;
                 const matches = text.match(/```/g);
@@ -225,11 +221,9 @@
                 if (backtickCount % 2 !== 0) {
                     processedText += '\n```';
                 }
-                try {
-                    const parsed = marked.parse(processedText);
-                    if (parsed) return parsed;
-                } catch (innerErr) {
-                    // Ignore and fallback
+                const parsed = marked.parse(processedText);
+                if (parsed) {
+                    return parsed;
                 }
             }
         } catch (e) {
@@ -240,7 +234,6 @@
     }
 
     function fallbackMarkdown(text) {
-        // Fallback basic parsing
         let formatted = escapeHtml(text);
         formatted = formatted.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
             return `<pre><code class="language-${lang}">${code}</code></pre>`;
@@ -278,7 +271,7 @@
 
             appendMessageTurn('user', prompt);
             setGeneratingState(true);
-
+            
             vscode.postMessage({
                 command: 'sendMessage',
                 prompt,

@@ -193,14 +193,6 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
             };
 
             let assistantText = '';
-            let assistantThinking = '';
-
-            // Send an empty token immediately to show the "Thinking..." placeholder in the UI while connecting
-            this._view?.webview.postMessage({
-                type: 'streamToken',
-                text: '',
-                thinking: ''
-            });
 
             const req = transport.request(options, (res) => {
                 res.on('data', (chunk: Buffer) => {
@@ -211,20 +203,11 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                                 const json = JSON.parse(line.substring(6));
                                 const delta = json.choices[0]?.delta;
                                 if (delta) {
-                                    if (delta.reasoning_content) {
-                                        assistantThinking += delta.reasoning_content;
-                                        this._view?.webview.postMessage({
-                                            type: 'streamToken',
-                                            text: '',
-                                            thinking: delta.reasoning_content
-                                        });
-                                    }
                                     if (delta.content) {
                                         assistantText += delta.content;
                                         this._view?.webview.postMessage({
                                             type: 'streamToken',
-                                            text: delta.content,
-                                            thinking: ''
+                                            text: delta.content
                                         });
                                     }
                                 }
@@ -243,7 +226,6 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                         id: `msg_${Date.now()}`,
                         role: 'assistant',
                         content: assistantText,
-                        thinking: assistantThinking || undefined,
                         model: model,
                         timestamp: Date.now()
                     });
