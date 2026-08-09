@@ -1,0 +1,125 @@
+{
+  "name": "podllama-code",
+  "displayName": "PodLlama Code",
+  "description": "Clean, lean, aesthetically pleasing AI assistant & low-latency autocomplete for VS Code powered by local PodLlama containers.",
+  "version": "0.1.0",
+  "publisher": "podllama",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "AI",
+    "Programming Languages",
+    "Snippets"
+  ],
+  "main": "./out/extension.js",
+  "icon": "resources/podllama-icon.png",
+  "activationEvents": [
+    "*"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "podllama-activitybar",
+          "title": "PodLlama Code",
+          "icon": "resources/podllama-icon.png"
+        }
+      ]
+    },
+    "views": {
+      "podllama-activitybar": [
+        {
+          "type": "webview",
+          "id": "podllama.chatView",
+          "name": "PodLlama Chat"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "podllama.toggleAutocomplete",
+        "title": "PodLlama: Toggle Autocomplete"
+      },
+      {
+        "command": "podllama.resetSettings",
+        "title": "PodLlama: Reset Settings to Default"
+      },
+      {
+        "command": "podllama.newConversation",
+        "title": "PodLlama: New Conversation",
+        "icon": "$(add)"
+      },
+      {
+        "command": "podllama.applyCodePatch",
+        "title": "PodLlama: Apply Code Patch to Active File"
+      }
+    ],
+    "configuration": {
+      "title": "PodLlama Code",
+      "properties": {
+        "podllama.apiBase": {
+          "type": "string",
+          "default": "http://localhost:4000/v1",
+          "description": "Base URL of the LiteLLM Proxy or backend server."
+        },
+        "podllama.apiKey": {
+          "type": "string",
+          "default": "sk-local",
+          "description": "API Key / Bearer token for authenticating with the backend."
+        },
+        "podllama.chatModel": {
+          "type": "string",
+          "default": "podllama-chat",
+          "description": "Default model ID for chat completions."
+        },
+        "podllama.thinkingModel": {
+          "type": "string",
+          "default": "podllama-thinking",
+          "description": "Default model ID for reasoning and deep thinking."
+        },
+        "podllama.autocompleteModel": {
+          "type": "string",
+          "default": "podllama-autocomplete",
+          "description": "Model ID used for low-latency FIM inline autocomplete."
+        },
+        "podllama.enableInlineCompletion": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable grey ghost text inline suggestions in the editor."
+        },
+        "podllama.enableDropdownCompletion": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable standard drop-down list completion items."
+        },
+        "podllama.debounceMs": {
+          "type": "number",
+          "default": 150,
+          "description": "Debounce delay (in ms) before dispatching inline completion requests."
+        },
+        "podllama.maxTokens": {
+          "type": "number",
+          "default": 64,
+          "description": "Maximum number of completion tokens to generate for autocomplete."
+        },
+        "podllama.temperature": {
+          "type": "number",
+          "default": 0.1,
+          "description": "Sampling temperature for autocomplete."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.7",
+    "@types/vscode": "^1.60.0",
+    "@vscode/vsce": "^3.9.2",
+    "typescript": "^4.5.4"
+  }
+}
