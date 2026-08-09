@@ -139,7 +139,7 @@
 
         const placeholder = activeStreamTurn.querySelector('#stream-thinking-placeholder');
 
-        if (thinking) {
+        if (thinking !== undefined && thinking !== null && thinking !== '') {
             if (placeholder && thinking.trim() !== '') {
                 placeholder.style.display = 'none';
             }
@@ -151,7 +151,7 @@
             }
         }
 
-        if (text) {
+        if (text !== undefined && text !== null && text !== '') {
             if (placeholder && text.trim() !== '') {
                 placeholder.style.display = 'none';
             }
