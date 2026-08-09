@@ -107,6 +107,32 @@
     }
 
     let activeStreamTurn = null;
+    let streamRawText = '';
+    let streamRenderScheduled = false;
+    let lastSuccessfulHtml = '';
+
+    function renderStream() {
+        if (!activeStreamTurn) return;
+        const msgContent = activeStreamTurn.querySelector('#stream-message-content');
+        if (!msgContent || !streamRawText) return;
+
+        try {
+            const html = formatMarkdown(streamRawText, true);
+            
+            if (html && typeof html === 'string' && html.trim().length > 0) {
+                msgContent.innerHTML = html;
+                attachCodeBlockActions(msgContent, true);
+            } else {
+                msgContent.innerHTML = fallbackMarkdown(streamRawText);
+            }
+        } catch (err) {
+            // Guarantee 100% visibility: show fallback markdown so streaming text is never hidden
+            msgContent.innerHTML = fallbackMarkdown(streamRawText);
+        }
+
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        streamRenderScheduled = false;
+    }
 
     function appendStreamToken(text, thinking) {
         if (!activeStreamTurn) {
@@ -116,22 +142,41 @@
                 <div class="message-content" id="stream-message-content"></div>
             `;
             messagesContainer.appendChild(activeStreamTurn);
+            streamRawText = '';
+            lastSuccessfulHtml = '';
         }
 
         if (text !== undefined && text !== null && text !== '') {
-            const msgContent = activeStreamTurn.querySelector('#stream-message-content');
-            if (msgContent) {
-                msgContent.dataset.raw = (msgContent.dataset.raw || '') + text;
-                msgContent.innerHTML = formatMarkdown(msgContent.dataset.raw);
-                attachCodeBlockActions(msgContent);
+            streamRawText += text;
+            
+            if (!streamRenderScheduled) {
+                streamRenderScheduled = true;
+                requestAnimationFrame(renderStream);
             }
         }
-
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
     function finalizeStreamResponse() {
+        // Full markdown render + syntax highlight happens ONCE when stream ends
+        if (activeStreamTurn) {
+            const msgContent = activeStreamTurn.querySelector('#stream-message-content');
+            if (msgContent && streamRawText) {
+                try {
+                    const html = formatMarkdown(streamRawText, false);
+                    if (html && html.trim().length > 0) {
+                        msgContent.innerHTML = html;
+                    } else {
+                        msgContent.innerHTML = fallbackMarkdown(streamRawText);
+                    }
+                } catch (e) {
+                    msgContent.innerHTML = fallbackMarkdown(streamRawText);
+                }
+                attachCodeBlockActions(msgContent, false);
+            }
+        }
         activeStreamTurn = null;
+        streamRawText = '';
+        lastSuccessfulHtml = '';
         setGeneratingState(false);
     }
 
@@ -146,14 +191,14 @@
         }
     }
 
-    function attachCodeBlockActions(container) {
+    function attachCodeBlockActions(container, isStreaming = false) {
         const pres = container.querySelectorAll('pre');
         pres.forEach(pre => {
             if (pre.querySelector('.code-actions')) return;
 
-            // Apply syntax coloring highlight
+            // Apply syntax coloring highlight ONLY if not streaming
             const codeEl = pre.querySelector('code');
-            if (codeEl && typeof hljs !== 'undefined') {
+            if (!isStreaming && codeEl && typeof hljs !== 'undefined') {
                 hljs.highlightElement(codeEl);
             }
 
@@ -184,57 +229,102 @@
         });
     }
 
-    // Configure marked to use highlight.js for syntax coloring
-    if (typeof marked !== 'undefined' && typeof hljs !== 'undefined') {
+    // Configure marked to not use highlight.js internally
+    // We apply it manually in attachCodeBlockActions to control performance
+    if (typeof marked !== 'undefined') {
         marked.setOptions({
-            highlight: function (code, lang) {
-                const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-                return hljs.highlight(code, { language }).value;
-            },
-            langPrefix: 'hljs language-'
+            langPrefix: 'language-'
         });
     }
 
-    // Configure marked to use highlight.js safely if both are available
-    if (typeof marked !== 'undefined' && typeof hljs !== 'undefined') {
-        marked.setOptions({
-            highlight: function (code, lang) {
-                try {
-                    const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-                    return hljs.highlight(code, { language }).value;
-                } catch (e) {
-                    return code;
-                }
-            },
-            langPrefix: 'hljs language-'
-        });
-    }
-
-    function formatMarkdown(text) {
+    function formatMarkdown(text, isStreaming = false) {
         if (!text) return '';
         
         try {
             if (typeof marked !== 'undefined' && marked.parse) {
                 let processedText = text;
-                const matches = text.match(/```/g);
-                const backtickCount = matches ? matches.length : 0;
-                if (backtickCount % 2 !== 0) {
+                
+                // 1. Auto-close triple-backtick fence markers (```)
+                const fences = (processedText.match(/```/g) || []).length;
+                if (fences % 2 !== 0) {
                     processedText += '\n```';
                 }
+
+                // 2. Auto-close tilde code fences (~~~)
+                const tildes = (processedText.match(/~~~/g) || []).length;
+                if (tildes % 2 !== 0) {
+                    processedText += '\n~~~';
+                }
+
+                // 3. Auto-close single backticks for inline code (`code`)
+                const textWithoutFences = processedText.replace(/```[\s\S]*?(```|$)/g, '').replace(/~~~[\s\S]*?(~~~|$)/g, '');
+                const singleBackticks = (textWithoutFences.match(/`/g) || []).length;
+                if (singleBackticks % 2 !== 0) {
+                    processedText += '`';
+                }
+
+                // 4. Auto-close explicit HTML <code> and <pre> tags
+                const codeStarts = (processedText.match(/<code[\s>]/gi) || []).length;
+                const codeEnds = (processedText.match(/<\/code>/gi) || []).length;
+                if (codeStarts > codeEnds) {
+                    processedText += '</code>';
+                }
+
+                const preStarts = (processedText.match(/<pre[\s>]/gi) || []).length;
+                const preEnds = (processedText.match(/<\/pre>/gi) || []).length;
+                if (preStarts > preEnds) {
+                    processedText += '</pre>';
+                }
+
+                // 5. Prevent unclosed HTML comments (<!--) from hiding subsequent text in innerHTML
+                const commentStarts = (processedText.match(/<!--/g) || []).length;
+                const commentEnds = (processedText.match(/-->/g) || []).length;
+                if (commentStarts > commentEnds) {
+                    processedText += '-->';
+                }
+
+                // 6. Escape raw script/style/textarea/svg/iframe tags so browser DOM doesn't hide inner content
+                processedText = processedText.replace(/<(script|style|textarea|svg|iframe)([\s>])/gi, '&lt;$1$2');
+                processedText = processedText.replace(/<\/(script|style|textarea|svg|iframe)>/gi, '&lt;/$1&gt;');
+
                 const parsed = marked.parse(processedText);
-                if (parsed) {
+                if (typeof parsed === 'string' && parsed.trim().length > 0) {
                     return parsed;
+                }
+
+                if (isStreaming) {
+                    throw new Error('Markdown parse returned empty result during streaming');
                 }
             }
         } catch (e) {
-            console.error('Error rendering markdown with marked.js:', e);
+            if (isStreaming) {
+                throw e;
+            }
+            console.warn('[PodLlama] marked.parse failed, using fallback renderer', e);
+            return fallbackMarkdown(text);
+        }
+
+        if (isStreaming) {
+            throw new Error('marked.parse unavailable during streaming');
         }
 
         return fallbackMarkdown(text);
     }
 
     function fallbackMarkdown(text) {
-        let formatted = escapeHtml(text);
+        let processedText = text;
+
+        const fences = (processedText.match(/```/g) || []).length;
+        if (fences % 2 !== 0) {
+            processedText += '\n```';
+        }
+        const textWithoutFences = processedText.replace(/```[\s\S]*?(```|$)/g, '');
+        const singleBackticks = (textWithoutFences.match(/`/g) || []).length;
+        if (singleBackticks % 2 !== 0) {
+            processedText += '`';
+        }
+
+        let formatted = escapeHtml(processedText);
         formatted = formatted.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
             return `<pre><code class="language-${lang}">${code}</code></pre>`;
         });

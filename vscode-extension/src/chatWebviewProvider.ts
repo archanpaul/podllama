@@ -193,11 +193,17 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
             };
 
             let assistantText = '';
+            let streamBuffer = '';
 
             const req = transport.request(options, (res) => {
                 res.on('data', (chunk: Buffer) => {
-                    const lines = chunk.toString().split('\n');
-                    for (const line of lines) {
+                    streamBuffer += chunk.toString('utf8');
+                    const lines = streamBuffer.split('\n');
+                    // The last item in array is incomplete unless streamBuffer ended with a newline
+                    streamBuffer = lines.pop() || '';
+
+                    for (const rawLine of lines) {
+                        const line = rawLine.trim();
                         if (line.startsWith('data: ') && line !== 'data: [DONE]') {
                             try {
                                 const json = JSON.parse(line.substring(6));
@@ -219,6 +225,21 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                 });
 
                 res.on('end', () => {
+                    if (streamBuffer.trim().startsWith('data: ') && streamBuffer.trim() !== 'data: [DONE]') {
+                        try {
+                            const json = JSON.parse(streamBuffer.trim().substring(6));
+                            const delta = json.choices[0]?.delta;
+                            if (delta && delta.content) {
+                                assistantText += delta.content;
+                                this._view?.webview.postMessage({
+                                    type: 'streamToken',
+                                    text: delta.content
+                                });
+                            }
+                        } catch (e) {
+                            // ignore
+                        }
+                    }
                     this.activeRequest = undefined;
                     this._view?.webview.postMessage({ type: 'streamEnd' });
 
@@ -360,7 +381,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
     <title>PodLlama Code</title>
     <link href="${fontAwesomeUri}" rel="stylesheet">
     <link href="${cssUri}" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 </head>
 <body>
