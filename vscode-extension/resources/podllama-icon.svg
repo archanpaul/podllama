@@ -1,32 +1,47 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Server Pod / Container Outline -->
-  <rect x="15" y="10" width="70" height="80" rx="12" ry="12"></rect>
-  <line x1="15" y1="28" x2="85" y2="28" stroke-width="3" opacity="0.8"></line>
-  <line x1="15" y1="80" x2="85" y2="80" stroke-width="3" opacity="0.8"></line>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Stacked Server Rack Cabinet Outline -->
+  <rect x="12" y="10" width="76" height="80" rx="6" ry="6"></rect>
+  <rect x="20" y="18" width="60" height="12" rx="2" ry="2"></rect>
+  <rect x="20" y="34" width="60" height="12" rx="2" ry="2"></rect>
+  <rect x="20" y="50" width="60" height="12" rx="2" ry="2"></rect>
+  <rect x="20" y="66" width="60" height="12" rx="2" ry="2"></rect>
   
-  <!-- Left Bracket < -->
-  <path d="M 34,42 L 23,50 L 34,58" stroke-width="4.5"></path>
+  <line x1="28" y1="90" x2="20" y2="96" stroke-width="4.5"></line>
+  <line x1="72" y1="90" x2="80" y2="96" stroke-width="4.5"></line>
+
+  <!-- 3D Pod Cube overlay centered in the middle of server stack -->
+  <!-- Background shielding circle for visibility -->
+  <circle cx="50" cy="46" r="26" fill="var(--vscode-sideBar-background, #1e1e1e)" stroke="currentColor" stroke-width="2.5"></circle>
+
+  <!-- Isometric 3D Cube Structure -->
+  <!-- Center top vertex: (50, 29) -->
+  <!-- Center bottom vertex: (50, 63) -->
+  <!-- Left vertex: (28, 41) -->
+  <!-- Right vertex: (72, 41) -->
+  <path d="M 50,26 L 72,36 L 72,56 L 50,66 L 28,56 L 28,36 Z" stroke-width="3"></path>
+  <!-- Cube Inner Edges -->
+  <line x1="50" y1="66" x2="50" y2="46" stroke-width="3"></line>
+  <line x1="50" y1="26" x2="50" y2="46" stroke-width="3"></line>
+  <line x1="28" y1="36" x2="50" y2="46" stroke-width="3"></line>
+  <line x1="72" y1="36" x2="50" y2="46" stroke-width="3"></line>
+
+  <!-- Minimalist AI Brain Node network in the center of the Cube -->
+  <circle cx="50" cy="46" r="3.5" fill="currentColor"></circle>
+  <line x1="50" y1="46" x2="50" y2="36" stroke-width="2"></line>
+  <line x1="50" y1="46" x2="50" y2="56" stroke-width="2"></line>
+  <line x1="50" y1="46" x2="40" y2="46" stroke-width="2"></line>
+  <line x1="50" y1="46" x2="60" y2="46" stroke-width="2"></line>
+  <line x1="50" y1="46" x2="43" y2="39" stroke-width="2"></line>
+  <line x1="50" y1="46" x2="57" y2="39" stroke-width="2"></line>
+  <line x1="50" y1="46" x2="43" y2="53" stroke-width="2"></line>
+  <line x1="50" y1="46" x2="57" y2="53" stroke-width="2"></line>
   
-  <!-- Right Bracket > -->
-  <path d="M 66,42 L 77,50 L 66,58" stroke-width="4.5"></path>
-  
-  <!-- Minimalist AI Brain Node Network -->
-  <circle cx="50" cy="50" r="4" fill="currentColor"></circle>
-  <line x1="50" y1="50" x2="50" y2="38"></line>
-  <line x1="50" y1="50" x2="50" y2="62"></line>
-  <line x1="50" y1="50" x2="38" y2="50"></line>
-  <line x1="50" y1="50" x2="62" y2="50"></line>
-  <line x1="50" y1="50" x2="41.5" y2="41.5"></line>
-  <line x1="50" y1="50" x2="58.5" y2="41.5"></line>
-  <line x1="50" y1="50" x2="41.5" y2="58.5"></line>
-  <line x1="50" y1="50" x2="58.5" y2="58.5"></line>
-  
-  <circle cx="50" cy="38" r="2" fill="currentColor"></circle>
-  <circle cx="50" cy="62" r="2" fill="currentColor"></circle>
-  <circle cx="38" cy="50" r="2" fill="currentColor"></circle>
-  <circle cx="62" cy="50" r="2" fill="currentColor"></circle>
-  <circle cx="41.5" cy="41.5" r="2" fill="currentColor"></circle>
-  <circle cx="58.5" cy="41.5" r="2" fill="currentColor"></circle>
-  <circle cx="41.5" cy="58.5" r="2" fill="currentColor"></circle>
-  <circle cx="58.5" cy="58.5" r="2" fill="currentColor"></circle>
+  <circle cx="50" cy="36" r="1.5" fill="currentColor"></circle>
+  <circle cx="50" cy="56" r="1.5" fill="currentColor"></circle>
+  <circle cx="40" cy="46" r="1.5" fill="currentColor"></circle>
+  <circle cx="60" cy="46" r="1.5" fill="currentColor"></circle>
+  <circle cx="43" cy="39" r="1.5" fill="currentColor"></circle>
+  <circle cx="57" cy="39" r="1.5" fill="currentColor"></circle>
+  <circle cx="43" cy="53" r="1.5" fill="currentColor"></circle>
+  <circle cx="57" cy="53" r="1.5" fill="currentColor"></circle>
 </svg>
