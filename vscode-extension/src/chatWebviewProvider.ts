@@ -315,6 +315,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
     private getHtmlForWebview(webview: vscode.Webview): string {
         const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'src', 'media', 'chat.css'));
         const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'src', 'media', 'chat.js'));
+        const fontAwesomeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'src', 'media', 'font-awesome', 'css', 'all.min.css'));
 
         return `<!DOCTYPE html>
 <html lang="en">
@@ -325,6 +326,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="${fontAwesomeUri}" rel="stylesheet">
     <link href="${cssUri}" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
@@ -332,17 +334,12 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
 <body>
     <div class="chat-header">
         <div class="title-group">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
-                <rect x="2" y="3" width="20" height="14" rx="2"></rect>
-                <line x1="8" y1="21" x2="16" y2="21"></line>
-                <line x1="12" y1="17" x2="12" y2="21"></line>
-                <path d="M12 6 L12.8 9.2 L16 10 L12.8 10.8 L12 14 L11.2 10.8 L8 10 L11.2 9.2 Z" fill="currentColor" stroke="none"></path>
-            </svg>
+            <i class="fa-solid fa-laptop-code" style="font-size: 14px; color: var(--accent); flex-shrink:0;"></i>
             <input type="text" class="chat-title-input" id="chat-title-input" value="PodLlama Code" title="Click to rename conversation" />
         </div>
         <div class="header-actions">
-            <button class="icon-btn" id="new-chat-btn" title="New Conversation">+</button>
-            <button class="icon-btn" id="history-btn" title="Conversation History">🕒</button>
+            <button class="icon-btn" id="new-chat-btn" title="New Conversation"><i class="fa-solid fa-plus"></i></button>
+            <button class="icon-btn" id="history-btn" title="Conversation History"><i class="fa-regular fa-clock"></i></button>
         </div>
     </div>
 
@@ -359,7 +356,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         </div>
         <div class="input-footer">
             <div class="left-controls">
-                <span class="plus-icon" id="add-context-btn" title="Add context attachment">+</span>
+                <span class="plus-icon" id="add-context-btn" title="Add context attachment"><i class="fa-solid fa-plus"></i></span>
                 <div class="model-select-container">
                     <select class="select-control" id="model-select">
                         <option value="podllama-chat">podllama-chat</option>
@@ -368,10 +365,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                 </div>
             </div>
             <button class="send-btn" id="send-btn" title="Send Message">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                </svg>
+                <i class="fa-solid fa-paper-plane" style="font-size: 10px;"></i>
             </button>
         </div>
     </div>
