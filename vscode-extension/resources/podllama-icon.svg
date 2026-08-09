@@ -1,45 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Thin Isometric 3D Cube Structure (The Pod) -->
-  <!-- Center top vertex: (50, 15) -->
-  <!-- Center bottom vertex: (50, 85) -->
-  <!-- Left vertex: (15, 35) -->
-  <!-- Right vertex: (85, 35) -->
-  <!-- Left bottom vertex: (15, 65) -->
-  <!-- Right bottom vertex: (85, 65) -->
-  <path d="M 50,15 L 85,35 L 85,65 L 50,85 L 15,65 L 15,35 Z" stroke-width="2.2"></path>
-  <!-- Cube Inner Edges -->
-  <line x1="50" y1="85" x2="50" y2="50" stroke-width="2.2"></line>
-  <line x1="15" y1="35" x2="50" y2="50" stroke-width="2.2"></line>
-  <line x1="85" y1="35" x2="50" y2="50" stroke-width="2.2"></line>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Thin outline of a computer monitor -->
+  <!-- Screen bezel frame -->
+  <rect x="12" y="15" width="76" height="52" rx="4" ry="4" stroke-width="3.5"></rect>
+  <!-- Inner screen boundary -->
+  <rect x="18" y="21" width="64" height="40" rx="1" ry="1" opacity="0.6" stroke-width="2"></rect>
+  <!-- Stand neck -->
+  <path d="M 42,67 Q 42,78 30,79 M 58,67 Q 58,78 70,79" stroke-width="3.5"></path>
+  <!-- Stand base -->
+  <line x1="30" y1="79" x2="70" y2="79" stroke-width="4.5"></line>
 
-  <!-- Detailed Minimalist AI Brain Node network in the center of the Cube -->
-  <circle cx="50" cy="50" r="3" fill="currentColor"></circle>
-  
-  <!-- Brain Outer Ring Nodes -->
-  <circle cx="50" cy="35" r="1.5" fill="currentColor"></circle>
-  <circle cx="50" cy="65" r="1.5" fill="currentColor"></circle>
-  <circle cx="35" cy="50" r="1.5" fill="currentColor"></circle>
-  <circle cx="65" cy="50" r="1.5" fill="currentColor"></circle>
-  <circle cx="39.4" cy="39.4" r="1.5" fill="currentColor"></circle>
-  <circle cx="60.6" cy="39.4" r="1.5" fill="currentColor"></circle>
-  <circle cx="39.4" cy="60.6" r="1.5" fill="currentColor"></circle>
-  <circle cx="60.6" cy="60.6" r="1.5" fill="currentColor"></circle>
+  <!-- Circular background shield for AI Brain Badge to overlap bezel nicely -->
+  <circle cx="70" cy="53" r="16" fill="var(--vscode-sideBar-background, #1e1e1e)" stroke="currentColor" stroke-width="3"></circle>
 
-  <!-- Brain Web Interconnections -->
-  <!-- Vertical and Horizontal lines -->
-  <line x1="50" y1="35" x2="50" y2="65" stroke-width="1.2" opacity="0.85"></line>
-  <line x1="35" y1="50" x2="65" y2="50" stroke-width="1.2" opacity="0.85"></line>
-  <!-- Diagonals -->
-  <line x1="39.4" y1="39.4" x2="60.6" y2="60.6" stroke-width="1.2" opacity="0.85"></line>
-  <line x1="60.6" y1="39.4" x2="39.4" y2="60.6" stroke-width="1.2" opacity="0.85"></line>
+  <!-- Minimalist AI Brain Node network inside the badge -->
+  <circle cx="70" cy="53" r="3.2" fill="currentColor"></circle>
+  <line x1="70" y1="53" x2="70" y2="43" stroke-width="1.8"></line>
+  <line x1="70" y1="53" x2="70" y2="63" stroke-width="1.8"></line>
+  <line x1="70" y1="53" x2="60" y2="53" stroke-width="1.8"></line>
+  <line x1="70" y1="53" x2="80" y2="53" stroke-width="1.8"></line>
+  <line x1="70" y1="53" x2="63" y2="46" stroke-width="1.8"></line>
+  <line x1="70" y1="53" x2="77" y2="46" stroke-width="1.8"></line>
+  <line x1="70" y1="53" x2="63" y2="60" stroke-width="1.8"></line>
+  <line x1="70" y1="53" x2="77" y2="60" stroke-width="1.8"></line>
   
-  <!-- Outer Node cross-mesh lines to form a clean circular brain web -->
-  <path d="M 50,35 Q 43,36 39.4,39.4" stroke-width="1.2" opacity="0.75"></path>
-  <path d="M 39.4,39.4 Q 36,43 35,50" stroke-width="1.2" opacity="0.75"></path>
-  <path d="M 35,50 Q 36,57 39.4,60.6" stroke-width="1.2" opacity="0.75"></path>
-  <path d="M 39.4,60.6 Q 43,64 50,65" stroke-width="1.2" opacity="0.75"></path>
-  <path d="M 50,65 Q 57,64 60.6,60.6" stroke-width="1.2" opacity="0.75"></path>
-  <path d="M 60.6,60.6 Q 64,57 65,50" stroke-width="1.2" opacity="0.75"></path>
-  <path d="M 65,50 Q 64,43 60.6,39.4" stroke-width="1.2" opacity="0.75"></path>
-  <path d="M 60.6,39.4 Q 57,36 50,35" stroke-width="1.2" opacity="0.75"></path>
+  <circle cx="70" cy="43" r="1.2" fill="currentColor"></circle>
+  <circle cx="70" cy="63" r="1.2" fill="currentColor"></circle>
+  <circle cx="60" cy="53" r="1.2" fill="currentColor"></circle>
+  <circle cx="80" cy="53" r="1.2" fill="currentColor"></circle>
+  <circle cx="63" cy="46" r="1.2" fill="currentColor"></circle>
+  <circle cx="77" cy="46" r="1.2" fill="currentColor"></circle>
+  <circle cx="63" cy="60" r="1.2" fill="currentColor"></circle>
+  <circle cx="77" cy="60" r="1.2" fill="currentColor"></circle>
 </svg>
