@@ -201,15 +201,9 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
 
             let assistantText = '';
             let streamBuffer = '';
-            let chunkCount = 0;
-            let tokenCount = 0;
-
-            console.log(`[PodLlama Backend] Dispatching POST ${parsedUrl.href} (model=${model}, msgCount=${messages.length})`);
 
             const req = transport.request(options, (res) => {
-                console.log(`[PodLlama Backend] HTTP response status: ${res.statusCode}`);
                 res.on('data', (chunk: Buffer) => {
-                    chunkCount++;
                     streamBuffer += chunk.toString('utf8');
                     const lines = streamBuffer.split('\n');
                     // The last item in array is incomplete unless streamBuffer ended with a newline
@@ -223,7 +217,6 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                                 const delta = json.choices[0]?.delta;
                                 if (delta) {
                                     if (delta.content) {
-                                        tokenCount++;
                                         assistantText += delta.content;
                                         this._view?.webview.postMessage({
                                             type: 'streamToken',
@@ -232,7 +225,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                                     }
                                 }
                             } catch (e) {
-                                console.warn('[PodLlama Backend] Non-JSON stream chunk ignored:', line);
+                                // Skip non-JSON chunks
                             }
                         }
                     }
@@ -244,7 +237,6 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                             const json = JSON.parse(streamBuffer.trim().substring(6));
                             const delta = json.choices[0]?.delta;
                             if (delta && delta.content) {
-                                tokenCount++;
                                 assistantText += delta.content;
                                 this._view?.webview.postMessage({
                                     type: 'streamToken',
@@ -255,7 +247,6 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                             // ignore
                         }
                     }
-                    console.log(`[PodLlama Backend] Stream finished. Chunks: ${chunkCount}, Tokens: ${tokenCount}, Total text len: ${assistantText.length}`);
                     this.activeRequest = undefined;
                     this._view?.webview.postMessage({ type: 'streamEnd' });
 
