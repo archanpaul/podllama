@@ -249,12 +249,20 @@
                 if (backtickCount % 2 !== 0) {
                     processedText += '\n```';
                 }
-                return marked.parse(processedText);
+                try {
+                    return marked.parse(processedText);
+                } catch (innerErr) {
+                    return fallbackMarkdown(text);
+                }
             }
         } catch (e) {
             console.error('Error rendering markdown with marked.js:', e);
         }
 
+        return fallbackMarkdown(text);
+    }
+
+    function fallbackMarkdown(text) {
         // Fallback basic parsing
         let formatted = escapeHtml(text);
         formatted = formatted.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
