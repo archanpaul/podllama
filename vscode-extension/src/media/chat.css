@@ -18,8 +18,9 @@
 }
 
 body {
-  font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
-  font-size: var(--vscode-font-size, 13px);
+  font-family: var(--vscode-editor-font-family, var(--vscode-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif));
+  font-size: var(--vscode-editor-font-size, var(--vscode-font-size, 13px));
+  font-weight: var(--vscode-editor-font-weight, normal);
   background-color: var(--bg-primary);
   color: var(--text-main);
   height: 100vh;
@@ -30,7 +31,7 @@ body {
 
 /* Ensure all form controls and content use editor fonts */
 textarea, select, button, input {
-  font-family: var(--vscode-font-family, inherit);
+  font-family: var(--vscode-editor-font-family, var(--vscode-font-family, inherit));
 }
 
 /* Header Navbar */
