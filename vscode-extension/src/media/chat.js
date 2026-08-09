@@ -99,21 +99,7 @@
         const turnDiv = document.createElement('div');
         turnDiv.className = `message-turn ${role}`;
 
-        if (role === 'assistant') {
-            let html = '';
-            if (thinking) {
-                html += `
-                    <details class="think-card" open>
-                        <summary class="think-summary">Thought Process</summary>
-                        <div class="think-content">${escapeHtml(thinking)}</div>
-                    </details>
-                `;
-            }
-            html += `<div class="message-content">${formatMarkdown(content)}</div>`;
-            turnDiv.innerHTML = html;
-        } else {
-            turnDiv.innerHTML = `<div class="message-content">${formatMarkdown(content)}</div>`;
-        }
+        turnDiv.innerHTML = `<div class="message-content">${formatMarkdown(content)}</div>`;
 
         messagesContainer.appendChild(turnDiv);
         attachCodeBlockActions(turnDiv);
@@ -127,34 +113,12 @@
             activeStreamTurn = document.createElement('div');
             activeStreamTurn.className = 'message-turn assistant';
             activeStreamTurn.innerHTML = `
-                <div id="stream-thinking-placeholder" style="color: var(--text-muted, #888888); font-style: italic; margin-bottom: 8px;">Thinking...</div>
-                <details class="think-card" id="stream-think-card" style="display: none;">
-                    <summary class="think-summary">Thinking...</summary>
-                    <div class="think-content" id="stream-think-content"></div>
-                </details>
                 <div class="message-content" id="stream-message-content"></div>
             `;
             messagesContainer.appendChild(activeStreamTurn);
         }
 
-        const placeholder = activeStreamTurn.querySelector('#stream-thinking-placeholder');
-
-        if (thinking !== undefined && thinking !== null && thinking !== '') {
-            if (placeholder) {
-                placeholder.style.display = 'none';
-            }
-            const thinkCard = activeStreamTurn.querySelector('#stream-think-card');
-            const thinkContent = activeStreamTurn.querySelector('#stream-think-content');
-            if (thinkCard && thinkContent) {
-                thinkCard.style.display = 'block';
-                thinkContent.textContent += thinking;
-            }
-        }
-
         if (text !== undefined && text !== null && text !== '') {
-            if (placeholder) {
-                placeholder.style.display = 'none';
-            }
             const msgContent = activeStreamTurn.querySelector('#stream-message-content');
             if (msgContent) {
                 msgContent.dataset.raw = (msgContent.dataset.raw || '') + text;
@@ -174,10 +138,6 @@
 
     function finalizeStreamResponse() {
         if (activeStreamTurn) {
-            const placeholder = activeStreamTurn.querySelector('#stream-thinking-placeholder');
-            if (placeholder) {
-                placeholder.remove();
-            }
             // Apply syntax highlight once token streaming has completely finalized
             attachCodeBlockActions(activeStreamTurn, true);
         }
