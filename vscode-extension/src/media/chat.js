@@ -304,6 +304,9 @@
 
     if (newChatBtn) {
         newChatBtn.addEventListener('click', () => {
+            if (historyDrawer) {
+                historyDrawer.classList.remove('open');
+            }
             vscode.postMessage({ command: 'newConversation' });
         });
     }
