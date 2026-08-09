@@ -4,6 +4,7 @@ import * as https from 'https';
 import { URL } from 'url';
 import { ConversationManager } from './conversationManager';
 import { PodLlamaClient } from './podllama-client';
+import { DiffContentProvider } from './diffContentProvider';
 
 export class ChatWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'podllama.chatView';
@@ -14,7 +15,8 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         private readonly _extensionUri: vscode.Uri,
         private conversationManager: ConversationManager,
         private client: PodLlamaClient,
-        private getSettings: () => { apiBase: string; apiKey: string; chatModel: string; thinkingModel: string }
+        private getSettings: () => { apiBase: string; apiKey: string; chatModel: string; thinkingModel: string },
+        private diffProvider: DiffContentProvider
     ) { }
 
     private abortCurrentRequest() {
@@ -268,19 +270,35 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
             return;
         }
 
-        const edit = new vscode.WorkspaceEdit();
-        if (editor.selection.isEmpty) {
-            edit.insert(editor.document.uri, editor.selection.active, code);
+        const document = editor.document;
+        const currentText = document.getText();
+        const selection = editor.selection;
+
+        // Generate the new text content applying the patch
+        let proposedText = '';
+        if (selection.isEmpty) {
+            const offset = document.offsetAt(selection.active);
+            proposedText = currentText.slice(0, offset) + code + currentText.slice(offset);
         } else {
-            edit.replace(editor.document.uri, editor.selection, code);
+            const startOffset = document.offsetAt(selection.start);
+            const endOffset = document.offsetAt(selection.end);
+            proposedText = currentText.slice(0, startOffset) + code + currentText.slice(endOffset);
         }
 
-        const success = await vscode.workspace.applyEdit(edit);
-        if (success) {
-            vscode.window.showInformationMessage('PodLlama: Code patch applied successfully.');
-        } else {
-            vscode.window.showErrorMessage('PodLlama: Failed to apply code patch.');
-        }
+        // Setup the target URIs for VS Code side-by-side Diff Editor review
+        const originalUri = document.uri;
+        const proposedUri = vscode.Uri.parse(`${DiffContentProvider.scheme}:Proposed%20Changes?${encodeURIComponent(originalUri.toString())}`);
+
+        // Register/update the proposed content with the virtual document provider
+        this.diffProvider.update(proposedUri, proposedText);
+
+        // Open the native side-by-side diff review screen
+        await vscode.commands.executeCommand(
+            'vscode.diff',
+            originalUri,
+            proposedUri,
+            `${vscode.workspace.asRelativePath(originalUri)} ↔ Proposed Changes`
+        );
     }
 
     private async handleAddContextAttachment() {

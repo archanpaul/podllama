@@ -4,11 +4,21 @@ import { InlineCompletionProvider } from './inlineCompletionProvider';
 import { StandardCompletionProvider } from './standardCompletionProvider';
 import { ConversationManager } from './conversationManager';
 import { ChatWebviewProvider } from './chatWebviewProvider';
+import { DiffContentProvider } from './diffContentProvider';
 
 let statusBarItem: vscode.StatusBarItem;
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('[PodLlama Code] Activating extension...');
+
+    // Instantiate virtual document diff provider
+    const diffProvider = new DiffContentProvider();
+    context.subscriptions.push(
+        vscode.workspace.registerTextDocumentContentProvider(
+            DiffContentProvider.scheme,
+            diffProvider
+        )
+    );
 
     // 1. Helper function to read current VS Code Settings
     const getSettings = () => {
@@ -45,7 +55,8 @@ export function activate(context: vscode.ExtensionContext) {
             apiKey: getSettings().apiKey,
             chatModel: getSettings().chatModel,
             thinkingModel: getSettings().thinkingModel
-        })
+        }),
+        diffProvider
     );
 
     context.subscriptions.push(
