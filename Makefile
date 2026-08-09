@@ -188,26 +188,3 @@ download-models:
 clean:
 	-$(PODMAN) rmi $(SERVER_IMAGE) $(CLIENT_IMAGE) podllama-litellm:latest qwen-litellm:latest qwen-client:latest || true
 
-vscode_extension-build:
-	@echo "Building PodLlama VS Code Extension..."
-	@cd vscode-extension && node esbuild.js
-
-vscode_extension-test:
-	@echo "Testing PodLlama VS Code Extension..."
-	@python3 -c "import subprocess, sys; res=subprocess.run(['node', '-e', 'require(\"./vscode-extension/test/suite/extension.test.ts\")'], capture_output=True); print('VS Code extension unit test syntax check:', 'PASSED' if res.returncode==0 else 'SKIPPED (ts-node not loaded)')"
-
-vscode_extension-package: vscode_extension-build
-	@echo "Packaging PodLlama VS Code Extension into .vsix file..."
-	@cd vscode-extension && npx -y @vscode/vsce package --no-git-tag-version --out podllama-vscode-0.2.0.vsix
-
-vscode_extension-install: vscode_extension-package
-	@echo "Installing/Updating PodLlama VS Code Extension into VS Code..."
-	@which code >/dev/null 2>&1 && code --install-extension vscode-extension/podllama-vscode-0.2.0.vsix --force || (which codium >/dev/null 2>&1 && codium --install-extension vscode-extension/podllama-vscode-0.2.0.vsix --force || (which cursor >/dev/null 2>&1 && cursor --install-extension vscode-extension/podllama-vscode-0.2.0.vsix --force || echo "NOTICE: Neither 'code', 'codium', nor 'cursor' CLI tools found on PATH. Install manually via: code --install-extension vscode-extension/podllama-vscode-0.2.0.vsix"))
-
-vscode_extension-update: vscode_extension-install
-
-extension-build: vscode_extension-build
-extension-test: vscode_extension-test
-extension-package: vscode_extension-package
-extension-install: vscode_extension-install
-extension-update: vscode_extension-install

@@ -80,15 +80,3 @@ The **PodLlama Container Environment** provides a local, GPU-accelerated, contai
   - **6. Autocomplete Model Completion**: Sends `podllama-autocomplete` FIM request and validates inline code completion.
   - **7. Function & Tool Calling**: Sends tool definitions to validate tool support without server error.
 
----
-
-## 10. Native VS Code Extension (`podllama-vscode`)
-
-- **Inline FIM Ghost Code Autocomplete**: Native `vscode.InlineCompletionItemProvider` using `podllama-autocomplete` for real-time tab completions with prompt echo stripping and token cleanup.
-- **Native Agent Chat Participant (`@podllama`)**: Native VS Code Chat drawer participant with `/explain`, `/refactor`, `/fix`, `/test`, and `/think` subcommands and VS Code Chat attachment references (`#file`, `#selection`, `#diagnostics`).
-- **Language Model Agent Tools API**: Registers 4 native VS Code tools (`podllama_get_workspace_diagnostics`, `podllama_read_active_editor`, `podllama_container_status`, `podllama_switch_model`) for agent workflows.
-- **Language Model Provider API**: Registers `podllama` as a native VS Code `languageModelProviders` chat provider.
-- **Auto-Config & Custom LM Endpoints**: Auto-registers local endpoints (`http://localhost:4000/v1`) and VS Code Custom LM Endpoint JSON upon installation.
-- **Theme-Adaptive Monochrome Icon**: Sleek grayscale icon looking sharp on both Light and Dark IDE themes.
-- **Makefile Commands**: `make extension-build`, `make extension-test`, `make extension-package`, `make extension-install`, `make extension-update`.
-

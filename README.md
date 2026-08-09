@@ -327,29 +327,7 @@ models:
 
 ## VS Code Integration
 
-### Option A: Official PodLlama VS Code Extension (`podllama-vscode`)
-
-The repository includes a dedicated, native VS Code extension built in `vscode-extension/`:
-
-- **Inline FIM Autocomplete**: Native `vscode.InlineCompletionItemProvider` using `podllama-autocomplete`.
-- **Agent Chat Participant (`@podllama`)**: Integrated VS Code Chat drawer support with `/explain`, `/refactor`, `/fix`, `/test`, `/think` subcommands.
-- **Language Model Tools API**: Registers tools (`podllama_get_workspace_diagnostics`, `podllama_read_active_editor`, `podllama_container_status`, `podllama_switch_model`) for VS Code Agent workflows.
-- **Status Bar Controls**: Real-time status monitoring, health probes, model quick-picker, and autocomplete toggle.
-
-#### Build & Install:
-```bash
-# 1. Build extension bundle
-make extension-build
-
-# 2. Package .vsix & install into VS Code
-cd vscode-extension
-npx @vscode/vsce package
-code --install-extension podllama-vscode-0.1.0.vsix
-```
-
----
-
-### Option B: Via LiteLLM Unified Proxy (Port 4000)
+### Integration Via LiteLLM Unified Proxy (Port 4000)
 - **API Provider**: OpenAI / Local Server
 - **Base URL**: `http://localhost:4000/v1`
 - **Chat Model**: `podllama-chat`
@@ -464,11 +442,6 @@ The workspace agent container (`Containerfile.qwencoder`) is launched with:
 | `make download-models` | Downloads ALL configured GGUF models into models directory |
 | `make run-qwencode` | Runs Qwen workspace agent CLI client in current workspace directory |
 | `make run-pod` | Runs server and client together inside a single Podman pod |
-| `make extension-build` | Compiles PodLlama VS Code Extension JavaScript bundle |
-| `make extension-test` | Runs VS Code extension unit test syntax verification |
-| `make extension-package` | Packages VS Code Extension into `.vsix` bundle |
-| `make extension-install` | Packages and installs/updates VS Code Extension in editor |
-| `make extension-update` | Alias for `make extension-install` |
 | `make clean` | Cleans Podman container images and temporary files |
 
 ---

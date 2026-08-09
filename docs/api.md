@@ -246,58 +246,8 @@ models:
 - **API Key**: `sk-local`
 - **Model ID**: `podllama-chat`
 
-### 4.3 Official PodLlama VS Code Extension & Custom LM Endpoints (`podllama-vscode`)
-
-Build and install the official native extension:
-
-```bash
-# Build, package, and install/update into VS Code
-make extension-install
-```
-
-VS Code Custom LM Endpoint JSON (auto-registered on installation):
-
-```json
-[
-  {
-    "name": "Podllama",
-    "vendor": "customendpoint",
-    "apiKey": "sk-local",
-    "apiType": "chat-completions",
-    "models": [
-      {
-        "id": "podllama-chat",
-        "name": "PodLlama Chat (Qwen 2.5 Coder 7B)",
-        "url": "http://localhost:4000/v1/chat/completions",
-        "toolCalling": true,
-        "vision": false,
-        "maxInputTokens": 16384,
-        "maxOutputTokens": 4096
-      },
-      {
-        "id": "podllama-thinking",
-        "name": "PodLlama Thinking (DeepSeek-R1 Distill 7B/14B)",
-        "url": "http://localhost:4000/v1/chat/completions",
-        "toolCalling": true,
-        "vision": false,
-        "maxInputTokens": 16384,
-        "maxOutputTokens": 4096
-      },
-      {
-        "id": "podllama-autocomplete",
-        "name": "PodLlama Autocomplete (Qwen 2.5 Coder 0.5B)",
-        "url": "http://localhost:4000/v1/completions",
-        "toolCalling": false,
-        "vision": false,
-        "maxInputTokens": 4096,
-        "maxOutputTokens": 512
-      }
-    ]
-  }
-]
-```
-
 ---
+
 
 
 ## 5. Live Endpoint Smoke Testing
