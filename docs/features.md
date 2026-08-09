@@ -90,3 +90,4 @@ A companion extension, **PodLlama Code**, is bundled with the project to streaml
 - **Context Attachments**: Injects complete files into chat inputs via a custom `+` context attachment button.
 - **Editor Integration ('Chat' Menu)**: Right-clicking highlighted code pastes it instantly as active chat context.
 - **Inline Proposed Change Diffing**: Allows reviewing applied code patches inline using VS Code's native accept/reject actions.
+- **Context Summarization Engine**: Triggers context parsing automatically via `podllama-chat` once a conversation exceeds 6 message turns. Compresses details into structured context points to save token history overhead and maintain minimal generation times.
