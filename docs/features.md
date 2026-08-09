@@ -80,3 +80,13 @@ The **PodLlama Container Environment** provides a local, GPU-accelerated, contai
   - **6. Autocomplete Model Completion**: Sends `podllama-autocomplete` FIM request and validates inline code completion.
   - **7. Function & Tool Calling**: Sends tool definitions to validate tool support without server error.
 
+---
+
+## 10. Official VS Code Extension (PodLlama Code)
+
+A companion extension, **PodLlama Code**, is bundled with the project to streamline developer workflows locally:
+- **Offline Fonts & Styles**: Self-contains Fira Sans and Fira Code fonts, enabling coding ligatures and offline privacy.
+- **Antigravity-inspired Sidebar**: A webview chat panel featuring a compact header, renamed conversation sessions, themed model dropdown controls, and scalable play/stop generation icons.
+- **Context Attachments**: Injects complete files into chat inputs via a custom `+` context attachment button.
+- **Editor Integration ('Chat' Menu)**: Right-clicking highlighted code pastes it instantly as active chat context.
+- **Inline Proposed Change Diffing**: Allows reviewing applied code patches inline using VS Code's native accept/reject actions.
