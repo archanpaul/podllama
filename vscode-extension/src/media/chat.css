@@ -218,7 +218,7 @@ body {
 
 /* Code block & Patch controls */
 pre {
-  background-color: var(--code-bg);
+  background-color: transparent;
   padding: 10px;
   border-radius: 6px;
   overflow-x: auto;
@@ -230,6 +230,7 @@ pre {
 code {
   font-family: var(--vscode-editor-font-family, monospace);
   font-size: var(--vscode-editor-font-size, 12px);
+  background-color: transparent;
 }
 
 .code-actions {
