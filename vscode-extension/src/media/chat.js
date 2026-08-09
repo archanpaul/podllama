@@ -112,7 +112,7 @@
             html += `<div class="message-content">${formatMarkdown(content)}</div>`;
             turnDiv.innerHTML = html;
         } else {
-            turnDiv.innerHTML = `<div class="message-content">${escapeHtml(content)}</div>`;
+            turnDiv.innerHTML = `<div class="message-content">${formatMarkdown(content)}</div>`;
         }
 
         messagesContainer.appendChild(turnDiv);
