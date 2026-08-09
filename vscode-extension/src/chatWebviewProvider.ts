@@ -143,12 +143,16 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
 
         this.conversationManager.saveConversation(conv);
 
-        // Summarize context if conversation exceeds 6 turns
+        // Summarize context if conversation exceeds 6 turns (run asynchronously so it does not block streaming!)
         if (conv.messages.length > 6 && !conv.summarizedContext) {
-            const summary = await this.client.summarizeContext(conv.messages.slice(0, -2), selectedModel);
-            if (summary) {
-                conv.summarizedContext = summary;
-            }
+            this.client.summarizeContext(conv.messages.slice(0, -2), selectedModel)
+                .then(summary => {
+                    if (summary) {
+                        conv.summarizedContext = summary;
+                        this.conversationManager.saveConversation(conv);
+                    }
+                })
+                .catch(err => console.error('[PodLlama] Background context summary error:', err));
         }
 
         // Prepare messages payload for API

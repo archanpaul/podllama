@@ -107,47 +107,40 @@
     }
 
     let activeStreamTurn = null;
-    let streamRawText = '';
+    let activeStreamContentElement = null;
+    let streamDataBuffer = ''; // Raw streamed data accumulation buffer
+    let viewBuffer = '';       // Rendered UI content buffer
     let streamRenderScheduled = false;
-    let lastSuccessfulHtml = '';
 
     function renderStream() {
-        if (!activeStreamTurn) return;
-        const msgContent = activeStreamTurn.querySelector('#stream-message-content');
-        if (!msgContent || !streamRawText) return;
+        if (!activeStreamContentElement) return;
 
-        try {
-            const html = formatMarkdown(streamRawText, true);
-            
-            if (html && typeof html === 'string' && html.trim().length > 0) {
-                msgContent.innerHTML = html;
-                attachCodeBlockActions(msgContent, true);
-            } else {
-                msgContent.innerHTML = fallbackMarkdown(streamRawText);
-            }
-        } catch (err) {
-            // Guarantee 100% visibility: show fallback markdown so streaming text is never hidden
-            msgContent.innerHTML = fallbackMarkdown(streamRawText);
-        }
+        // Update viewBuffer with current raw streamed data directly via DOM reference
+        viewBuffer = streamDataBuffer;
+        activeStreamContentElement.style.whiteSpace = 'pre-wrap';
+        activeStreamContentElement.textContent = viewBuffer;
 
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
         streamRenderScheduled = false;
     }
 
     function appendStreamToken(text, thinking) {
-        if (!activeStreamTurn) {
+        if (!activeStreamTurn || !activeStreamContentElement) {
             activeStreamTurn = document.createElement('div');
             activeStreamTurn.className = 'message-turn assistant';
-            activeStreamTurn.innerHTML = `
-                <div class="message-content" id="stream-message-content"></div>
-            `;
+            
+            activeStreamContentElement = document.createElement('div');
+            activeStreamContentElement.className = 'message-content';
+            
+            activeStreamTurn.appendChild(activeStreamContentElement);
             messagesContainer.appendChild(activeStreamTurn);
-            streamRawText = '';
-            lastSuccessfulHtml = '';
+
+            streamDataBuffer = '';
+            viewBuffer = '';
         }
 
         if (text !== undefined && text !== null && text !== '') {
-            streamRawText += text;
+            streamDataBuffer += text;
             
             if (!streamRenderScheduled) {
                 streamRenderScheduled = true;
@@ -157,26 +150,25 @@
     }
 
     function finalizeStreamResponse() {
-        // Full markdown render + syntax highlight happens ONCE when stream ends
-        if (activeStreamTurn) {
-            const msgContent = activeStreamTurn.querySelector('#stream-message-content');
-            if (msgContent && streamRawText) {
-                try {
-                    const html = formatMarkdown(streamRawText, false);
-                    if (html && html.trim().length > 0) {
-                        msgContent.innerHTML = html;
-                    } else {
-                        msgContent.innerHTML = fallbackMarkdown(streamRawText);
-                    }
-                } catch (e) {
-                    msgContent.innerHTML = fallbackMarkdown(streamRawText);
+        // Replace unformatted viewBuffer with formatted Markdown on stream end
+        if (activeStreamTurn && activeStreamContentElement) {
+            if (streamDataBuffer) {
+                activeStreamContentElement.style.whiteSpace = '';
+                const html = formatMarkdown(streamDataBuffer, false);
+                if (html && html.trim().length > 0) {
+                    viewBuffer = html;
+                    activeStreamContentElement.innerHTML = viewBuffer;
+                } else {
+                    viewBuffer = fallbackMarkdown(streamDataBuffer);
+                    activeStreamContentElement.innerHTML = viewBuffer;
                 }
-                attachCodeBlockActions(msgContent, false);
+                attachCodeBlockActions(activeStreamContentElement, false);
             }
         }
         activeStreamTurn = null;
-        streamRawText = '';
-        lastSuccessfulHtml = '';
+        activeStreamContentElement = null;
+        streamDataBuffer = '';
+        viewBuffer = '';
         setGeneratingState(false);
     }
 
