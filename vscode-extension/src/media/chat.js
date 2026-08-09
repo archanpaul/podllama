@@ -243,10 +243,11 @@
         try {
             // Render markdown using marked.js if loaded
             if (typeof marked !== 'undefined' && marked.parse) {
-                // If there's an odd number of triple backticks, append closing backticks so marked doesn't choke/go blank
                 let processedText = text;
-                const backtickCount = (text.match(/```/g) || []).length;
-                if (backtickCount % 2 !== 0) {
+                // Check if we have an open backtick block
+                const parts = text.split('```');
+                if (parts.length % 2 === 0) {
+                    // There is an unclosed ``` block
                     processedText += '\n```';
                 }
                 try {
