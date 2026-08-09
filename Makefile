@@ -1,6 +1,6 @@
 # Makefile for PodLlama Container Environment (Vulkan GPU Accelerated)
 
-.PHONY: help build build-server build-client build-litellm build-proxy start-server stop-server compose-up compose-down compose-logs compose-start compose-stop compose-restart service-up service-down service-start service-stop service-restart service-logs service-status show-live-logs status unit-tests test smoke-tests smoke_tests smoke-test run-qwencode run-pod check-checksum download-active-models download-models clean
+.PHONY: help build build-server build-client build-litellm build-proxy build-extension build-vscode-extension install-extension install-vscode-extension start-server stop-server compose-up compose-down compose-logs compose-start compose-stop compose-restart service-up service-down service-start service-stop service-restart service-logs service-status show-live-logs status unit-tests test smoke-tests smoke_tests smoke-test run-qwencode run-pod check-checksum download-active-models download-models clean
 
 # Variables
 PODMAN ?= podman
@@ -17,6 +17,8 @@ help:
 	@echo "  make check-infra         - Verify host build/run infrastructure (Podman, Python 3, PyYAML, curl, DRI)"
 	@echo "  make build               - Build server, client, and LiteLLM proxy Podman images using fedora-minimal:latest"
 	@echo "  make build-litellm       - Build LiteLLM Proxy image (fedora-minimal staged build)"
+	@echo "  make build-vscode-extension - Build VS Code extension package (vscode-extension/*.vsix)"
+	@echo "  make install-vscode-extension - Build and install VS Code extension into VS Code ('code --install-extension')"
 	@echo "  make service-up          - Launch Chat, Autocomplete & LiteLLM Proxy via Podman Compose (Port 4000)"
 	@echo "  make service-down        - Stop Podman Compose services"
 	@echo "  make service-logs        - View live logs from all running services"
@@ -75,6 +77,26 @@ build-litellm:
 	$(PODMAN) build -t podllama-litellm:latest -f containers/Containerfile.litellm .
 
 build-proxy: build-litellm
+
+build-vscode-extension:
+	@echo "Building PodLlama Code VS Code Extension..."
+	@which node >/dev/null 2>&1 || (echo "ERROR: 'node' is required to build the VS Code extension." && exit 1)
+	@which npm >/dev/null 2>&1 || (echo "ERROR: 'npm' is required to build the VS Code extension." && exit 1)
+	@if [ ! -d "vscode-extension/node_modules" ]; then \
+		echo "Installing dependencies in vscode-extension..."; \
+		(cd vscode-extension && npm install); \
+	fi
+	(cd vscode-extension && npm run compile)
+	(cd vscode-extension && npx @vscode/vsce package --allow-missing-repository --allow-star-activation --no-dependencies)
+
+build-extension: build-vscode-extension
+
+install-vscode-extension: build-vscode-extension
+	@echo "Installing PodLlama Code extension into VS Code..."
+	@which code >/dev/null 2>&1 || (echo "ERROR: 'code' CLI is not found on PATH." && exit 1)
+	code --install-extension vscode-extension/podllama-code-0.1.0.vsix --force
+
+install-extension: install-vscode-extension
 
 start-server:
 	@echo "Starting Vulkan Chat Model Server container (port 8080)..."
