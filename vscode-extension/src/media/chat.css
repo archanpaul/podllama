@@ -28,6 +28,11 @@ body {
   overflow: hidden;
 }
 
+/* Ensure all form controls and content use editor fonts */
+textarea, select, button, input {
+  font-family: var(--vscode-font-family, inherit);
+}
+
 /* Header Navbar */
 .chat-header {
   padding: 10px 14px;
@@ -77,17 +82,6 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.select-control {
-  background-color: var(--bg-secondary);
-  color: var(--text-main);
-  border: 1px solid var(--border);
-  padding: 4px 8px;
-  border-radius: 4px;
-  outline: none;
-  font-size: 12px;
-  flex: 1;
 }
 
 /* History Drawer Overlay */
@@ -227,9 +221,9 @@ pre {
   border: 1px solid var(--border);
 }
 
-code {
-  font-family: var(--vscode-editor-font-family, monospace);
-  font-size: var(--vscode-editor-font-size, 12px);
+code, pre code {
+  font-family: var(--vscode-editor-font-family, "Fira Code", Consolas, Monaco, monospace) !important;
+  font-size: var(--vscode-editor-font-size, 12px) !important;
   background-color: transparent;
 }
 
@@ -263,42 +257,48 @@ code {
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .textarea-wrapper {
   display: flex;
-  gap: 8px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 6px;
   align-items: flex-end;
+}
+
+.textarea-wrapper:focus-within {
+  border-color: var(--accent);
 }
 
 textarea {
   flex: 1;
-  background-color: var(--bg-primary);
+  background-color: transparent;
   color: var(--text-main);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 8px 10px;
+  border: none;
+  padding: 8px;
   outline: none;
   resize: none;
   min-height: 44px;
   max-height: 160px;
-  font-family: inherit;
   font-size: 13px;
-}
-
-textarea:focus {
-  border-color: var(--accent);
 }
 
 .send-btn {
   background-color: var(--accent);
   color: #ffffff;
   border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
   cursor: pointer;
-  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-bottom: 4px;
 }
 
 .send-btn:hover {
@@ -309,6 +309,31 @@ textarea:focus {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11px;
+}
+
+.model-select-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  border-radius: 16px;
+  cursor: pointer;
+}
+
+.plus-icon {
   color: var(--text-muted);
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.select-control {
+  background: transparent;
+  color: var(--text-main);
+  border: none;
+  outline: none;
+  font-size: 11px;
+  cursor: pointer;
+  padding-right: 4px;
 }

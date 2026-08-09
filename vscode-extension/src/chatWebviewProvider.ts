@@ -285,7 +285,9 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PodLlama Code</title>
     <link href="${cssUri}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 </head>
 <body>
     <div class="chat-header">
@@ -304,14 +306,6 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         </div>
     </div>
 
-    <div class="toolbar">
-        <label style="font-size: 11px; color: var(--text-muted);">Model:</label>
-        <select class="select-control" id="model-select">
-            <option value="podllama-chat">podllama-chat</option>
-            <option value="podllama-thinking">podllama-thinking</option>
-        </select>
-    </div>
-
     <div class="history-drawer" id="history-drawer">
         <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px;">Past Conversations</div>
         <ul class="history-list" id="history-list"></ul>
@@ -322,11 +316,29 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
     <div class="input-container">
         <div class="textarea-wrapper">
             <textarea id="prompt-input" placeholder="Ask PodLlama Code... (Shift+Enter for new line)"></textarea>
-            <button class="send-btn" id="send-btn">Send</button>
+            <button class="send-btn" id="send-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
         </div>
         <div class="input-footer">
-            <span>Press Enter to send</span>
-            <span>PodLlama Local Container</span>
+            <div class="model-select-container">
+                <span class="plus-icon">+</span>
+                <select class="select-control" id="model-select">
+                    <option value="podllama-chat">podllama-chat</option>
+                    <option value="podllama-thinking">podllama-thinking</option>
+                </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <svg class="mic-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted); cursor: pointer;">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+            </div>
         </div>
     </div>
 

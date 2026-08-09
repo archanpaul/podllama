@@ -164,6 +164,12 @@
         pres.forEach(pre => {
             if (pre.querySelector('.code-actions')) return;
 
+            // Apply syntax coloring highlight
+            const codeEl = pre.querySelector('code');
+            if (codeEl && typeof hljs !== 'undefined') {
+                hljs.highlightElement(codeEl);
+            }
+
             const actionsDiv = document.createElement('div');
             actionsDiv.className = 'code-actions';
 
@@ -188,6 +194,17 @@
             actionsDiv.appendChild(copyBtn);
             actionsDiv.appendChild(patchBtn);
             pre.appendChild(actionsDiv);
+        });
+    }
+
+    // Configure marked to use highlight.js for syntax coloring
+    if (typeof marked !== 'undefined' && typeof hljs !== 'undefined') {
+        marked.setOptions({
+            highlight: function (code, lang) {
+                const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                return hljs.highlight(code, { language }).value;
+            },
+            langPrefix: 'hljs language-'
         });
     }
 
