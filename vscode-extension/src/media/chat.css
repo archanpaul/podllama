@@ -433,6 +433,11 @@ textarea {
   padding: 2px 4px;
 }
 
+.select-control option {
+  background-color: var(--vscode-dropdown-background, var(--bg-secondary));
+  color: var(--vscode-dropdown-foreground, var(--text-main));
+}
+
 .select-control:hover {
   color: var(--text-main);
 }
