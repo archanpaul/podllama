@@ -207,6 +207,7 @@ input {
   border-radius: 12px 12px 2px 12px;
   border: 1px solid var(--border);
   max-width: 85%;
+  font-size: 14.5px;
 }
 
 .message-turn.assistant {
@@ -215,14 +216,14 @@ input {
 }
 
 .message-turn.assistant .message-content p {
-  font-size: 15.5px;
+  font-size: 14.5px;
   margin-bottom: 8px;
   line-height: 1.5;
 }
 
 .message-turn.assistant .message-content ul,
 .message-turn.assistant .message-content ol {
-  font-size: 15.5px;
+  font-size: 14.5px;
   margin-bottom: 8px;
   padding-left: 18px;
 }
@@ -232,20 +233,20 @@ input {
 }
 
 .message-turn.assistant .message-content h1 {
-  font-size: 19.5px;
+  font-size: 18.5px;
   margin: 14px 0 6px 0;
   font-weight: 600;
 }
 
 .message-turn.assistant .message-content h2 {
-  font-size: 18px;
+  font-size: 17px;
   margin: 14px 0 6px 0;
   font-weight: 600;
 }
 
 .message-turn.assistant .message-content h3,
 .message-turn.assistant .message-content h4 {
-  font-size: 16px;
+  font-size: 15px;
   margin: 12px 0 6px 0;
   font-weight: 600;
 }
