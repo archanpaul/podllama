@@ -362,7 +362,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                 </div>
             </div>
             <button class="send-btn" id="send-btn" title="Send Message">
-                <i class="fa-solid fa-paper-plane" style="font-size: 10px;"></i>
+                <i class="fa-solid fa-circle-play" style="font-size: 14px;"></i>
             </button>
         </div>
     </div>

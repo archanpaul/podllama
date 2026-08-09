@@ -485,25 +485,24 @@ textarea::placeholder {
 }
 
 .send-btn {
-  background-color: var(--accent);
-  color: #ffffff;
+  background-color: transparent;
+  color: var(--accent);
   border: none;
   width: 24px;
   height: 24px;
-  border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background-color 0.15s ease, transform 0.1s ease;
+  transition: color 0.15s ease, transform 0.1s ease;
 }
 
 .send-btn:hover {
-  background-color: var(--accent-hover);
-  transform: scale(1.05);
+  color: var(--accent-hover);
+  transform: scale(1.1);
 }
 
 .send-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.9);
 }
