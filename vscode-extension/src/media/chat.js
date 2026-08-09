@@ -71,6 +71,8 @@
 
     function renderConversation(conv) {
         if (!messagesContainer) return;
+
+        const savedStreamTurn = activeStreamTurn;
         messagesContainer.innerHTML = '';
 
         const titleInput = document.getElementById('chat-title-input');
@@ -79,18 +81,27 @@
         }
 
         if (!conv || !conv.messages || conv.messages.length === 0) {
-            messagesContainer.innerHTML = `
-                <div style="text-align: center; color: var(--text-muted); margin-top: 40px;">
-                    <p style="font-size: 14px; font-weight: 500;">Welcome to PodLlama Code</p>
-                    <p style="font-size: 12px; margin-top: 6px;">Ask a question or request code refactoring.</p>
-                </div>
-            `;
-            return;
+            if (!savedStreamTurn) {
+                messagesContainer.innerHTML = `
+                    <div style="text-align: center; color: var(--text-muted); margin-top: 40px;">
+                        <p style="font-size: 14px; font-weight: 500;">Welcome to PodLlama Code</p>
+                        <p style="font-size: 12px; margin-top: 6px;">Ask a question or request code refactoring.</p>
+                    </div>
+                `;
+                return;
+            }
         }
 
-        conv.messages.forEach(msg => {
-            appendMessageTurn(msg.role, msg.content, msg.thinking);
-        });
+        if (conv && conv.messages) {
+            conv.messages.forEach(msg => {
+                appendMessageTurn(msg.role, msg.content, msg.thinking);
+            });
+        }
+
+        // Re-attach activeStreamTurn if mid-stream so DOM node is never detached
+        if (savedStreamTurn) {
+            messagesContainer.appendChild(savedStreamTurn);
+        }
 
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }

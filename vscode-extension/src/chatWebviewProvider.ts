@@ -104,6 +104,9 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
 
     public async refreshWebviewSession(conv = this.conversationManager.getActiveConversation()) {
         if (!this._view) return;
+        // Do not interrupt or clear the webview session mid-stream!
+        if (this.activeRequest) return;
+
         const models = await this.client.listModels();
         const settings = this.getSettings();
 
