@@ -292,7 +292,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         if (success) {
             // Trigger native accept/reject overlay for the changes
             vscode.commands.executeCommand('editor.action.dirtydiff.next');
-            
+
             const accept = 'Accept Changes';
             const reject = 'Reject Changes';
             const action = await vscode.window.showInformationMessage(
@@ -415,7 +415,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                 </div>
             </div>
             <button class="send-btn" id="send-btn" title="Send Message">
-                <i class="fa-solid fa-circle-play" style="font-size: 14px;"></i>
+                <i class="fa-solid fa-circle-play" style="font-size: 22px;"></i>
             </button>
         </div>
     </div>

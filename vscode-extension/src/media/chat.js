@@ -180,10 +180,10 @@
     function setGeneratingState(generating) {
         isGenerating = generating;
         if (generating) {
-            sendBtn.innerHTML = '<i class="fa-solid fa-circle-stop" style="font-size: 14px;"></i>';
+            sendBtn.innerHTML = '<i class="fa-solid fa-circle-stop" style="font-size: 22px;"></i>';
             sendBtn.style.color = 'var(--vscode-errorForeground, #f48771)';
         } else {
-            sendBtn.innerHTML = '<i class="fa-solid fa-circle-play" style="font-size: 14px;"></i>';
+            sendBtn.innerHTML = '<i class="fa-solid fa-circle-play" style="font-size: 22px;"></i>';
             sendBtn.style.color = 'var(--accent)';
         }
     }
@@ -239,7 +239,7 @@
 
     function formatMarkdown(text) {
         if (!text) return '';
-        
+
         try {
             // Render markdown using marked.js if loaded
             if (typeof marked !== 'undefined' && marked.parse) {
@@ -293,7 +293,7 @@
 
             appendMessageTurn('user', prompt);
             setGeneratingState(true);
-            
+
             vscode.postMessage({
                 command: 'sendMessage',
                 prompt,
