@@ -232,12 +232,16 @@
         });
     }
 
-    // Configure marked to use highlight.js for syntax coloring
+    // Configure marked to use highlight.js for syntax coloring safely
     if (typeof marked !== 'undefined' && typeof hljs !== 'undefined') {
         marked.setOptions({
             highlight: function (code, lang) {
-                const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-                return hljs.highlight(code, { language }).value;
+                try {
+                    const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                    return hljs.highlight(code, { language }).value;
+                } catch (e) {
+                    return code; // Fallback plain text on syntax errors
+                }
             },
             langPrefix: 'hljs language-'
         });
