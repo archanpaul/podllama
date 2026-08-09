@@ -271,34 +271,41 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         }
 
         const document = editor.document;
-        const currentText = document.getText();
         const selection = editor.selection;
 
-        // Generate the new text content applying the patch
-        let proposedText = '';
+        // Apply edit directly inline inside the active editor
+        const edit = new vscode.WorkspaceEdit();
         if (selection.isEmpty) {
-            const offset = document.offsetAt(selection.active);
-            proposedText = currentText.slice(0, offset) + code + currentText.slice(offset);
+            edit.insert(document.uri, selection.active, code);
         } else {
-            const startOffset = document.offsetAt(selection.start);
-            const endOffset = document.offsetAt(selection.end);
-            proposedText = currentText.slice(0, startOffset) + code + currentText.slice(endOffset);
+            edit.replace(document.uri, selection, code);
         }
 
-        // Setup the target URIs for VS Code side-by-side Diff Editor review
-        const originalUri = document.uri;
-        const proposedUri = vscode.Uri.parse(`${DiffContentProvider.scheme}:Proposed%20Changes?${encodeURIComponent(originalUri.toString())}`);
+        const success = await vscode.workspace.applyEdit(edit);
+        if (success) {
+            // Trigger native accept/reject overlay for the changes
+            vscode.commands.executeCommand('editor.action.dirtydiff.next');
+            
+            const accept = 'Accept Changes';
+            const reject = 'Reject Changes';
+            const action = await vscode.window.showInformationMessage(
+                'Proposed changes applied. Would you like to keep them?',
+                accept,
+                reject
+            );
 
-        // Register/update the proposed content with the virtual document provider
-        this.diffProvider.update(proposedUri, proposedText);
-
-        // Open the native side-by-side diff review screen
-        await vscode.commands.executeCommand(
-            'vscode.diff',
-            originalUri,
-            proposedUri,
-            `${vscode.workspace.asRelativePath(originalUri)} ↔ Proposed Changes`
-        );
+            if (action === reject) {
+                // Revert changes by executing undo command
+                await vscode.commands.executeCommand('undo');
+                vscode.window.showInformationMessage('Changes rejected and reverted.');
+            } else if (action === accept) {
+                // Keep changes by saving the document
+                await document.save();
+                vscode.window.showInformationMessage('Changes accepted and saved.');
+            }
+        } else {
+            vscode.window.showErrorMessage('Failed to apply proposed code changes.');
+        }
     }
 
     private async handleAddContextAttachment() {
