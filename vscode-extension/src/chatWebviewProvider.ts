@@ -86,6 +86,12 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                 case 'addContextAttachment':
                     await this.handleAddContextAttachment();
                     break;
+                case 'renameConversation':
+                    const currentConv = this.conversationManager.getActiveConversation();
+                    currentConv.title = data.title;
+                    this.conversationManager.saveConversation(currentConv);
+                    this.sendHistoryList();
+                    break;
             }
         });
 
@@ -326,13 +332,13 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
 <body>
     <div class="chat-header">
         <div class="title-group">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
                 <rect x="2" y="3" width="20" height="14" rx="2"></rect>
                 <line x1="8" y1="21" x2="16" y2="21"></line>
                 <line x1="12" y1="17" x2="12" y2="21"></line>
                 <path d="M12 6 L12.8 9.2 L16 10 L12.8 10.8 L12 14 L11.2 10.8 L8 10 L11.2 9.2 Z" fill="currentColor" stroke="none"></path>
             </svg>
-            <span>PodLlama Code</span>
+            <input type="text" class="chat-title-input" id="chat-title-input" value="PodLlama Code" title="Click to rename conversation" />
         </div>
         <div class="header-actions">
             <button class="icon-btn" id="new-chat-btn" title="New Conversation">+</button>

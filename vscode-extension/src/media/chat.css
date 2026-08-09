@@ -19,7 +19,7 @@
 
 body {
   font-family: "Outfit", var(--vscode-font-family), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: var(--vscode-font-size, 13px);
+  font-size: var(--vscode-font-size, 14px);
   background-color: var(--bg-primary);
   color: var(--text-main);
   height: 100vh;
@@ -29,33 +29,64 @@ body {
 }
 
 /* Ensure all form controls and content use editor fonts */
-textarea, select, button, input {
+textarea,
+select,
+button,
+input {
   font-family: "Outfit", var(--vscode-font-family), inherit;
 }
 
 /* Header Navbar */
 .chat-header {
-  padding: 10px 14px;
+  padding: 6px 10px;
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
 }
 
 .title-group {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  font-size: 14px;
+  gap: 6px;
+  font-weight: 500;
+  font-size: 13px;
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-title-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  width: 100%;
+  padding: 2px 4px;
+  border-radius: 4px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.chat-title-input:hover {
+  background-color: var(--bg-hover);
+}
+
+.chat-title-input:focus {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border);
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .icon-btn {
@@ -119,7 +150,8 @@ textarea, select, button, input {
   margin-bottom: 4px;
 }
 
-.history-item:hover, .history-item.active {
+.history-item:hover,
+.history-item.active {
   background-color: var(--bg-hover);
 }
 
@@ -234,36 +266,60 @@ pre {
   border: 1px solid var(--border);
 }
 
-code, pre code {
+code,
+pre code {
   font-family: var(--vscode-editor-font-family, "Fira Code", Consolas, Monaco, monospace) !important;
   font-size: var(--vscode-editor-font-size, 12px) !important;
   background-color: transparent;
 }
 
 /* Map Highlight.js token tokens to native active VS Code theme editor colors */
-.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-section, .hljs-link {
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-section,
+.hljs-link {
   color: var(--vscode-symbolIcon-keywordForeground, var(--vscode-textLink-foreground, #569cd6));
 }
-.hljs-string, .hljs-attribute, .hljs-addition {
+
+.hljs-string,
+.hljs-attribute,
+.hljs-addition {
   color: var(--vscode-debugTokenExpression-string, #ce9178);
 }
-.hljs-number, .hljs-regexp {
+
+.hljs-number,
+.hljs-regexp {
   color: var(--vscode-debugTokenExpression-number, #b5cea8);
 }
-.hljs-comment, .hljs-quote {
+
+.hljs-comment,
+.hljs-quote {
   color: var(--vscode-editor-lineHighlightBorder, var(--vscode-disabledForeground, #6a9955));
   font-style: italic;
 }
-.hljs-built_in, .hljs-class, .hljs-title, .hljs-title.class_ {
+
+.hljs-built_in,
+.hljs-class,
+.hljs-title,
+.hljs-title.class_ {
   color: var(--vscode-symbolIcon-classForeground, #4ec9b0);
 }
-.hljs-variable, .hljs-template-variable, .hljs-type, .hljs-params {
+
+.hljs-variable,
+.hljs-template-variable,
+.hljs-type,
+.hljs-params {
   color: var(--vscode-symbolIcon-variableForeground, #9cdcfe);
 }
-.hljs-function, .hljs-title.function_ {
+
+.hljs-function,
+.hljs-title.function_ {
   color: var(--vscode-symbolIcon-functionForeground, #dcdcaa);
 }
-.hljs-meta, .hljs-tag {
+
+.hljs-meta,
+.hljs-tag {
   color: var(--vscode-symbolIcon-namespaceForeground, #808080);
 }
 
@@ -275,7 +331,8 @@ code, pre code {
   gap: 4px;
 }
 
-.patch-btn, .copy-btn {
+.patch-btn,
+.copy-btn {
   background-color: var(--bg-secondary);
   color: var(--text-main);
   border: 1px solid var(--border);
@@ -285,7 +342,8 @@ code, pre code {
   cursor: pointer;
 }
 
-.patch-btn:hover, .copy-btn:hover {
+.patch-btn:hover,
+.copy-btn:hover {
   background-color: var(--accent);
   color: #ffffff;
 }

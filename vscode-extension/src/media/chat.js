@@ -70,6 +70,11 @@
         if (!messagesContainer) return;
         messagesContainer.innerHTML = '';
 
+        const titleInput = document.getElementById('chat-title-input');
+        if (titleInput && conv) {
+            titleInput.value = conv.title || 'Untitled Chat';
+        }
+
         if (!conv || !conv.messages || conv.messages.length === 0) {
             messagesContainer.innerHTML = `
                 <div style="text-align: center; color: var(--text-muted); margin-top: 40px;">
@@ -297,6 +302,25 @@
     if (newChatBtn) {
         newChatBtn.addEventListener('click', () => {
             vscode.postMessage({ command: 'newConversation' });
+        });
+    }
+
+    const chatTitleInput = document.getElementById('chat-title-input');
+    if (chatTitleInput) {
+        const saveTitleRename = () => {
+            const title = chatTitleInput.value.trim();
+            if (title && currentConversation && title !== currentConversation.title) {
+                currentConversation.title = title;
+                vscode.postMessage({ command: 'renameConversation', title });
+            }
+        };
+
+        chatTitleInput.addEventListener('blur', saveTitleRename);
+        chatTitleInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                chatTitleInput.blur();
+            }
         });
     }
 
