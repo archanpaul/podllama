@@ -29,7 +29,13 @@
                 renderHistoryList(message.conversations);
                 break;
             case 'streamToken':
-                appendStreamToken(message.text, message.thinking);
+                if (message.appendInput && promptInput) {
+                    promptInput.value += message.appendInput;
+                    vscode.setState({ text: promptInput.value });
+                    promptInput.scrollTop = promptInput.scrollHeight;
+                } else {
+                    appendStreamToken(message.text, message.thinking);
+                }
                 break;
             case 'streamEnd':
                 finalizeStreamResponse();
@@ -291,6 +297,13 @@
     if (newChatBtn) {
         newChatBtn.addEventListener('click', () => {
             vscode.postMessage({ command: 'newConversation' });
+        });
+    }
+
+    const addContextBtn = document.getElementById('add-context-btn');
+    if (addContextBtn) {
+        addContextBtn.addEventListener('click', () => {
+            vscode.postMessage({ command: 'addContextAttachment' });
         });
     }
 

@@ -83,6 +83,9 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                 case 'stopGeneration':
                     this.abortCurrentRequest();
                     break;
+                case 'addContextAttachment':
+                    await this.handleAddContextAttachment();
+                    break;
             }
         });
 
@@ -274,6 +277,35 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
+    private async handleAddContextAttachment() {
+        const fileUris = await vscode.window.showOpenDialog({
+            canSelectMany: false,
+            openLabel: 'Add to context',
+            filters: {
+                'Code / Text Files': ['ts', 'js', 'py', 'json', 'yaml', 'yml', 'md', 'txt', 'go', 'rs', 'c', 'cpp', 'h', 'java', 'html', 'css', 'sh']
+            }
+        });
+
+        if (fileUris && fileUris.length > 0) {
+            try {
+                const doc = await vscode.workspace.openTextDocument(fileUris[0]);
+                const content = doc.getText();
+                const relativePath = vscode.workspace.asRelativePath(fileUris[0]);
+
+                // Post message to webview containing code block to append
+                const contextStr = `\n\n[Context: ${relativePath}]\n\`\`\`\n${content}\n\`\`\`\n`;
+                this._view?.webview.postMessage({
+                    type: 'streamToken',
+                    text: '',
+                    thinking: '',
+                    appendInput: contextStr
+                });
+            } catch (err: any) {
+                vscode.window.showErrorMessage(`Failed to read file context: ${err.message}`);
+            }
+        }
+    }
+
     private getHtmlForWebview(webview: vscode.Webview): string {
         const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'src', 'media', 'chat.css'));
         const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'src', 'media', 'chat.js'));
@@ -285,7 +317,6 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PodLlama Code</title>
     <link href="${cssUri}" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 </head>
@@ -315,30 +346,24 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
 
     <div class="input-container">
         <div class="textarea-wrapper">
-            <textarea id="prompt-input" placeholder="Ask PodLlama Code... (Shift+Enter for new line)"></textarea>
-            <button class="send-btn" id="send-btn">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <textarea id="prompt-input" placeholder="Ask anything, @ to mention, / for actions"></textarea>
+        </div>
+        <div class="input-footer">
+            <div class="left-controls">
+                <span class="plus-icon" id="add-context-btn" title="Add context attachment">+</span>
+                <div class="model-select-container">
+                    <select class="select-control" id="model-select">
+                        <option value="podllama-chat">podllama-chat</option>
+                        <option value="podllama-thinking">podllama-thinking</option>
+                    </select>
+                </div>
+            </div>
+            <button class="send-btn" id="send-btn" title="Send Message">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="22" y1="2" x2="11" y2="13"></line>
                     <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                 </svg>
             </button>
-        </div>
-        <div class="input-footer">
-            <div class="model-select-container">
-                <span class="plus-icon">+</span>
-                <select class="select-control" id="model-select">
-                    <option value="podllama-chat">podllama-chat</option>
-                    <option value="podllama-thinking">podllama-thinking</option>
-                </select>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <svg class="mic-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted); cursor: pointer;">
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                    <line x1="12" y1="19" x2="12" y2="23"></line>
-                    <line x1="8" y1="23" x2="16" y2="23"></line>
-                </svg>
-            </div>
         </div>
     </div>
 

@@ -227,6 +227,33 @@ code, pre code {
   background-color: transparent;
 }
 
+/* Map Highlight.js token tokens to native active VS Code theme editor colors */
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-section, .hljs-link {
+  color: var(--vscode-symbolIcon-keywordForeground, var(--vscode-textLink-foreground, #569cd6));
+}
+.hljs-string, .hljs-attribute, .hljs-addition {
+  color: var(--vscode-debugTokenExpression-string, #ce9178);
+}
+.hljs-number, .hljs-regexp {
+  color: var(--vscode-debugTokenExpression-number, #b5cea8);
+}
+.hljs-comment, .hljs-quote {
+  color: var(--vscode-editor-lineHighlightBorder, var(--vscode-disabledForeground, #6a9955));
+  font-style: italic;
+}
+.hljs-built_in, .hljs-class, .hljs-title, .hljs-title.class_ {
+  color: var(--vscode-symbolIcon-classForeground, #4ec9b0);
+}
+.hljs-variable, .hljs-template-variable, .hljs-type, .hljs-params {
+  color: var(--vscode-symbolIcon-variableForeground, #9cdcfe);
+}
+.hljs-function, .hljs-title.function_ {
+  color: var(--vscode-symbolIcon-functionForeground, #dcdcaa);
+}
+.hljs-meta, .hljs-tag {
+  color: var(--vscode-symbolIcon-namespaceForeground, #808080);
+}
+
 .code-actions {
   position: absolute;
   top: 6px;
@@ -257,7 +284,7 @@ code, pre code {
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .textarea-wrapper {
@@ -286,6 +313,53 @@ textarea {
   font-size: 13px;
 }
 
+.input-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.left-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.plus-icon {
+  color: var(--text-muted);
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.plus-icon:hover {
+  color: var(--text-main);
+}
+
+.model-select-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border);
+  padding: 3px 10px;
+  border-radius: 16px;
+  cursor: pointer;
+}
+
+.select-control {
+  background: transparent;
+  color: var(--text-main);
+  border: none;
+  outline: none;
+  font-size: 11px;
+  cursor: pointer;
+}
+
 .send-btn {
   background-color: var(--accent);
   color: #ffffff;
@@ -298,42 +372,8 @@ textarea {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-bottom: 4px;
 }
 
 .send-btn:hover {
   background-color: var(--accent-hover);
-}
-
-.input-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.model-select-container {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border);
-  padding: 4px 8px;
-  border-radius: 16px;
-  cursor: pointer;
-}
-
-.plus-icon {
-  color: var(--text-muted);
-  font-size: 14px;
-  font-weight: bold;
-}
-
-.select-control {
-  background: transparent;
-  color: var(--text-main);
-  border: none;
-  outline: none;
-  font-size: 11px;
-  cursor: pointer;
-  padding-right: 4px;
 }
