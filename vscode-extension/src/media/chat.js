@@ -122,14 +122,9 @@
             const msgContent = activeStreamTurn.querySelector('#stream-message-content');
             if (msgContent) {
                 msgContent.dataset.raw = (msgContent.dataset.raw || '') + text;
-                try {
-                    const formatted = formatMarkdown(msgContent.dataset.raw);
-                    msgContent.innerHTML = formatted || escapeHtml(msgContent.dataset.raw);
-                } catch (e) {
-                    console.error('Streaming rendering exception caught:', e);
-                    msgContent.textContent = msgContent.dataset.raw;
-                }
-                attachCodeBlockActions(msgContent);
+                // Use fallback basic parsing during streaming to guarantee text is always shown
+                msgContent.innerHTML = fallbackMarkdown(msgContent.dataset.raw);
+                attachCodeBlockActions(msgContent, false);
             }
         }
 
@@ -138,6 +133,11 @@
 
     function finalizeStreamResponse() {
         if (activeStreamTurn) {
+            const msgContent = activeStreamTurn.querySelector('#stream-message-content');
+            if (msgContent && msgContent.dataset.raw) {
+                // Compile final markdown layout using marked.js once completely finished streaming
+                msgContent.innerHTML = formatMarkdown(msgContent.dataset.raw);
+            }
             // Apply syntax highlight once token streaming has completely finalized
             attachCodeBlockActions(activeStreamTurn, true);
         }
