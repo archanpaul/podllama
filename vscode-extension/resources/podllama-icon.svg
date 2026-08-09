@@ -9,26 +9,14 @@
   <!-- Stand base -->
   <line x1="30" y1="79" x2="70" y2="79" stroke-width="4.5"></line>
 
-  <!-- Circular background shield for AI Brain Badge to overlap bezel nicely -->
-  <circle cx="70" cy="53" r="16" fill="var(--vscode-sideBar-background, #1e1e1e)" stroke="currentColor" stroke-width="3"></circle>
+  <!-- Center code symbols </> -->
+  <path d="M 37,36 L 29,41 L 37,46" stroke-width="2.5"></path>
+  <line x1="46" y1="33" x2="52" y2="49" stroke-width="2.5"></line>
+  <path d="M 61,36 L 69,41 L 61,46" stroke-width="2.5"></path>
 
-  <!-- Minimalist AI Brain Node network inside the badge -->
-  <circle cx="70" cy="53" r="3.2" fill="currentColor"></circle>
-  <line x1="70" y1="53" x2="70" y2="43" stroke-width="1.8"></line>
-  <line x1="70" y1="53" x2="70" y2="63" stroke-width="1.8"></line>
-  <line x1="70" y1="53" x2="60" y2="53" stroke-width="1.8"></line>
-  <line x1="70" y1="53" x2="80" y2="53" stroke-width="1.8"></line>
-  <line x1="70" y1="53" x2="63" y2="46" stroke-width="1.8"></line>
-  <line x1="70" y1="53" x2="77" y2="46" stroke-width="1.8"></line>
-  <line x1="70" y1="53" x2="63" y2="60" stroke-width="1.8"></line>
-  <line x1="70" y1="53" x2="77" y2="60" stroke-width="1.8"></line>
-  
-  <circle cx="70" cy="43" r="1.2" fill="currentColor"></circle>
-  <circle cx="70" cy="63" r="1.2" fill="currentColor"></circle>
-  <circle cx="60" cy="53" r="1.2" fill="currentColor"></circle>
-  <circle cx="80" cy="53" r="1.2" fill="currentColor"></circle>
-  <circle cx="63" cy="46" r="1.2" fill="currentColor"></circle>
-  <circle cx="77" cy="46" r="1.2" fill="currentColor"></circle>
-  <circle cx="63" cy="60" r="1.2" fill="currentColor"></circle>
-  <circle cx="77" cy="60" r="1.2" fill="currentColor"></circle>
+  <!-- Circular background shield for AI Sparkle Badge to overlap bezel -->
+  <circle cx="72" cy="54" r="14" fill="var(--vscode-sideBar-background, #1e1e1e)" stroke="currentColor" stroke-width="3"></circle>
+
+  <!-- AI Sparkle star inside bottom right badge -->
+  <path d="M 72,44 C 72,49 74,54 79,54 C 74,54 72,59 72,64 C 72,59 70,54 65,54 C 70,54 72,49 72,44 Z" fill="currentColor" stroke="none"></path>
 </svg>
