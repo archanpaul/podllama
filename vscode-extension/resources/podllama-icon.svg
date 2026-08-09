@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Isometric 3D Cube Structure (The Pod) with thinner lines -->
+  <!-- Thin Isometric 3D Cube Structure (The Pod) -->
   <!-- Center top vertex: (50, 15) -->
   <!-- Center bottom vertex: (50, 85) -->
   <!-- Left vertex: (15, 35) -->
@@ -12,23 +12,34 @@
   <line x1="15" y1="35" x2="50" y2="50" stroke-width="2.2"></line>
   <line x1="85" y1="35" x2="50" y2="50" stroke-width="2.2"></line>
 
-  <!-- Minimalist AI Brain Node network in the center of the Cube -->
+  <!-- Detailed Minimalist AI Brain Node network in the center of the Cube -->
   <circle cx="50" cy="50" r="3" fill="currentColor"></circle>
-  <line x1="50" y1="50" x2="50" y2="34" stroke-width="1.8"></line>
-  <line x1="50" y1="50" x2="50" y2="66" stroke-width="1.8"></line>
-  <line x1="50" y1="50" x2="34" y2="50" stroke-width="1.8"></line>
-  <line x1="50" y1="50" x2="66" y2="50" stroke-width="1.8"></line>
-  <line x1="50" y1="50" x2="38.7" y2="38.7" stroke-width="1.8"></line>
-  <line x1="50" y1="50" x2="61.3" y2="38.7" stroke-width="1.8"></line>
-  <line x1="50" y1="50" x2="38.7" y2="61.3" stroke-width="1.8"></line>
-  <line x1="50" y1="50" x2="61.3" y2="61.3" stroke-width="1.8"></line>
   
-  <circle cx="50" cy="34" r="1.5" fill="currentColor"></circle>
-  <circle cx="50" cy="66" r="1.5" fill="currentColor"></circle>
-  <circle cx="34" cy="50" r="1.5" fill="currentColor"></circle>
-  <circle cx="66" cy="50" r="1.5" fill="currentColor"></circle>
-  <circle cx="38.7" cy="38.7" r="1.5" fill="currentColor"></circle>
-  <circle cx="61.3" cy="38.7" r="1.5" fill="currentColor"></circle>
-  <circle cx="38.7" cy="61.3" r="1.5" fill="currentColor"></circle>
-  <circle cx="61.3" cy="61.3" r="1.5" fill="currentColor"></circle>
+  <!-- Brain Outer Ring Nodes -->
+  <circle cx="50" cy="35" r="1.5" fill="currentColor"></circle>
+  <circle cx="50" cy="65" r="1.5" fill="currentColor"></circle>
+  <circle cx="35" cy="50" r="1.5" fill="currentColor"></circle>
+  <circle cx="65" cy="50" r="1.5" fill="currentColor"></circle>
+  <circle cx="39.4" cy="39.4" r="1.5" fill="currentColor"></circle>
+  <circle cx="60.6" cy="39.4" r="1.5" fill="currentColor"></circle>
+  <circle cx="39.4" cy="60.6" r="1.5" fill="currentColor"></circle>
+  <circle cx="60.6" cy="60.6" r="1.5" fill="currentColor"></circle>
+
+  <!-- Brain Web Interconnections -->
+  <!-- Vertical and Horizontal lines -->
+  <line x1="50" y1="35" x2="50" y2="65" stroke-width="1.2" opacity="0.85"></line>
+  <line x1="35" y1="50" x2="65" y2="50" stroke-width="1.2" opacity="0.85"></line>
+  <!-- Diagonals -->
+  <line x1="39.4" y1="39.4" x2="60.6" y2="60.6" stroke-width="1.2" opacity="0.85"></line>
+  <line x1="60.6" y1="39.4" x2="39.4" y2="60.6" stroke-width="1.2" opacity="0.85"></line>
+  
+  <!-- Outer Node cross-mesh lines to form a clean circular brain web -->
+  <path d="M 50,35 Q 43,36 39.4,39.4" stroke-width="1.2" opacity="0.75"></path>
+  <path d="M 39.4,39.4 Q 36,43 35,50" stroke-width="1.2" opacity="0.75"></path>
+  <path d="M 35,50 Q 36,57 39.4,60.6" stroke-width="1.2" opacity="0.75"></path>
+  <path d="M 39.4,60.6 Q 43,64 50,65" stroke-width="1.2" opacity="0.75"></path>
+  <path d="M 50,65 Q 57,64 60.6,60.6" stroke-width="1.2" opacity="0.75"></path>
+  <path d="M 60.6,60.6 Q 64,57 65,50" stroke-width="1.2" opacity="0.75"></path>
+  <path d="M 65,50 Q 64,43 60.6,39.4" stroke-width="1.2" opacity="0.75"></path>
+  <path d="M 60.6,39.4 Q 57,36 50,35" stroke-width="1.2" opacity="0.75"></path>
 </svg>
