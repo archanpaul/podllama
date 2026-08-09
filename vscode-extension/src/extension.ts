@@ -163,24 +163,6 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('podllama.reviewCode', () => {
-            const contextData = getActiveEditorSelection();
-            if (contextData) {
-                chatWebviewProvider.injectCodeSelection(contextData.code, contextData.path, 'Please review the following code for bugs, errors, and potential improvements:');
-            }
-        })
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('podllama.documentCode', () => {
-            const contextData = getActiveEditorSelection();
-            if (contextData) {
-                chatWebviewProvider.injectCodeSelection(contextData.code, contextData.path, 'Please add inline documentation, comments, and docstrings to the following code:');
-            }
-        })
-    );
-
-    context.subscriptions.push(
         vscode.commands.registerCommand('podllama.setStatusBarLoading', (loading: boolean) => {
             if (loading) {
                 statusBarItem.text = '$(sync~spin) PodLlama: Thinking...';
