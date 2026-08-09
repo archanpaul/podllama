@@ -8,6 +8,7 @@ import { PodLlamaClient } from './podllama-client';
 export class ChatWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'podllama.chatView';
     private _view?: vscode.WebviewView;
+    private activeRequest: http.ClientRequest | undefined;
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -15,6 +16,18 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         private client: PodLlamaClient,
         private getSettings: () => { apiBase: string; apiKey: string; chatModel: string; thinkingModel: string }
     ) {}
+
+    private abortCurrentRequest() {
+        if (this.activeRequest) {
+            this.activeRequest.destroy();
+            this.activeRequest = undefined;
+            this._view?.webview.postMessage({
+                type: 'streamToken',
+                text: '\n\n*Generation stopped by user.*'
+            });
+            this._view?.webview.postMessage({ type: 'streamEnd' });
+        }
+    }
 
     public resolveWebviewView(
         webviewView: vscode.WebviewView,
@@ -27,6 +40,15 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
             enableScripts: true,
             localResourceRoots: [this._extensionUri]
         };
+
+        // Retain webview context when hidden to prevent text/messages from resetting
+        webviewView.description = "Local AI Chat";
+        // @ts-ignore
+        if (typeof webviewView.show === 'function') {
+            // some versions expose different view options
+        }
+        // @ts-ignore
+        webviewView.webview.options.retainContextWhenHidden = true;
 
         webviewView.webview.html = this.getHtmlForWebview(webviewView.webview);
 
@@ -57,6 +79,9 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                     break;
                 case 'applyPatch':
                     await this.applyCodePatch(data.code);
+                    break;
+                case 'stopGeneration':
+                    this.abortCurrentRequest();
                     break;
             }
         });
@@ -193,6 +218,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                 });
 
                 res.on('end', () => {
+                    this.activeRequest = undefined;
                     this._view?.webview.postMessage({ type: 'streamEnd' });
 
                     conv.messages.push({
@@ -210,6 +236,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
             });
 
             req.on('error', (err) => {
+                this.activeRequest = undefined;
                 console.error('[PodLlama] Stream error:', err);
                 this._view?.webview.postMessage({
                     type: 'streamToken',
@@ -219,6 +246,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                 resolve();
             });
 
+            this.activeRequest = req;
             req.write(body);
             req.end();
         });
@@ -257,6 +285,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PodLlama Code</title>
     <link href="${cssUri}" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
     <div class="chat-header">

@@ -145,6 +145,18 @@
 
     function finalizeStreamResponse() {
         activeStreamTurn = null;
+        setGeneratingState(false);
+    }
+
+    function setGeneratingState(generating) {
+        isGenerating = generating;
+        if (generating) {
+            sendBtn.textContent = 'Stop';
+            sendBtn.style.backgroundColor = 'var(--vscode-errorForeground, #f48771)';
+        } else {
+            sendBtn.textContent = 'Send';
+            sendBtn.style.backgroundColor = 'var(--accent)';
+        }
     }
 
     function attachCodeBlockActions(container) {
@@ -181,21 +193,24 @@
 
     function formatMarkdown(text) {
         if (!text) return '';
-        // Basic Markdown & Code snippet parsing
-        let formatted = escapeHtml(text);
+        
+        try {
+            // Render markdown using marked.js if loaded
+            if (typeof marked !== 'undefined' && marked.parse) {
+                return marked.parse(text);
+            }
+        } catch (e) {
+            console.error('Error rendering markdown with marked.js:', e);
+        }
 
-        // Convert ```lang code ``` into pre code blocks
+        // Fallback basic parsing
+        let formatted = escapeHtml(text);
         formatted = formatted.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
             return `<pre><code class="language-${lang}">${code}</code></pre>`;
         });
-
-        // Convert inline `code`
         formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-        // Convert LaTeX \( ... \) and $$ ... $$
         formatted = formatted.replace(/\$\$([\s\S]*?)\$\$/g, '<div class="latex-display">$1</div>');
         formatted = formatted.replace(/\\\(([\s\S]*?)\\\)/g, '<span class="latex-inline">$1</span>');
-
         return formatted;
     }
 
@@ -207,15 +222,26 @@
             .replace(/"/g, '&quot;');
     }
 
+    let isGenerating = false;
+
     // UI Event Listeners
     if (sendBtn && promptInput) {
         sendBtn.addEventListener('click', () => {
+            if (isGenerating) {
+                // Trigger Stop Action
+                vscode.postMessage({ command: 'stopGeneration' });
+                setGeneratingState(false);
+                return;
+            }
+
             const prompt = promptInput.value.trim();
             if (!prompt) return;
 
             const selectedModel = modelSelect ? modelSelect.value : 'podllama-chat';
 
             appendMessageTurn('user', prompt);
+            setGeneratingState(true);
+            
             vscode.postMessage({
                 command: 'sendMessage',
                 prompt,
@@ -223,6 +249,18 @@
             });
 
             promptInput.value = '';
+            vscode.setState({ text: '' });
+        });
+
+        // Restore saved textarea state on load
+        const previousState = vscode.getState();
+        if (previousState && previousState.text) {
+            promptInput.value = previousState.text;
+        }
+
+        // Save textarea content on keypress / input
+        promptInput.addEventListener('input', () => {
+            vscode.setState({ text: promptInput.value });
         });
 
         promptInput.addEventListener('keydown', (e) => {
