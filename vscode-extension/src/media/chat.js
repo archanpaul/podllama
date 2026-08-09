@@ -243,7 +243,13 @@
         try {
             // Render markdown using marked.js if loaded
             if (typeof marked !== 'undefined' && marked.parse) {
-                return marked.parse(text);
+                // If there's an odd number of triple backticks, append closing backticks so marked doesn't choke/go blank
+                let processedText = text;
+                const backtickCount = (text.match(/```/g) || []).length;
+                if (backtickCount % 2 !== 0) {
+                    processedText += '\n```';
+                }
+                return marked.parse(processedText);
             }
         } catch (e) {
             console.error('Error rendering markdown with marked.js:', e);
