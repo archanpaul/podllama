@@ -254,16 +254,16 @@
             // Render markdown using marked.js if loaded
             if (typeof marked !== 'undefined' && marked.parse) {
                 let processedText = text;
-                // Check if we have an open backtick block
-                const parts = text.split('```');
-                if (parts.length % 2 === 0) {
-                    // There is an unclosed ``` block
+                const matches = text.match(/```/g);
+                const backtickCount = matches ? matches.length : 0;
+                if (backtickCount % 2 !== 0) {
                     processedText += '\n```';
                 }
                 try {
-                    return marked.parse(processedText);
+                    const parsed = marked.parse(processedText);
+                    if (parsed) return parsed;
                 } catch (innerErr) {
-                    return fallbackMarkdown(text);
+                    // Ignore and fallback
                 }
             }
         } catch (e) {
