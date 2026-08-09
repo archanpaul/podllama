@@ -137,6 +137,17 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
+    context.subscriptions.push(
+        vscode.commands.registerCommand('podllama.setStatusBarLoading', (loading: boolean) => {
+            if (loading) {
+                statusBarItem.text = '$(sync~spin) PodLlama: Thinking...';
+                statusBarItem.color = '#facc15'; // yellow color during generation
+            } else {
+                updateStatusBar(getSettings().enableInline || getSettings().enableDropdown);
+            }
+        })
+    );
+
     // 8. Listen to Configuration Changes
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration(e => {

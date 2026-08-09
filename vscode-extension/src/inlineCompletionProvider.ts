@@ -47,22 +47,32 @@ export class InlineCompletionProvider implements vscode.InlineCompletionItemProv
         // Format FIM prompt for PodLlama (Qwen Coder FIM tags)
         const fimPrompt = `<|fim_prefix|>${prefix}<|fim_suffix|>${suffix}<|fim_middle|>`;
 
-        const completionText = await this.client.getCompletion({
-            model: settings.model,
-            prompt: fimPrompt,
-            max_tokens: settings.maxTokens,
-            temperature: settings.temperature
-        });
+        // Trigger loading visual clue
+        vscode.commands.executeCommand('podllama.setStatusBarLoading', true);
 
-        if (token.isCancellationRequested || !completionText) {
+        try {
+            const completionText = await this.client.getCompletion({
+                model: settings.model,
+                prompt: fimPrompt,
+                max_tokens: settings.maxTokens,
+                temperature: settings.temperature
+            });
+
+            vscode.commands.executeCommand('podllama.setStatusBarLoading', false);
+
+            if (token.isCancellationRequested || !completionText) {
+                return [];
+            }
+
+            const item = new vscode.InlineCompletionItem(
+                completionText,
+                new vscode.Range(position, position)
+            );
+
+            return [item];
+        } catch (err) {
+            vscode.commands.executeCommand('podllama.setStatusBarLoading', false);
             return [];
         }
-
-        const item = new vscode.InlineCompletionItem(
-            completionText,
-            new vscode.Range(position, position)
-        );
-
-        return [item];
     }
 }
