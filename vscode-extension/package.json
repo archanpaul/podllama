@@ -53,8 +53,39 @@
       {
         "command": "podllama.applyCodePatch",
         "title": "PodLlama: Apply Code Patch to Active File"
+      },
+      {
+        "command": "podllama.sendToChat",
+        "title": "PodLlama: Send Selection to Chat"
+      },
+      {
+        "command": "podllama.reviewCode",
+        "title": "PodLlama: Review Selected Code"
+      },
+      {
+        "command": "podllama.documentCode",
+        "title": "PodLlama: Document Selected Code"
       }
     ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "podllama.sendToChat",
+          "when": "editorHasSelection",
+          "group": "podllama@1"
+        },
+        {
+          "command": "podllama.reviewCode",
+          "when": "editorHasSelection",
+          "group": "podllama@2"
+        },
+        {
+          "command": "podllama.documentCode",
+          "when": "editorHasSelection",
+          "group": "podllama@3"
+        }
+      ]
+    },
     "configuration": {
       "title": "PodLlama Code",
       "properties": {

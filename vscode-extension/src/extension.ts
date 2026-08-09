@@ -137,6 +137,49 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
+    // Context Menu selection commands forwarding editor blocks to Chat
+    const getActiveEditorSelection = () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showWarningMessage('No active editor found.');
+            return undefined;
+        }
+        const selection = editor.selection;
+        if (selection.isEmpty) {
+            vscode.window.showWarningMessage('Please select some code first.');
+            return undefined;
+        }
+        const codeText = editor.document.getText(selection);
+        return { code: codeText, path: editor.document.fileName };
+    };
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('podllama.sendToChat', () => {
+            const contextData = getActiveEditorSelection();
+            if (contextData) {
+                chatWebviewProvider.injectCodeSelection(contextData.code, contextData.path);
+            }
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('podllama.reviewCode', () => {
+            const contextData = getActiveEditorSelection();
+            if (contextData) {
+                chatWebviewProvider.injectCodeSelection(contextData.code, contextData.path, 'Please review the following code for bugs, errors, and potential improvements:');
+            }
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('podllama.documentCode', () => {
+            const contextData = getActiveEditorSelection();
+            if (contextData) {
+                chatWebviewProvider.injectCodeSelection(contextData.code, contextData.path, 'Please add inline documentation, comments, and docstrings to the following code:');
+            }
+        })
+    );
+
     context.subscriptions.push(
         vscode.commands.registerCommand('podllama.setStatusBarLoading', (loading: boolean) => {
             if (loading) {

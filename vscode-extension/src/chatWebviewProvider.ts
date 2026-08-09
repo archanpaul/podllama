@@ -312,6 +312,27 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
+    public injectCodeSelection(code: string, filepath: string, instruction?: string) {
+        if (!this._view) {
+            // Reveal chat view if hidden
+            vscode.commands.executeCommand('workbench.view.extension.podllama-activitybar');
+        }
+
+        const relativePath = vscode.workspace.asRelativePath(filepath);
+        let injectedVal = ``;
+        if (instruction) {
+            injectedVal += `${instruction}\n`;
+        }
+        injectedVal += `\n[Context Selection: ${relativePath}]\n\`\`\`\n${code}\n\`\`\`\n`;
+
+        this._view?.webview.postMessage({
+            type: 'streamToken',
+            text: '',
+            thinking: '',
+            appendInput: injectedVal
+        });
+    }
+
     private getHtmlForWebview(webview: vscode.Webview): string {
         const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'src', 'media', 'chat.css'));
         const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'src', 'media', 'chat.js'));
