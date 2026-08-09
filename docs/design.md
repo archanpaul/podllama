@@ -6,33 +6,58 @@ This document outlines the architecture, container orchestration, network flow, 
 
 ## 1. High-Level Architecture Overview
 
-The system employs a containerized microservices architecture organized into three main layers:
+The system employs a containerized microservices architecture organized into four main operational layers:
 
-1. **Client / Workspace Layer**: The user's workstation or `qwen-client` terminal agent.
+1. **Client / Workspace Layer**: VS Code Extension (PodLlama Code), terminal workspace agent (`qwen-client`), or third-party IDE extensions (Continue.dev, Cline, Cursor).
 2. **Unified Routing Proxy Layer**: `podllama_proxy` listening on host port `4000`.
-3. **Backend Model Server Layer**: Isolated `llama-server` instances with Vulkan GPU layer offloading.
+3. **Backend Model Server & Supervisor Layer**: Isolated `llama-server` instances managed by `chat_swapper.py` on port `8080` (Chat/Reasoning) and port `8081` (Autocomplete).
+4. **Hardware Acceleration & Security Layer**: Vulkan GPU API (`/dev/dri`), rootless Podman user namespaces, and SELinux volume isolation.
 
 ```mermaid
-flowchart TD
-    subgraph Host Workstation / IDE
-        Client Agent["qwen-client CLI / VS Code Extensions"]
+flowchart TB
+    subgraph IDE_CLIENT_LAYER["1. Client & IDE Integration Layer"]
+        VSCodeExt["PodLlama Code VS Code Extension\n(Webview Chat, Inline Diff, Offline Ligatures)"]
+        QwenCLI["qwen-client Container CLI\n(QwenLM/qwen-code Workspace Agent)"]
+        ExternalIDE["Third-Party IDE Extensions\n(Continue.dev, Cline, Cursor, Roo Code)"]
     end
 
-    subgraph Podman Container Stack (containers_default network)
-        LiteLLM["podllama_proxy\n(Port 4000:4000)"]
-        ChatServer["podllama_chat\n(Port 8080 internal)\nQwen2.5-Coder-7B"]
-        AutoServer["podllama_autocomplete\n(Port 8081 internal)\nQwen2.5-Coder-0.5B / 1.5B"]
+    subgraph PROXY_LAYER["2. Unified Routing Proxy Layer (Port 4000)"]
+        LiteLLMProxy["podllama_proxy (LiteLLM Router)\nhttp://localhost:4000/v1"]
     end
 
-    subgraph GPU Hardware Layer
-        Vulkan["/dev/dri (Intel / AMD / NVIDIA GPU)"]
+    subgraph BACKEND_STACK["3. Podman Container Microservices Stack (containers_default network)"]
+        subgraph CHAT_SUPERVISOR["Chat & Reasoning Supervisor (Port 8080)"]
+            Swapper["chat_swapper.py Supervisor"]
+            LlamaChat["llama-server Backend Process\n(podllama-chat / podllama-thinking)"]
+            IdleTimer["Idle Auto-Stop Timer\n(0 MB RAM/VRAM when idle > 600s)"]
+            Swapper --> LlamaChat
+            LlamaChat --> IdleTimer
+        end
+
+        subgraph AUTOCOMPLETE_SERVICE["Autocomplete Service (Port 8081)"]
+            LlamaAuto["podllama_autocomplete Backend\n(Qwen2.5-Coder-0.5B / 1.5B FIM)"]
+        end
     end
 
-    Client Agent -->|HTTP / OpenAI API| LiteLLM
-    LiteLLM -->|Route qwen-chat| ChatServer
-    LiteLLM -->|Route qwen-autocomplete| AutoServer
-    ChatServer -->|Vulkan Offload -ngl 99| Vulkan
-    AutoServer -->|Vulkan Offload -ngl 99| Vulkan
+    subgraph HARDWARE_SECURITY_LAYER["4. Host Hardware Acceleration & Security Layer"]
+        VulkanGPU["Cross-Vendor Vulkan GPU API\n/dev/dri (Intel Arc / AMD Radeon / NVIDIA)"]
+        CPUPool["Host Multi-Threaded CPU Fallback Pool"]
+        RootlessSELinux["Rootless Podman Namespace (--userns=keep-id)\nSELinux Volume Isolation (:Z / :ro,Z)"]
+    end
+
+    %% Flow Connections
+    VSCodeExt -->|OpenAI REST API| LiteLLMProxy
+    QwenCLI -->|OpenAI REST API| LiteLLMProxy
+    ExternalIDE -->|OpenAI REST API| LiteLLMProxy
+
+    LiteLLMProxy -->|Route podllama-chat / podllama-thinking| Swapper
+    LiteLLMProxy -->|Route podllama-autocomplete| LlamaAuto
+
+    LlamaChat -->|Offload Vulkan Layers -ngl 99| VulkanGPU
+    LlamaChat -->|CPU Fallback| CPUPool
+    LlamaAuto -->|Offload Vulkan Layers -ngl 99| VulkanGPU
+
+    BACKEND_STACK --- RootlessSELinux
 ```
 
 ---
@@ -206,9 +231,45 @@ router_settings:
   num_retries: 3
   timeout: 120
 
-litellm_settings:
-  max_tokens: 65536
-  max_input_tokens: 65536
-  truncate_input_tokens: true
-  drop_params: true
+---
+
+## 6. VS Code Extension Streaming & Webview Architecture
+
+The companion **PodLlama Code** VS Code extension employs an asynchronous, dual-buffered event architecture to deliver low-latency chat streaming while protecting against network packet fragmentation and DOM re-render glitches:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant UI as Webview Panel (chat.js)
+    participant Host as Extension Host (chatWebviewProvider.ts)
+    participant Proxy as LiteLLM Proxy (Port 4000)
+
+    UI->>Host: postMessage({ command: 'sendMessage', prompt })
+    Host->>Host: Save user message to active conversation
+    Host->>Host: Dispatch non-blocking summarizeContext (if turns > 6)
+    Host->>Proxy: POST /v1/chat/completions (stream=true)
+    
+    loop SSE Stream Line Processing
+        Proxy-->>Host: Incoming TCP Buffer Chunks
+        Host->>Host: Preserve trailing partial line in streamBuffer
+        Host->>UI: postMessage({ type: 'streamToken', text })
+        UI->>UI: Accumulate tokens into streamDataBuffer
+        UI->>UI: requestAnimationFrame -> renderStream()
+        alt Live formatMarkdown succeeds
+            UI->>UI: Update DOM innerHTML & save lastGoodHtml
+        else Incomplete token / syntax error mid-stream
+            UI->>UI: Preserve lastGoodHtml in DOM (No UI wipe / blank)
+        end
+    end
+
+    Proxy-->>Host: Stream End ([DONE])
+    Host->>Host: Save completed assistant message to history
+    Host->>UI: postMessage({ type: 'streamEnd' })
+    UI->>UI: finalizeStreamResponse() -> formatMarkdown + syntax highlight
 ```
+
+### Key Reliability Safeguards:
+1. **SSE Line Buffer (`streamBuffer`)**: The extension host maintains a `streamBuffer` across raw HTTP response `data` events, splitting only on `\n` boundaries and preserving partial trailing lines to prevent JSON syntax errors from packet fragmentation.
+2. **Decoupled Dual-Buffer Rendering**: `chat.js` maintains a raw ingestion buffer (`streamDataBuffer`) and a formatted HTML presentation buffer (`lastGoodHtml`), decoupling network token throughput from browser DOM paint cycles.
+3. **DOM Node Persistence**: Active streaming turns use direct JavaScript DOM element handles (`activeStreamContentElement`) rather than static CSS ID selectors, preventing ID collisions or node detachment when workspace sessions refresh.
+4. **Asynchronous Context Summarization**: Conversations exceeding 6 turns trigger context summarization in the background without blocking the primary streaming request.

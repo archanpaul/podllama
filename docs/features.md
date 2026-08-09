@@ -87,7 +87,9 @@ The **PodLlama Container Environment** provides a local, GPU-accelerated, contai
 A companion extension, **PodLlama Code**, is bundled with the project to streamline developer workflows locally:
 - **Offline Fonts & Styles**: Self-contains Fira Sans and Fira Code fonts, enabling coding ligatures and offline privacy.
 - **Antigravity-inspired Sidebar**: A webview chat panel featuring a compact header, renamed conversation sessions, themed model dropdown controls, and scalable play/stop generation icons.
+- **Decoupled Dual-Buffer Architecture**: Ingestion buffer (`streamDataBuffer`) and presentation buffer (`viewBuffer` / `lastGoodHtml`) decouple network packet reception from browser UI paints.
+- **Exception-Guarded Live Markdown**: Formats Markdown live during streaming with `lastGoodHtml` retry buffer protection against incomplete tokens, split backticks, and TCP packet fragmentation.
 - **Context Attachments**: Injects complete files into chat inputs via a custom `+` context attachment button.
 - **Editor Integration ('Chat' Menu)**: Right-clicking highlighted code pastes it instantly as active chat context.
 - **Inline Proposed Change Diffing**: Allows reviewing applied code patches inline using VS Code's native accept/reject actions.
-- **Context Summarization Engine**: Triggers context parsing automatically via `podllama-chat` once a conversation exceeds 6 message turns. Compresses details into structured context points to save token history overhead and maintain minimal generation times.
+- **Asynchronous Context Summarization Engine**: Triggers context summarization asynchronously via `podllama-chat` once a conversation exceeds 6 message turns. Compresses details into structured context points to save token history overhead while allowing live chat completions to stream immediately without blocking.

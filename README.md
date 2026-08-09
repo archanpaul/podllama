@@ -27,7 +27,117 @@ This project addresses these challenges by delivering an enterprise-ready, self-
 - **Unified LiteLLM Proxy API (Port 4000)**: Exposes a single, multithreaded OpenAI-compatible API endpoint on port 4000 (`http://localhost:4000/v1`) that dynamically routes requests to the appropriate model server backend based on the model name in API requests.
 - **Official QwenLM/qwen-code CLI Integration**: The workspace agent container (`Containerfile.qwencoder`) automatically installs the latest release of [QwenLM/qwen-code](https://github.com/QwenLM/qwen-code) directly from GitHub releases without API rate limits or hardcoded versions. Supports build-time version pinning via `QWEN_CODE_VERSION`.
 - **Podman Compose Orchestration**: Easily manage the entire stack (`podllama_chat`, `podllama_autocomplete`, `podllama_proxy`) with a single command (`make service-up`).
-- **YAML Model Configuration (`config/model_conf.yaml`)**: Centralized model registry specifying download URLs, active chat/autocomplete model selections, ports, context sizes, and SHA256 checksums.
+---
+
+## System High-Level Architecture
+
+### ASCII Architecture Chart
+
+```text
++---------------------------------------------------------------------------------------------------+
+|                                 1. CLIENT & IDE INTEGRATION LAYER                                 |
+|                                                                                                   |
+|   +--------------------------+    +--------------------------+    +---------------------------+   |
+|   | PodLlama Code Extension  |    |  qwen-client CLI Agent   |    |  Third-Party Extensions   |   |
+|   |  (Webview Chat & Diff)   |    |  (QwenLM/qwen-code CLI)  |    |  (Continue / Cline/ Roo)  |   |
+|   +------------+-------------+    +------------+-------------+    +-------------+-------------+   |
++----------------|-------------------------------|--------------------------------|-----------------+
+                 |                               |                                |
+                 +-----------------------+       |       +------------------------+
+                                         |       |       |
+                                         v       v       v
++---------------------------------------------------------------------------------------------------+
+|                               2. UNIFIED ROUTING PROXY LAYER                                      |
+|                                                                                                   |
+|                 +-----------------------------------------------------------+                     |
+|                 |       podllama_proxy (LiteLLM OpenAI-Compatible Router)   |                     |
+|                 |                   http://localhost:4000/v1                |                     |
+|                 +-----------------------------+-----------------------------+                     |
++-----------------------------------------------|---------------------------------------------------+
+                                                |
+                       +------------------------+------------------------+
+                       |                                                 |
+                       | Route: podllama-chat / podllama-thinking        | Route: podllama-autocomplete
+                       v                                                 v
++---------------------------------------------------------------------------------------------------+
+|                        3. PODMAN CONTAINER MICROSERVICES STACK (containers_default)               |
+|                                                                                                   |
+|   +---------------------------------------------+   +-----------------------------------------+   |
+|   | Chat & Reasoning Supervisor (Port 8080)     |   | Autocomplete Service (Port 8081)        |   |
+|   |                                             |   |                                         |   |
+|   |  +---------------------------------------+  |   |  +-----------------------------------+  |   |
+|   |  | chat_swapper.py (Model Auto-Swapper)  |  |   |  | llama-server Backend              |  |   |
+|   |  +-------------------+-------------------+  |   |  | (Qwen2.5-Coder-0.5B / 1.5B FIM)    |  |   |
+|   |                      |                      |   |  +-----------------+------------------+  |   |
+|   |                      v                      |   +--------------------|--------------------+   |
+|   |  +---------------------------------------+  |                        |                        |
+|   |  | llama-server (7B / 14B Models)        |  |                        |                        |
+|   |  | (Idle Auto-Stop: 0 MB VRAM when idle) |  |                        |                        |
+|   |  +-------------------+-------------------+  |                        |                        |
+|   +----------------------|----------------------+                        |                        |
++--------------------------|-----------------------------------------------|------------------------+
+                           |                                               |
+                           +-----------------------+-----------------------+
+                                                   |
+                                                   v
++---------------------------------------------------------------------------------------------------+
+|                        4. HOST HARDWARE ACCELERATION & SECURITY LAYER                             |
+|                                                                                                   |
+|   +-----------------------------------++----------------------------------++--------------------+   |
+|   | Cross-Vendor Vulkan GPU API       || Host Multi-Threaded CPU Pool     || Rootless Podman   |   |
+|   | (/dev/dri: Intel / AMD / NVIDIA)  || (Fallback Inference Engine)      || & SELinux (:Z)    |   |
+|   +-----------------------------------++----------------------------------++--------------------+   |
++---------------------------------------------------------------------------------------------------+
+```
+
+### Mermaid Architecture Diagram
+
+```mermaid
+flowchart TB
+    subgraph IDE_CLIENT_LAYER["1. Client & IDE Integration Layer"]
+        VSCodeExt["PodLlama Code VS Code Extension\n(Webview Chat, Inline Diff, Offline Ligatures)"]
+        QwenCLI["qwen-client Container CLI\n(QwenLM/qwen-code Workspace Agent)"]
+        ExternalIDE["Third-Party IDE Extensions\n(Continue.dev, Cline, Cursor, Roo Code)"]
+    end
+
+    subgraph PROXY_LAYER["2. Unified Routing Proxy Layer (Port 4000)"]
+        LiteLLMProxy["podllama_proxy (LiteLLM Router)\nhttp://localhost:4000/v1"]
+    end
+
+    subgraph BACKEND_STACK["3. Podman Container Microservices Stack (containers_default network)"]
+        subgraph CHAT_SUPERVISOR["Chat & Reasoning Supervisor (Port 8080)"]
+            Swapper["chat_swapper.py Supervisor"]
+            LlamaChat["llama-server Backend Process\n(podllama-chat / podllama-thinking)"]
+            IdleTimer["Idle Auto-Stop Timer\n(0 MB RAM/VRAM when idle > 600s)"]
+            Swapper --> LlamaChat
+            LlamaChat --> IdleTimer
+        end
+
+        subgraph AUTOCOMPLETE_SERVICE["Autocomplete Service (Port 8081)"]
+            LlamaAuto["podllama_autocomplete Backend\n(Qwen2.5-Coder-0.5B / 1.5B FIM)"]
+        end
+    end
+
+    subgraph HARDWARE_SECURITY_LAYER["4. Host Hardware Acceleration & Security Layer"]
+        VulkanGPU["Cross-Vendor Vulkan GPU API\n/dev/dri (Intel Arc / AMD Radeon / NVIDIA)"]
+        CPUPool["Host Multi-Threaded CPU Fallback Pool"]
+        RootlessSELinux["Rootless Podman Namespace (--userns=keep-id)\nSELinux Volume Isolation (:Z / :ro,Z)"]
+    end
+
+    %% Flow Connections
+    VSCodeExt -->|OpenAI REST API| LiteLLMProxy
+    QwenCLI -->|OpenAI REST API| LiteLLMProxy
+    ExternalIDE -->|OpenAI REST API| LiteLLMProxy
+
+    LiteLLMProxy -->|Route podllama-chat / podllama-thinking| Swapper
+    LiteLLMProxy -->|Route podllama-autocomplete| LlamaAuto
+
+    LlamaChat -->|Offload Vulkan Layers -ngl 99| VulkanGPU
+    LlamaChat -->|CPU Fallback| CPUPool
+    LlamaAuto -->|Offload Vulkan Layers -ngl 99| VulkanGPU
+
+    BACKEND_STACK --- RootlessSELinux
+```
 
 ---
 
@@ -48,12 +158,13 @@ An official extension, **PodLlama Code**, is packaged in [`vscode-extension/podl
 
 ### Features:
 - **Interactive Chat Sidebar**: A custom-themed webview panel (matching the Antigravity IDE aesthetic) utilizing local **Fira Sans** and **Fira Code** typography (with programming ligatures) for complete offline privacy.
+- **High-Performance Stream Renderer**: Powered by a dual-buffer streaming architecture (`streamDataBuffer` & `lastGoodHtml`) that renders live formatted Markdown smoothly while preventing DOM node detachment or layout flashes during packet fragmentation.
 - **Context Attachment Button (`+`)**: Select any text/code file from your workspace and append it directly as a code-block context inside the chat panel.
 - **Dynamic Model Selection**: Swap between `podllama-chat` and `podllama-thinking` directly from the input footer dropdown (themed matching your VS Code active workspace theme).
 - **Editor Context Menu Selection**: Highlight any code in the editor, right-click, and choose **Chat** to automatically reveal the panel and copy the highlighted code selection as context.
 - **Side-by-Side Accept/Reject Diff View**: When applying code patches generated by the AI, proposed edits are applied inline and prompted with VS Code's native accept/reject actions (Undo to discard / Save to accept).
 - **Inline ghost-text autocomplete** and status bar indicators showing active completion generation.
-- **Auto-Summarization Engine**: To prevent model latency degradation during long programming sessions, the extension automatically calls `podllama-chat` when a thread exceeds 6 turns to summarize requirements and decisions. This summary is injected as compressed system context, preserving key details while reducing VRAM memory load.
+- **Non-Blocking Auto-Summarization Engine**: To prevent model latency degradation during long programming sessions, the extension triggers context summarization asynchronously when a thread exceeds 6 turns. Details are compressed into structured system context without blocking live response generation.
 
 ### Installation & Setup:
 1. Ensure the Podman backend container stack is running (`make service-up`).
