@@ -22,7 +22,14 @@ The **PodLlama Container Environment** provides a local, GPU-accelerated, contai
 ## 3. Multi-Model Architecture & On-Demand Swapping
 
 - **Dedicated Chat & Thinking Model Supervisor**: Runs `containers/chat_swapper.py` on port `8080` for chat, reasoning, refactoring, and thinking tasks (`podllama-chat` and `podllama-thinking`).
-- **On-Demand Model Auto-Swapping**: Automatically intercepts incoming model requests (e.g. swapping between `Qwen2.5-Coder-7B`, `DeepSeek-R1-Distill-Qwen-7B`, and `DeepSeek-R1-Distill-Qwen-14B`), stops the active `llama-server` process, loads the target GGUF model into Vulkan VRAM, and streams back responses.
+- **On-Demand Model Auto-Swapping**: Automatically intercepts incoming model requests across the 6 supported GGUF model files (`Qwen2.5-Coder-0.5B/1.5B/3B/7B` and `DeepSeek-R1-Distill-Qwen-7B/14B`), stops the active `llama-server` process, loads the target GGUF model into Vulkan VRAM, and streams back responses.
+- **Supported GGUF Models Suite**:
+  1. `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` (~491 MB): Ultra-low latency Fill-In-Middle (FIM) autocomplete model running on dedicated Port 8081.
+  2. `qwen2.5-coder-1.5b-instruct-q4_k_m.gguf` (~1.12 GB): Higher-capacity autocomplete / lightweight chat model for extended context completions.
+  3. `qwen2.5-coder-3b-instruct-q4_k_m.gguf` (~2.10 GB): Mid-sized code instruction model for fast chat and editing on constrained hardware.
+  4. `qwen2.5-coder-7b-instruct-q4_k_m.gguf` (~4.68 GB): Default active chat model (`podllama-chat`) with full tool-calling support.
+  5. `DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf` (~4.68 GB): Default active thinking model (`podllama-thinking`) for chain-of-thought logic and math reasoning.
+  6. `DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf` (~8.99 GB): High-parameter thinking model for deep architectural synthesis and complex deduction.
 - **Configurable Thinking Model Selection**: Switch `active_thinking_model` in `config/model_conf.yaml` between `DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf` (7B) and `DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf` (14B) for high-tier reasoning.
 - **Auto-Stop After Idle (0 MB LLM RAM/VRAM)**: Automatically terminates the underlying `llama-server` process after a configurable idle threshold (`idle_timeout_seconds` in `config/model_conf.yaml` or `IDLE_TIMEOUT_SECONDS` env var, defaulting to 10 minutes / 600s), releasing 100% of LLM VRAM and RAM back to the host system until the next request triggers a cold-start.
 - **Low-Latency Autocomplete Model**: Runs `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` or `1.5b` on port `8081` for low-latency inline code completions.
@@ -63,8 +70,11 @@ The **PodLlama Container Environment** provides a local, GPU-accelerated, contai
 
 ## 8. Automated Model Management & Checksum Verification
 
-- **Centralized Model Registry**: `config/model_conf.yaml` maps model identifiers to download URLs and SHA256 hashes.
+- **Centralized Model Registry**: `config/model_conf.yaml` maps model identifiers for all 6 GGUF models to download URLs, repository origins, and SHA256 hashes.
 - **Automated Downloads & Verification**: `scripts/download_models.py` downloads missing models into `./models` and validates SHA256 checksums before initiating model server processes.
+- **Selective Download Modes**:
+  - `make download-models`: Downloads the complete catalog of 6 GGUF models (~22 GB total).
+  - `make download-active-models`: Downloads only the currently active chat, autocomplete, and thinking models (~9.8 GB total).
 
 ---
 

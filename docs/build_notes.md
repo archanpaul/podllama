@@ -61,7 +61,23 @@ The workspace agent container packages the official standalone release binary of
 
 ---
 
-## 3. Build & Maintenance Commands
+## 3. Model Storage & Checksum Verification (`scripts/download_models.py`)
+
+All model weights are stored in the host `./models/` directory, which is mounted into model server containers via SELinux-isolated volumes (`${MODELS_DIR}:/models:Z`).
+
+### Download & Verification Logic:
+1. **Registry Resolution (`config/model_conf.yaml`)**: `scripts/download_models.py` reads the configured model list, URLs, expected SHA256 hashes, and download targets.
+2. **SHA256 Checksum Verification**:
+   - For models with explicit SHA256 hashes (e.g. `qwen2.5-coder-0.5b`, `1.5b`, `7b`), the downloader verifies file integrity before and after downloading. If an existing file fails hash validation, it is removed and re-downloaded automatically.
+   - For models with `auto-verify-on-download` (e.g. `qwen2.5-coder-3b`, `DeepSeek-R1-Distill-Qwen-7B/14B`), files larger than 10 MB are verified as valid pre-downloaded GGUF models.
+3. **Atomic Downloads**: Downloads write to temporary `.tmp` files first, ensuring incomplete transfers never corrupt model file integrity.
+4. **Selective Downloading**:
+   - `make download-models`: Fetches all 6 GGUF model files defined in `config/model_conf.yaml`.
+   - `make download-active-models`: Downloads only models currently assigned to `active_chat_model`, `active_autocomplete_model`, and `active_thinking_model`.
+
+---
+
+## 4. Build & Maintenance Commands
 
 | Command | Description |
 | :--- | :--- |

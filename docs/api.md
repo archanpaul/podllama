@@ -162,34 +162,64 @@ curl http://localhost:4000/health/liveliness
 
 ---
 
-## 3. Model Mapping Table
+## 3. Model Mapping & Execution Specification
 
-| Model Alias / ID | Backend Route | Default Model File | Concurrency & Execution Behavior |
-| :--- | :--- | :--- | :--- |
-| `podllama-chat` | `podllama_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` | Auto-swaps on port 8080 (Single active instance) |
-| `podllama-thinking` | `podllama_chat:8080` | `DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf` | Auto-swaps on port 8080 (Single active instance) |
-| `podllama-autocomplete` | `podllama_autocomplete:8081` | `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` | Dedicated port 8081 (Runs in parallel) |
+| Model Alias / GGUF Identifier | Role / Category | Backend Target Server | Loaded Model File | Disk Size | Concurrency & Execution Behavior |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `podllama-chat` | Default Chat | `podllama_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` | ~4.68 GB | Auto-swaps on port 8080 (Single active chat/thinking model) |
+| `podllama-thinking` | Default Reasoning | `podllama_chat:8080` | `DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf` | ~4.68 GB | Auto-swaps on port 8080 (Single active chat/thinking model) |
+| `podllama-autocomplete` | Default Autocomplete | `podllama_autocomplete:8081` | `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` | ~491 MB | Dedicated port 8081 (Runs in parallel with chat) |
+| `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` | Direct File (Autocomplete) | `podllama_autocomplete:8081` | `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` | ~491 MB | Dedicated port 8081 (Real-time FIM inline completions) |
+| `qwen2.5-coder-1.5b-instruct-q4_k_m.gguf` | Direct File (Autocomplete/Chat) | `podllama_autocomplete:8081` | `qwen2.5-coder-1.5b-instruct-q4_k_m.gguf` | ~1.12 GB | Dedicated port 8081 (Enhanced multi-line completions) |
+| `qwen2.5-coder-3b-instruct-q4_k_m.gguf` | Direct File (Medium Chat) | `podllama_chat:8080` | `qwen2.5-coder-3b-instruct-q4_k_m.gguf` | ~2.10 GB | Auto-swaps on port 8080 (Fast mid-sized code chat) |
+| `qwen2.5-coder-7b-instruct-q4_k_m.gguf` | Direct File (Flagship Chat) | `podllama_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` | ~4.68 GB | Auto-swaps on port 8080 (State-of-the-art coding chat) |
+| `DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf` | Direct File (7B Reasoning) | `podllama_chat:8080` | `DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf` | ~4.68 GB | Auto-swaps on port 8080 (Chain-of-thought logic & math) |
+| `DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf` | Direct File (14B Reasoning) | `podllama_chat:8080` | `DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf` | ~8.99 GB | Auto-swaps on port 8080 (High-capacity deep synthesis) |
 
 ---
 
 ## 4. On-Demand Model Switching & Selection
 
-The LiteLLM Proxy (`http://localhost:4000/v1`) forwards requests to backend supervisors that support on-demand model swapping. You can switch models on the fly by changing the `"model"` field in API requests:
+The LiteLLM Proxy (`http://localhost:4000/v1`) forwards requests to backend supervisors that support on-demand model swapping. You can switch models on the fly by specifying the exact `"model"` identifier in API requests:
 
-### Available Model Roles & Identifiers
-- **Chat Role**: `podllama-chat` or `qwen2.5-coder-7b-instruct-q4_k_m.gguf`
-- **Thinking Role**: `podllama-thinking`, `DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf`, or `DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf`
-- **Autocomplete Role**: `podllama-autocomplete` or `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf`
+### Available Model Roles & GGUF Identifiers
+- **Autocomplete Models (Port 8081)**:
+  - `podllama-autocomplete` (Default alias for `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf`)
+  - `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` (491 MB)
+  - `qwen2.5-coder-1.5b-instruct-q4_k_m.gguf` (1.12 GB)
+- **Chat Models (Port 8080)**:
+  - `podllama-chat` (Default alias for `qwen2.5-coder-7b-instruct-q4_k_m.gguf`)
+  - `qwen2.5-coder-3b-instruct-q4_k_m.gguf` (2.10 GB)
+  - `qwen2.5-coder-7b-instruct-q4_k_m.gguf` (4.68 GB)
+- **Thinking & Reasoning Models (Port 8080)**:
+  - `podllama-thinking` (Default alias for `DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf`)
+  - `DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf` (4.68 GB)
+  - `DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf` (8.99 GB)
 
-### Example: On-Demand Thinking Model Swap
+### Example: On-Demand Model Swap API Requests
+
+#### 1. On-Demand 14B Deep Reasoning Swap:
 ```bash
 curl http://localhost:4000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer sk-local" \
   -d '{
-    "model": "podllama-thinking",
+    "model": "DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf",
     "messages": [
-      {"role": "user", "content": "Analyze time complexity of red-black tree insertion."}
+      {"role": "user", "content": "Analyze algorithm time complexity of red-black tree insertion."}
+    ]
+  }'
+```
+
+#### 2. On-Demand 3B Fast Chat Swap:
+```bash
+curl http://localhost:4000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer sk-local" \
+  -d '{
+    "model": "qwen2.5-coder-3b-instruct-q4_k_m.gguf",
+    "messages": [
+      {"role": "user", "content": "Write a bash script to back up a postgres database."}
     ]
   }'
 ```

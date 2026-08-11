@@ -184,18 +184,42 @@ chat_server_port: 8080
 autocomplete_server_port: 8081
 idle_timeout_seconds: 600
 vulkan_gpu_layers: 99
-context_size: 65536
+context_size: 8192
 
 models:
+  qwen2.5-coder-0.5b-instruct-q4_k_m.gguf:
+    name: Qwen2.5-Coder-0.5B-Instruct (Q4_K_M)
+    repo: Qwen/Qwen2.5-Coder-0.5B-Instruct-GGUF
+    url: https://huggingface.co/Qwen/Qwen2.5-Coder-0.5B-Instruct-GGUF/resolve/main/qwen2.5-coder-0.5b-instruct-q4_k_m.gguf
+    sha256: 1d9614638d18024d0fbb36575a15f1302a3adf044df10345688ec4f6e1c4ff32
+
+  qwen2.5-coder-1.5b-instruct-q4_k_m.gguf:
+    name: Qwen2.5-Coder-1.5B-Instruct (Q4_K_M)
+    repo: Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF
+    url: https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/main/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
+    sha256: cc324af070c2ecbfd324a30884d2f951a7ff756aba85cb811a6ec436933bb046
+
+  qwen2.5-coder-3b-instruct-q4_k_m.gguf:
+    name: Qwen2.5-Coder-3B-Instruct (Q4_K_M)
+    repo: Qwen/Qwen2.5-Coder-3B-Instruct-GGUF
+    url: https://huggingface.co/Qwen/Qwen2.5-Coder-3B-Instruct-GGUF/resolve/main/qwen2.5-coder-3b-instruct-q4_k_m.gguf
+    sha256: auto-verify-on-download
+
   qwen2.5-coder-7b-instruct-q4_k_m.gguf:
+    name: Qwen2.5-Coder-7B-Instruct (Q4_K_M)
+    repo: Qwen/Qwen2.5-Coder-7B-Instruct-GGUF
     url: https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF/resolve/main/qwen2.5-coder-7b-instruct-q4_k_m.gguf
     sha256: 509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c
 
   DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf:
+    name: DeepSeek-R1-Distill-Qwen-7B (Q4_K_M)
+    repo: unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF
     url: https://huggingface.co/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf
     sha256: auto-verify-on-download
 
   DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf:
+    name: DeepSeek-R1-Distill-Qwen-14B (Q4_K_M)
+    repo: unsloth/DeepSeek-R1-Distill-Qwen-14B-GGUF
     url: https://huggingface.co/unsloth/DeepSeek-R1-Distill-Qwen-14B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf
     sha256: auto-verify-on-download
 ```

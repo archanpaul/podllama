@@ -211,6 +211,75 @@ An official extension, **PodLlama Code**, is packaged in [`vscode-extension/podl
 
 ---
 
+## Downloaded & Supported Models Catalog
+
+The PodLlama container environment manages a curated suite of 6 GGUF LLM models pre-configured in [`config/model_conf.yaml`](file:///home/arp/workspace/grokking.workspace/podllama.git/config/model_conf.yaml) and stored in `./models/`. These models cover low-latency inline autocomplete, multi-turn chat, code editing, function calling, and deep reasoning tasks.
+
+### Models Summary Overview
+
+| Model Identifier / Filename | Parameter Count | Quantization | Disk Size | HuggingFace Repository | Default Role / Alias | Concurrency Mode |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` | 0.5B | `Q4_K_M` | ~491 MB | [`Qwen/Qwen2.5-Coder-0.5B-Instruct-GGUF`](https://huggingface.co/Qwen/Qwen2.5-Coder-0.5B-Instruct-GGUF) | `podllama-autocomplete` (Port 8081) | Dedicated (Runs in Parallel) |
+| `qwen2.5-coder-1.5b-instruct-q4_k_m.gguf` | 1.5B | `Q4_K_M` | ~1.12 GB | [`Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF`](https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF) | Optional Autocomplete / Light Chat | Dedicated / Swappable |
+| `qwen2.5-coder-3b-instruct-q4_k_m.gguf` | 3.0B | `Q4_K_M` | ~2.10 GB | [`Qwen/Qwen2.5-Coder-3B-Instruct-GGUF`](https://huggingface.co/Qwen/Qwen2.5-Coder-3B-Instruct-GGUF) | Medium Chat / Fast Generation | Swappable (Port 8080) |
+| `qwen2.5-coder-7b-instruct-q4_k_m.gguf` | 7.6B | `Q4_K_M` | ~4.68 GB | [`Qwen/Qwen2.5-Coder-7B-Instruct-GGUF`](https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF) | `podllama-chat` (Port 8080) | Swappable (Port 8080) |
+| `DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf` | 7.6B | `Q4_K_M` | ~4.68 GB | [`unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF`](https://huggingface.co/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF) | `podllama-thinking` (Port 8080) | Swappable (Port 8080) |
+| `DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf` | 14.8B | `Q4_K_M` | ~8.99 GB | [`unsloth/DeepSeek-R1-Distill-Qwen-14B-GGUF`](https://huggingface.co/unsloth/DeepSeek-R1-Distill-Qwen-14B-GGUF) | High-Capacity Thinking / Deep Reasoning | Swappable (Port 8080) |
+
+---
+
+### Detailed Model Descriptions
+
+#### 1. Qwen2.5-Coder-0.5B-Instruct (`qwen2.5-coder-0.5b-instruct-q4_k_m.gguf`)
+- **Primary Role**: Default Active Autocomplete (`active_autocomplete_model` / `podllama-autocomplete`)
+- **Backend Service**: `podllama_autocomplete` (Port 8081)
+- **Size & Format**: 491 MB, 4-bit Medium K-quantization (`Q4_K_M`)
+- **HuggingFace Repository**: `Qwen/Qwen2.5-Coder-0.5B-Instruct-GGUF`
+- **SHA256 Hash**: `1d9614638d18024d0fbb36575a15f1302a3adf044df10345688ec4f6e1c4ff32`
+- **Description**: An ultra-compact model optimized for real-time Fill-In-Middle (FIM) code autocomplete. Consumes under 1 GB of VRAM/RAM, delivering sub-100ms inline suggestions during active typing.
+
+#### 2. Qwen2.5-Coder-1.5B-Instruct (`qwen2.5-coder-1.5b-instruct-q4_k_m.gguf`)
+- **Primary Role**: Enhanced Autocomplete / High-Speed Lightweight Chat
+- **Backend Service**: `podllama_autocomplete` (Port 8081) or `podllama_chat` (Port 8080)
+- **Size & Format**: 1.12 GB, 4-bit Medium K-quantization (`Q4_K_M`)
+- **HuggingFace Repository**: `Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF`
+- **SHA256 Hash**: `cc324af070c2ecbfd324a30884d2f951a7ff756aba85cb811a6ec436933bb046`
+- **Description**: Offers a sweet spot between low latency and higher completion accuracy. Recommended for developers who want richer multi-line inline completions without heavy VRAM utilization.
+
+#### 3. Qwen2.5-Coder-3B-Instruct (`qwen2.5-coder-3b-instruct-q4_k_m.gguf`)
+- **Primary Role**: Medium-Tier Code Generation & Fast Chat
+- **Backend Service**: `podllama_chat` (Port 8080)
+- **Size & Format**: 2.10 GB, 4-bit Medium K-quantization (`Q4_K_M`)
+- **HuggingFace Repository**: `Qwen/Qwen2.5-Coder-3B-Instruct-GGUF`
+- **SHA256 Hash**: Verified on download
+- **Description**: A medium-weight model providing strong coding competence for multi-turn chat and refactoring. Ideal for low-VRAM laptops and Integrated GPU (iGPU) setups.
+
+#### 4. Qwen2.5-Coder-7B-Instruct (`qwen2.5-coder-7b-instruct-q4_k_m.gguf`)
+- **Primary Role**: Default Active Chat (`active_chat_model` / `podllama-chat`)
+- **Backend Service**: `podllama_chat` (Port 8080)
+- **Size & Format**: 4.68 GB, 4-bit Medium K-quantization (`Q4_K_M`)
+- **HuggingFace Repository**: `Qwen/Qwen2.5-Coder-7B-Instruct-GGUF`
+- **SHA256 Hash**: `509287f78cb4d4cf6b3843734733b914b2c158e43e22a7f4bf5e963800894d3c`
+- **Description**: The default flagship coding assistant model. Capable of handling complex multi-file code editing, bug fixing, automated test writing, and structured function/tool calling via `--jinja` prompt formatting.
+
+#### 5. DeepSeek-R1-Distill-Qwen-7B (`DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf`)
+- **Primary Role**: Default Active Thinking (`active_thinking_model` / `podllama-thinking`)
+- **Backend Service**: `podllama_chat` (Port 8080)
+- **Size & Format**: 4.68 GB, 4-bit Medium K-quantization (`Q4_K_M`)
+- **HuggingFace Repository**: `unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF`
+- **SHA256 Hash**: Verified on download
+- **Description**: A specialized reasoning model distilled from DeepSeek-R1 into Qwen2.5-7B. Excels at step-by-step chain-of-thought analysis, mathematical derivation, algorithmic complexity proofs, and architectural design breakdowns.
+
+#### 6. DeepSeek-R1-Distill-Qwen-14B (`DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf`)
+- **Primary Role**: High-Capacity Thinking & Deep Reasoning
+- **Backend Service**: `podllama_chat` (Port 8080)
+- **Size & Format**: 8.99 GB, 4-bit Medium K-quantization (`Q4_K_M`)
+- **HuggingFace Repository**: `unsloth/DeepSeek-R1-Distill-Qwen-14B-GGUF`
+- **SHA256 Hash**: Verified on download
+- **Description**: The largest reasoning model available in the environment. Designed for hardware configurations with 12GB+ VRAM or 16GB+ System RAM. Delivers superior reasoning accuracy on complex multi-step logical problems.
+
+---
+
 ## Quick Start Guide
 
 ### 0. Verify System Infrastructure
