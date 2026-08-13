@@ -295,7 +295,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
 
         try:
             req = urllib.request.Request(target_url, data=forward_body if forward_body else None, headers=fwd_headers, method=self.command)
-            with urllib.request.urlopen(req, timeout=120) as resp:
+            with urllib.request.urlopen(req, timeout=300) as resp:
                 resp_status = resp.status
                 resp_headers = resp.getheaders()
 

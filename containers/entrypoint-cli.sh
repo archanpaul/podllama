@@ -47,6 +47,23 @@ fi
 sed -i "s|\${SERVER_URL}|${SERVER_URL}|g" ~/.config/crush/crush.json
 sed -i "s|\${OPENAI_API_KEY}|${OPENAI_API_KEY:-sk-local}|g" ~/.config/crush/crush.json
 
+# Create CRUSH.md agent instructions to reinforce tool-based actions.
+# This helps steer the model towards using write/edit/bash tools
+# rather than describing code in prose (especially important for
+# smaller local models that may not always respect tool_choice).
+cat > ~/.config/crush/CRUSH.md << 'CRUSHMD'
+# Agent Instructions
+
+You are a coding agent operating inside a workspace at /workspace.
+
+## Critical Rules
+- ALWAYS use the `write` tool to create or overwrite files. Never just describe what code should look like.
+- ALWAYS use the `edit` tool to modify existing files.
+- ALWAYS use the `bash` tool to run commands (install packages, run tests, etc).
+- When asked to create a file, respond with a tool call — not a code block.
+- The working directory is /workspace. Write all files there unless told otherwise.
+CRUSHMD
+
 CRUSH_BIN=""
 for candidate in "/usr/local/bin/crush" "/opt/crush/crush" "/opt/crush/bin/crush"; do
     if [ -x "${candidate}" ] && [ ! -d "${candidate}" ]; then
