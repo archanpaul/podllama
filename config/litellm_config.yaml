@@ -5,18 +5,21 @@ model_list:
       model: openai/qwen2.5-coder
       api_base: http://podllama_chat:8080/v1
       api_key: sk-local
+      drop_params: true
 
   - model_name: podllama-autocomplete
     litellm_params:
       model: openai/podllama-autocomplete
       api_base: http://podllama_autocomplete:8081/v1
       api_key: sk-local
+      drop_params: true
 
   - model_name: podllama-thinking
     litellm_params:
       model: openai/qwen2.5-coder
       api_base: http://podllama_chat:8080/v1
       api_key: sk-local
+      drop_params: true
 
   # Available Backend GGUF Models for Direct Auto-Swapping
   - model_name: qwen2.5-coder-0.5b-instruct-q4_k_m.gguf
@@ -24,47 +27,45 @@ model_list:
       model: openai/qwen2.5-coder-0.5b-instruct-q4_k_m.gguf
       api_base: http://podllama_chat:8080/v1
       api_key: sk-local
+      drop_params: true
 
   - model_name: qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
     litellm_params:
       model: openai/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
       api_base: http://podllama_chat:8080/v1
       api_key: sk-local
+      drop_params: true
 
   - model_name: qwen2.5-coder-3b-instruct-q4_k_m.gguf
     litellm_params:
       model: openai/qwen2.5-coder-3b-instruct-q4_k_m.gguf
       api_base: http://podllama_chat:8080/v1
       api_key: sk-local
+      drop_params: true
 
   - model_name: qwen2.5-coder-7b-instruct-q4_k_m.gguf
     litellm_params:
       model: openai/qwen2.5-coder-7b-instruct-q4_k_m.gguf
       api_base: http://podllama_chat:8080/v1
       api_key: sk-local
+      drop_params: true
 
   - model_name: DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf
     litellm_params:
       model: openai/DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf
       api_base: http://podllama_chat:8080/v1
       api_key: sk-local
+      drop_params: true
 
   - model_name: DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf
     litellm_params:
       model: openai/DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf
       api_base: http://podllama_chat:8080/v1
       api_key: sk-local
+      drop_params: true
+
+litellm_settings:
+  drop_params: true
 
 general_settings:
   master_key: sk-local
-  disable_master_key_auth: true
-
-router_settings:
-  num_retries: 0
-  timeout: 600
-
-litellm_settings:
-  max_tokens: 65536
-  max_input_tokens: 65536
-  truncate_input_tokens: true
-  drop_params: true
