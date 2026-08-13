@@ -36,11 +36,11 @@ RUN if [ -n "${CRUSH_VERSION}" ]; then \
 WORKDIR /app
 COPY config/model_conf.yaml /app/config/model_conf.yaml
 COPY config/crush.json /app/config/crush.json
-COPY containers/entrypoint-client.sh /app/entrypoint-client.sh
-RUN chmod +x /app/entrypoint-client.sh
+COPY containers/entrypoint-cli.sh /app/entrypoint-cli.sh
+RUN chmod +x /app/entrypoint-cli.sh
 
 # Restricted workspace mount point
 WORKDIR /workspace
 VOLUME ["/workspace"]
 
-ENTRYPOINT ["/app/entrypoint-client.sh"]
+ENTRYPOINT ["/app/entrypoint-cli.sh"]

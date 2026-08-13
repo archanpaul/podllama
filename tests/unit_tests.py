@@ -109,7 +109,7 @@ def test_script_permissions():
     scripts = [
         os.path.join(PROJECT_ROOT, "scripts", "run_podman.sh"),
         os.path.join(PROJECT_ROOT, "containers", "entrypoint-llamacpp.sh"),
-        os.path.join(PROJECT_ROOT, "containers", "entrypoint-client.sh"),
+        os.path.join(PROJECT_ROOT, "containers", "entrypoint-cli.sh"),
     ]
 
     for script_path in scripts:
