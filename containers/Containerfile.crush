@@ -32,9 +32,10 @@ RUN if [ -n "${CRUSH_VERSION}" ]; then \
     ln -sf "${CRUSH_BIN}" /usr/local/bin/crush && \
     chmod +x /usr/local/bin/crush "${CRUSH_BIN}"
 
-# Set up application workspace
+# Set up application workspace & configuration files
 WORKDIR /app
 COPY config/model_conf.yaml /app/config/model_conf.yaml
+COPY config/crush.json /app/config/crush.json
 COPY containers/entrypoint-client.sh /app/entrypoint-client.sh
 RUN chmod +x /app/entrypoint-client.sh
 

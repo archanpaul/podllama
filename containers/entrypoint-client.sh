@@ -22,7 +22,7 @@ while [ ${RETRY_COUNT} -lt ${MAX_RETRIES} ]; do
         break
     fi
     RETRY_COUNT=$((RETRY_COUNT + 1))
-    echo "Waiting for server (${RETRY_COUNT}/${MAX_RETRIES})..."
+    echo "Waiting for server (${RETRY_COUNT}/${MAX_RETRIES})...."
     sleep 2
 done
 
@@ -35,34 +35,13 @@ export OPENAI_BASE_URL="${SERVER_URL}"
 export OPENAI_API_KEY="${OPENAI_API_KEY:-sk-local}"
 export OPENAI_MODEL="${OPENAI_MODEL:-podllama-chat}"
 
-# Configure ~/.config/crush/crush.json dynamically for podllama-chat and podllama-thinking
+# Configure ~/.config/crush/crush.json from template in /app/config/crush.json
 mkdir -p ~/.config/crush
-cat << 'JSON' > ~/.config/crush/crush.json
-{
-  "$schema": "https://charm.land/crush.json",
-  "model": "podllama-chat",
-  "provider": "podllama",
-  "providers": {
-    "podllama": {
-      "type": "openai-compat",
-      "base_url": "${SERVER_URL}",
-      "api_key": "${OPENAI_API_KEY}",
-      "models": [
-        {
-          "id": "podllama-chat",
-          "name": "PodLlama Chat (Qwen2.5-Coder-7B)",
-          "context_window": 16384
-        },
-        {
-          "id": "podllama-thinking",
-          "name": "PodLlama Thinking (DeepSeek-R1-Distill-Qwen)",
-          "context_window": 16384
-        }
-      ]
-    }
-  }
-}
-JSON
+if [ -f /app/config/crush.json ]; then
+    cp /app/config/crush.json ~/.config/crush/crush.json
+else
+    echo "WARNING: /app/config/crush.json not found, using default configuration."
+fi
 
 # Substitute runtime environment variables into crush.json
 sed -i "s|\${SERVER_URL}|${SERVER_URL}|g" ~/.config/crush/crush.json

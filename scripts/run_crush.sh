@@ -11,12 +11,26 @@ echo "Launching PodLlama Workspace Client Container (Crush)..."
 echo "Workspace: ${WORKSPACE_DIR}"
 echo "Server Endpoint: http://${PODLLAMA_SERVER_HOST}:${PODLLAMA_SERVER_PORT}"
 
-exec podman run -it --rm \
-    --name "podllama_client_$$" \
-    --network host \
-    -e PODLLAMA_SERVER_HOST="${PODLLAMA_SERVER_HOST}" \
-    -e PODLLAMA_SERVER_PORT="${PODLLAMA_SERVER_PORT}" \
-    -v "${WORKSPACE_DIR}:/workspace:z" \
-    -w /workspace \
-    --userns=keep-id \
-    "${CLI_IMAGE}"
+# Pass --yolo if user requested or run default args
+if [ "$1" = "--yolo" ] || [ "$2" = "--yolo" ]; then
+    shift || true
+    exec podman run -it --rm \
+        --name "podllama_client_$$" \
+        --network host \
+        -e PODLLAMA_SERVER_HOST="${PODLLAMA_SERVER_HOST}" \
+        -e PODLLAMA_SERVER_PORT="${PODLLAMA_SERVER_PORT}" \
+        -v "${WORKSPACE_DIR}:/workspace:z" \
+        -w /workspace \
+        --userns=keep-id \
+        "${CLI_IMAGE}" --yolo "$@"
+else
+    exec podman run -it --rm \
+        --name "podllama_client_$$" \
+        --network host \
+        -e PODLLAMA_SERVER_HOST="${PODLLAMA_SERVER_HOST}" \
+        -e PODLLAMA_SERVER_PORT="${PODLLAMA_SERVER_PORT}" \
+        -v "${WORKSPACE_DIR}:/workspace:z" \
+        -w /workspace \
+        --userns=keep-id \
+        "${CLI_IMAGE}" "$@"
+fi
