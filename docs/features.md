@@ -48,8 +48,8 @@ The **PodLlama Container Environment** provides a local, GPU-accelerated, contai
 
 ## 5. Official QwenLM CLI Integration
 
-- **`Containerfile.qwencoder`**: Packages the official [QwenLM/qwen-code](https://github.com/QwenLM/qwen-code) terminal agent inside a Fedora 44 Minimal container.
-- **Dynamic Binary Fetching**: Fetches the latest GitHub release of `qwen-code` at build time without hardcoded version locks, with optional version pinning via `--build-arg QWEN_CODE_VERSION=vX.Y.Z`.
+- **`Containerfile.crush`**: Packages the official [charmbracelet/crush](https://github.com/charmbracelet/crush) terminal agent inside a Fedora 44 Minimal container.
+- **Dynamic Binary Fetching**: Fetches the latest GitHub release of `qwen-code` at build time without hardcoded version locks, with optional version pinning via `--build-arg CRUSH_VERSION=vX.Y.Z`.
 - **Interactive Workspace Shell**: Runs inside user workspaces with full access to project file trees.
 
 ---

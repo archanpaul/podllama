@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-SERVER_HOST="${PODLLAMA_SERVER_HOST:-${PODLLAMA_HOST:-${QWEN_SERVER_HOST:-127.0.0.1}}}"
-SERVER_PORT="${PODLLAMA_SERVER_PORT:-${PODLLAMA_PORT:-${QWEN_SERVER_PORT:-4000}}}"
+SERVER_HOST="${PODLLAMA_SERVER_HOST:-${PODLLAMA_HOST:-${CRUSH_SERVER_HOST:-127.0.0.1}}}"
+SERVER_PORT="${PODLLAMA_SERVER_PORT:-${PODLLAMA_PORT:-${CRUSH_SERVER_PORT:-4000}}}"
 SERVER_URL="http://${SERVER_HOST}:${SERVER_PORT}/v1"
 
-echo "=== Official QwenLM/qwen-code Agent Starting ==="
+echo "=== Official charmbracelet/crush Agent Starting ==="
 echo "Workspace Directory: /workspace"
 echo "Connecting to Model Endpoint: ${SERVER_URL}"
 
@@ -18,7 +18,7 @@ while [ ${RETRY_COUNT} -lt ${MAX_RETRIES} ]; do
     if curl -s "http://${SERVER_HOST}:${SERVER_PORT}/health/liveliness" > /dev/null 2>&1 || \
        curl -s -H "Authorization: Bearer ${OPENAI_API_KEY:-sk-local}" "${SERVER_URL}/models" > /dev/null 2>&1 || \
        curl -s "http://${SERVER_HOST}:${SERVER_PORT}/health" > /dev/null 2>&1; then
-        echo "Connected to Qwen model server endpoint!"
+        echo "Connected to model server endpoint!"
         break
     fi
     RETRY_COUNT=$((RETRY_COUNT + 1))
@@ -30,22 +30,55 @@ if [ ${RETRY_COUNT} -eq ${MAX_RETRIES} ]; then
     echo "WARNING: Could not verify model server endpoint. Proceeding anyway..."
 fi
 
-# Environment variables for official QwenLM/qwen-code CLI
+# Environment variables for charmbracelet/crush CLI
 export OPENAI_BASE_URL="${SERVER_URL}"
 export OPENAI_API_KEY="${OPENAI_API_KEY:-sk-local}"
 export OPENAI_MODEL="${OPENAI_MODEL:-podllama-chat}"
 
-QWEN_BIN=""
-for candidate in "/usr/local/bin/qwen-code" "/usr/local/bin/qwen" "/opt/qwen-code/bin/qwen"; do
+# Configure ~/.config/crush/crush.json dynamically for podllama-chat and podllama-thinking
+mkdir -p ~/.config/crush
+cat << 'JSON' > ~/.config/crush/crush.json
+{
+  "$schema": "https://charm.land/crush.json",
+  "model": "podllama-chat",
+  "provider": "podllama",
+  "providers": {
+    "podllama": {
+      "type": "openai-compat",
+      "base_url": "${SERVER_URL}",
+      "api_key": "${OPENAI_API_KEY}",
+      "models": [
+        {
+          "id": "podllama-chat",
+          "name": "PodLlama Chat (Qwen2.5-Coder-7B)",
+          "context_window": 16384
+        },
+        {
+          "id": "podllama-thinking",
+          "name": "PodLlama Thinking (DeepSeek-R1-Distill-Qwen)",
+          "context_window": 16384
+        }
+      ]
+    }
+  }
+}
+JSON
+
+# Substitute runtime environment variables into crush.json
+sed -i "s|\${SERVER_URL}|${SERVER_URL}|g" ~/.config/crush/crush.json
+sed -i "s|\${OPENAI_API_KEY}|${OPENAI_API_KEY:-sk-local}|g" ~/.config/crush/crush.json
+
+CRUSH_BIN=""
+for candidate in "/usr/local/bin/crush" "/opt/crush/crush" "/opt/crush/bin/crush"; do
     if [ -x "${candidate}" ] && [ ! -d "${candidate}" ]; then
-        QWEN_BIN="${candidate}"
+        CRUSH_BIN="${candidate}"
         break
     fi
 done
 
-if [ -z "${QWEN_BIN}" ]; then
-    QWEN_BIN=$(command -v qwen-code || command -v qwen || echo "/opt/qwen-code/bin/qwen")
+if [ -z "${CRUSH_BIN}" ]; then
+    CRUSH_BIN=$(command -v crush || echo "/usr/local/bin/crush")
 fi
 
-echo "Launching official QwenLM/qwen-code CLI..."
-exec "${QWEN_BIN}" "$@"
+echo "Launching official charmbracelet/crush CLI..."
+exec "${CRUSH_BIN}" "$@"

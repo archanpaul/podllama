@@ -17,7 +17,7 @@ The system employs a containerized microservices architecture organized into fou
 flowchart TB
     subgraph IDE_CLIENT_LAYER["1. Client & IDE Integration Layer"]
         VSCodeExt["PodLlama Code VS Code Extension\n(Webview Chat, Inline Diff, Offline Ligatures)"]
-        QwenCLI["qwen-client Container CLI\n(QwenLM/qwen-code Workspace Agent)"]
+        QwenCLI["podllama-cli Container CLI\n(charmbracelet/crush Workspace Agent)"]
         ExternalIDE["Third-Party IDE Extensions\n(Continue.dev, Cline, Cursor, Roo Code)"]
     end
 
@@ -80,7 +80,7 @@ flowchart TB
 - **Role**: Runs `llama-server` configured with `MODEL_ROLE=autocomplete`. Loads `qwen2.5-coder-0.5b` or `1.5b` for low-latency FIM inline autocomplete.
 
 ### 2.4 `qwen-client`
-- **Image**: `qwen-client:latest` (built from `containers/Containerfile.qwencoder`)
+- **Image**: `qwen-client:latest` (built from `containers/Containerfile.crush`)
 - **Role**: Standalone interactive workspace agent container pre-packaged with official `QwenLM/qwen-code` CLI tool. Mounted directly to the project root directory.
 
 ---

@@ -1,0 +1,45 @@
+# Workspace Agent Container using Official charmbracelet/crush
+FROM registry.fedoraproject.org/fedora-minimal:latest
+
+ARG CRUSH_VERSION=""
+
+RUN microdnf update -y && \
+    microdnf install -y --setopt=install_weak_deps=0 \
+    python3 \
+    python3-requests \
+    python3-urllib3 \
+    curl \
+    git \
+    tar \
+    gzip \
+    ca-certificates && \
+    microdnf clean all
+
+# Download and install official charmbracelet/crush binary (latest release or specified build arg)
+RUN if [ -n "${CRUSH_VERSION}" ]; then \
+    DOWNLOAD_URL="https://github.com/charmbracelet/crush/releases/download/v${CRUSH_VERSION#v}/crush_${CRUSH_VERSION#v}_Linux_x86_64.tar.gz"; \
+    else \
+    CRUSH_TAG=$(curl -sL https://api.github.com/repos/charmbracelet/crush/releases/latest | grep '"tag_name":' | cut -d'"' -f4) && \
+    VERSION="${CRUSH_TAG#v}" && \
+    DOWNLOAD_URL="https://github.com/charmbracelet/crush/releases/download/${CRUSH_TAG}/crush_${VERSION}_Linux_x86_64.tar.gz"; \
+    fi && \
+    echo "Downloading charmbracelet/crush from: ${DOWNLOAD_URL}" && \
+    curl -L -o /tmp/crush.tar.gz "${DOWNLOAD_URL}" && \
+    mkdir -p /opt/crush && \
+    tar -xzf /tmp/crush.tar.gz -C /opt/crush/ && \
+    rm -f /tmp/crush.tar.gz && \
+    CRUSH_BIN=$(find /opt/crush -type f -name crush | head -n 1) && \
+    ln -sf "${CRUSH_BIN}" /usr/local/bin/crush && \
+    chmod +x /usr/local/bin/crush "${CRUSH_BIN}"
+
+# Set up application workspace
+WORKDIR /app
+COPY config/model_conf.yaml /app/config/model_conf.yaml
+COPY containers/entrypoint-client.sh /app/entrypoint-client.sh
+RUN chmod +x /app/entrypoint-client.sh
+
+# Restricted workspace mount point
+WORKDIR /workspace
+VOLUME ["/workspace"]
+
+ENTRYPOINT ["/app/entrypoint-client.sh"]

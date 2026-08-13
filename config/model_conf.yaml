@@ -10,10 +10,10 @@ server_host: 0.0.0.0
 vulkan_gpu_layers: 99
 chat_cpu_threads: 8
 autocomplete_cpu_threads: 4
-context_size: 65536
+context_size: 16384
 autocomplete_context_size: 4096
-batch_size: 512
-ubatch_size: 256
+batch_size: 2048
+ubatch_size: 512
 
 models:
   qwen2.5-coder-0.5b-instruct-q4_k_m.gguf:

@@ -1,6 +1,6 @@
 # PodLlama Container Environment
 
-A high-performance, containerized AI coding environment powered by PodLlama running in Podman, with Vulkan GPU Acceleration, LiteLLM Unified Proxy API, Podman Compose Orchestration, and Official QwenLM/qwen-code CLI Integration.
+A high-performance, containerized AI coding environment powered by PodLlama running in Podman, with Vulkan GPU Acceleration, LiteLLM Unified Proxy API, Podman Compose Orchestration, and Official charmbracelet/crush CLI Integration.
 
 ---
 
@@ -25,7 +25,7 @@ This project addresses these challenges by delivering an enterprise-ready, self-
 - **Dual Model Support & Dynamic Auto-Swapping**: Run dedicated Chat (`qwen2.5-coder-7b-instruct`) and Autocomplete (`qwen2.5-coder-0.5b` or `1.5b`) models simultaneously. Automatically swaps chat models on demand.
 - **Configurable Idle Auto-Stop (0 MB LLM VRAM/RAM Mode)**: Automatically shuts down the chat container backend process after a configurable idle duration (`idle_timeout_seconds`, defaulting to 10 minutes / 600s), freeing 100% of LLM VRAM and host RAM until cold-started by the next request.
 - **Unified LiteLLM Proxy API (Port 4000)**: Exposes a single, multithreaded OpenAI-compatible API endpoint on port 4000 (`http://localhost:4000/v1`) that dynamically routes requests to the appropriate model server backend based on the model name in API requests.
-- **Official QwenLM/qwen-code CLI Integration**: The workspace agent container (`Containerfile.qwencoder`) automatically installs the latest release of [QwenLM/qwen-code](https://github.com/QwenLM/qwen-code) directly from GitHub releases without API rate limits or hardcoded versions. Supports build-time version pinning via `QWEN_CODE_VERSION`.
+- **Official charmbracelet/crush CLI Integration**: The workspace agent container (`Containerfile.crush`) automatically installs the latest release of [charmbracelet/crush](https://github.com/charmbracelet/crush) directly from GitHub releases without API rate limits or hardcoded versions. Supports build-time version pinning via `CRUSH_VERSION`.
 - **Podman Compose Orchestration**: Easily manage the entire stack (`podllama_chat`, `podllama_autocomplete`, `podllama_proxy`) with a single command (`make service-up`).
 ---
 
@@ -38,8 +38,8 @@ This project addresses these challenges by delivering an enterprise-ready, self-
 |                                 1. CLIENT & IDE INTEGRATION LAYER                                 |
 |                                                                                                   |
 |   +--------------------------+    +--------------------------+    +---------------------------+   |
-|   | PodLlama Code Extension  |    |  qwen-client CLI Agent   |    |  Third-Party Extensions   |   |
-|   |  (Webview Chat & Diff)   |    |  (QwenLM/qwen-code CLI)  |    |  (Continue / Cline/ Roo)  |   |
+|   | PodLlama Code Extension  |    |  podllama-cli Agent   |    |  Third-Party Extensions   |   |
+|   |  (Webview Chat & Diff)   |    |  (charmbracelet/crush CLI)  |    |  (Continue / Cline/ Roo)  |   |
 |   +------------+-------------+    +------------+-------------+    +-------------+-------------+   |
 +----------------|-------------------------------|--------------------------------|-----------------+
                  |                               |                                |
@@ -96,7 +96,7 @@ This project addresses these challenges by delivering an enterprise-ready, self-
 flowchart TB
     subgraph IDE_CLIENT_LAYER["1. Client & IDE Integration Layer"]
         VSCodeExt["PodLlama Code VS Code Extension\n(Webview Chat, Inline Diff, Offline Ligatures)"]
-        QwenCLI["qwen-client Container CLI\n(QwenLM/qwen-code Workspace Agent)"]
+        QwenCLI["podllama-cli Container CLI\n(charmbracelet/crush Workspace Agent)"]
         ExternalIDE["Third-Party IDE Extensions\n(Continue.dev, Cline, Cursor, Roo Code)"]
     end
 
@@ -188,7 +188,7 @@ An official extension, **PodLlama Code**, is packaged in [`vscode-extension/podl
 │   └── continue.yaml            # Continue IDE extension configuration template
 ├── containers/
 │   ├── Containerfile.llamacpp    # Fedora 44 Minimal image for llama-server (Vulkan & RPMs)
-│   ├── Containerfile.qwencoder  # Fedora 44 Minimal image for Qwen workspace agent
+│   ├── Containerfile.crush  # Fedora 44 Minimal image for Qwen workspace agent
 │   ├── compose.yaml             # Podman Compose orchestration stack
 │   ├── entrypoint-llamacpp.sh   # Server entrypoint (Vulkan GPU check, checksums, auto-download)
 │   └── entrypoint-client.sh     # Client agent entrypoint
@@ -202,7 +202,7 @@ An official extension, **PodLlama Code**, is packaged in [`vscode-extension/podl
 ├── scripts/
 │   ├── download_models.py       # Python downloader and SHA256 verifier
 │   ├── run_podman.sh            # Podman container launcher script
-│   └── run_qwencode.sh          # Interactive workspace agent launcher script
+│   └── run_crush.sh          # Interactive workspace agent launcher script
 ├── tests/
 │   ├── unit_tests.py            # Automated unit test suite
 │   └── smoke_tests.py           # Live endpoint smoke test suite (Chat, Autocomplete, Tool Calling)
@@ -344,14 +344,14 @@ Run the workspace agent inside your current project folder:
 
 ```bash
 # Option A: From inside the qwen_code_container directory
-make run-qwencode
+make run-crush
 
 # Option B: From inside any target project directory
 cd /path/to/your/project
-make -C /path/to/qwen_code_container run-qwencode WORKSPACE_DIR=$(pwd)
+make -C /path/to/qwen_code_container run-crush WORKSPACE_DIR=$(pwd)
 
 # Option C: Direct script invocation
-/path/to/qwen_code_container/scripts/run_qwencode.sh /path/to/your/project
+/path/to/qwen_code_container/scripts/run_crush.sh /path/to/your/project
 ```
 
 ---
@@ -610,7 +610,7 @@ This runs `tests/smoke_tests.py` to perform verbose end-to-end verification acro
 
 ## Security & Workspace Isolation
 
-The workspace agent container (`Containerfile.qwencoder`) is launched with:
+The workspace agent container (`Containerfile.crush`) is launched with:
 - `-v "$(pwd):/workspace:Z"`: SELinux-labeled volume mount restricted strictly to the current working directory.
 - `--userns=keep-id`: Preserves host user UID/GID without root privileges in workspace.
 
@@ -642,7 +642,7 @@ The workspace agent container (`Containerfile.qwencoder`) is launched with:
 | `make smoke-test` | Alias for `make smoke-tests` |
 | `make download-active-models` | Downloads active chat and autocomplete models into models directory |
 | `make download-models` | Downloads ALL configured GGUF models into models directory |
-| `make run-qwencode` | Runs Qwen workspace agent CLI client in current workspace directory |
+| `make run-crush` | Runs Qwen workspace agent CLI client in current workspace directory |
 | `make run-pod` | Runs server and client together inside a single Podman pod |
 | `make clean` | Cleans Podman container images and temporary files |
 

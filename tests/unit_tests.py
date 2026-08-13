@@ -39,9 +39,9 @@ def test_yaml_configurations():
     assert isinstance(model_conf["idle_timeout_seconds"], int) and model_conf["idle_timeout_seconds"] > 0, "idle_timeout_seconds must be a positive integer"
     assert "models" in model_conf, "Missing models section in model_conf.yaml"
     assert "context_size" in model_conf, "Missing context_size in model_conf.yaml"
-    assert model_conf["context_size"] == 8192, f"Expected context_size 8192, got {model_conf['context_size']}"
-    assert model_conf.get("batch_size") == 512, f"Expected batch_size 512, got {model_conf.get('batch_size')}"
-    assert model_conf.get("ubatch_size") == 256, f"Expected ubatch_size 256, got {model_conf.get('ubatch_size')}"
+    assert model_conf["context_size"] == 16384, f"Expected context_size 16384, got {model_conf['context_size']}"
+    assert model_conf.get("batch_size") == 2048, f"Expected batch_size 2048, got {model_conf.get('batch_size')}"
+    assert model_conf.get("ubatch_size") == 512, f"Expected ubatch_size 512, got {model_conf.get('ubatch_size')}"
 
     models_map = model_conf["models"]
     assert model_conf["active_chat_model"] in models_map, f"Active chat model {model_conf['active_chat_model']} not in models map"
@@ -124,7 +124,7 @@ def test_container_definitions():
     compose_file = os.path.join(PROJECT_ROOT, "containers", "compose.yaml")
     container_files = [
         os.path.join(PROJECT_ROOT, "containers", "Containerfile.llamacpp"),
-        os.path.join(PROJECT_ROOT, "containers", "Containerfile.qwencoder"),
+        os.path.join(PROJECT_ROOT, "containers", "Containerfile.crush"),
         compose_file,
         os.path.join(PROJECT_ROOT, "containers", "chat_swapper.py"),
     ]
@@ -221,7 +221,3 @@ def run_all_tests():
 
 if __name__ == "__main__":
     run_all_tests()
-
-
-
-

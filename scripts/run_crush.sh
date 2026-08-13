@@ -3,11 +3,11 @@ set -eo pipefail
 
 WORKSPACE_DIR="${1:-${WORKSPACE_DIR:-$(pwd)}}"
 WORKSPACE_DIR=$(realpath "${WORKSPACE_DIR}")
-CLIENT_IMAGE="${CLIENT_IMAGE:-podllama-client:latest}"
-PODLLAMA_SERVER_HOST="${PODLLAMA_SERVER_HOST:-${PODLLAMA_HOST:-${QWEN_SERVER_HOST:-127.0.0.1}}}"
-PODLLAMA_SERVER_PORT="${PODLLAMA_SERVER_PORT:-${PODLLAMA_PORT:-${QWEN_SERVER_PORT:-4000}}}"
+CLI_IMAGE="${CLI_IMAGE:-podllama-cli:latest}"
+PODLLAMA_SERVER_HOST="${PODLLAMA_SERVER_HOST:-${PODLLAMA_HOST:-${CRUSH_SERVER_HOST:-127.0.0.1}}}"
+PODLLAMA_SERVER_PORT="${PODLLAMA_SERVER_PORT:-${PODLLAMA_PORT:-${CRUSH_SERVER_PORT:-4000}}}"
 
-echo "Launching PodLlama Workspace Client Container..."
+echo "Launching PodLlama Workspace Client Container (Crush)..."
 echo "Workspace: ${WORKSPACE_DIR}"
 echo "Server Endpoint: http://${PODLLAMA_SERVER_HOST}:${PODLLAMA_SERVER_PORT}"
 
@@ -19,4 +19,4 @@ exec podman run -it --rm \
     -v "${WORKSPACE_DIR}:/workspace:Z" \
     -w /workspace \
     --userns=keep-id \
-    "${CLIENT_IMAGE}"
+    "${CLI_IMAGE}"

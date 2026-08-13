@@ -1,6 +1,6 @@
 # Makefile for PodLlama Container Environment (Vulkan GPU Accelerated)
 
-.PHONY: help build build-server build-client build-litellm build-proxy build-extension build-vscode-extension install-extension install-vscode-extension start-server stop-server compose-up compose-down compose-logs compose-start compose-stop compose-restart service-up service-down service-start service-stop service-restart service-logs service-status show-live-logs status unit-tests test smoke-tests smoke_tests smoke-test run-qwencode run-pod check-checksum download-active-models download-models clean
+.PHONY: help build build-server build-cli build-litellm build-proxy build-extension build-vscode-extension install-extension install-vscode-extension start-server stop-server compose-up compose-down compose-logs compose-start compose-stop compose-restart service-up service-down service-start service-stop service-restart service-logs service-status show-live-logs status unit-tests test smoke-tests smoke_tests smoke-test run-crush run-pod check-checksum download-active-models download-models clean
 
 # Variables
 PODMAN ?= podman
@@ -8,7 +8,8 @@ PODMAN_COMPOSE ?= podman compose
 MODELS_DIR ?= ./models
 WORKSPACE_DIR ?= $(shell pwd)
 SERVER_IMAGE ?= podllama-server:latest
-CLIENT_IMAGE ?= podllama-client:latest
+CLI_IMAGE ?= podllama-cli:latest
+CLIENT_IMAGE ?= $(CLI_IMAGE)
 POD_NAME ?= podllama_pod
 LLAMA_CPP_TAG ?= b10327
 
@@ -34,7 +35,7 @@ help:
 	@echo "  make download-active-models - Download active chat and autocomplete models into $(MODELS_DIR)"
 	@echo "  make download-models     - Download ALL registered GGUF models into $(MODELS_DIR)"
 	@echo "  make check-checksum      - Verify SHA256 checksum of local model files"
-	@echo "  make run-qwencode        - Run workspace agent client in current directory ($(WORKSPACE_DIR))"
+	@echo "  make run-crush        - Run workspace agent client in current directory ($(WORKSPACE_DIR))"
 	@echo "  make run-pod             - Run server + client together in a Podman pod"
 check-infra:
 	@echo "=== Checking System Build & Runtime Infrastructure ==="
@@ -47,7 +48,7 @@ check-infra:
 	@echo "  -> System Infrastructure Check: PASSED"
 	@echo ""
 
-build: check-infra build-server build-client build-litellm
+build: check-infra build-server build-cli build-litellm
 
 build-server:
 	@echo "Building Qwen Model Server image (Fedora 44 Minimal + Vulkan, LLAMA_CPP_TAG=$(LLAMA_CPP_TAG))..."
@@ -68,9 +69,9 @@ build-server:
 	fi; \
 	$(PODMAN) build --build-arg LLAMA_CPP_TAG="$${TAG_TO_PASS}" -t $(SERVER_IMAGE) -f containers/Containerfile.llamacpp .
 
-build-client:
-	@echo "Building Qwen Encoder Agent image (Fedora 44 Minimal)..."
-	$(PODMAN) build -t $(CLIENT_IMAGE) -f containers/Containerfile.qwencoder .
+build-cli:
+	@echo "Building PodLlama CLI Agent image (Fedora 44 Minimal)..."
+	$(PODMAN) build -t $(CLIENT_IMAGE) -f containers/Containerfile.crush .
 
 build-litellm:
 	@echo "Building LiteLLM Proxy image (Fedora Minimal staged build)..."
@@ -187,8 +188,8 @@ smoke-tests:
 smoke_tests: smoke-tests
 smoke-test: smoke-tests
 
-run-qwencode:
-	@CLIENT_IMAGE="$(CLIENT_IMAGE)" ./scripts/run_qwencode.sh "$(WORKSPACE_DIR)"
+run-crush:
+	@CLIENT_IMAGE="$(CLIENT_IMAGE)" ./scripts/run_crush.sh "$(WORKSPACE_DIR)"
 
 run-pod:
 	./scripts/run_podman.sh pod "$(WORKSPACE_DIR)"
@@ -208,5 +209,5 @@ download-models:
 	@$(MAKE) check-checksum
 
 clean:
-	-$(PODMAN) rmi $(SERVER_IMAGE) $(CLIENT_IMAGE) podllama-litellm:latest qwen-litellm:latest qwen-client:latest || true
+	-$(PODMAN) rmi $(SERVER_IMAGE) $(CLIENT_IMAGE) podllama-litellm:latest qwen-litellm:latest podllama-cli:latest || true
 

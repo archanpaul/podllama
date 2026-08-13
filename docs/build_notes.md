@@ -47,15 +47,15 @@ RUN if [ -n "${LLAMA_CPP_TAG}" ]; then \
 
 ---
 
-## 2. Qwen Encoder Client Container (`Containerfile.qwencoder`)
+## 2. Qwen Encoder Client Container (`Containerfile.crush`)
 
 The workspace agent container packages the official standalone release binary of `QwenLM/qwen-code`.
 
 ### Features:
 - **Automatic Latest Release Redirect**: By default, downloads from `https://github.com/QwenLM/qwen-code/releases/latest/download/qwen-code-linux-x64.tar.gz`.
-- **Version Pinning (`QWEN_CODE_VERSION`)**: You can pin a specific release version during container image build:
+- **Version Pinning (`CRUSH_VERSION`)**: You can pin a specific release version during container image build:
   ```bash
-  podman build --build-arg QWEN_CODE_VERSION="v0.1.0" -t qwen-client:latest -f containers/Containerfile.qwencoder .
+  podman build --build-arg CRUSH_VERSION="v0.1.0" -t qwen-client:latest -f containers/Containerfile.crush .
   ```
 - **User Namespace Isolation**: Runs with `--userns=keep-id` to match host user permissions on mounted workspaces.
 

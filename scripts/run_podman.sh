@@ -39,7 +39,7 @@ case "${MODE}" in
             -v "${WORKSPACE_DIR}:/workspace:Z" \
             -w /workspace \
             --userns=keep-id \
-            podllama-client:latest
+            podllama-cli:latest
         ;;
 
     pod)
@@ -66,7 +66,7 @@ case "${MODE}" in
             -v "${WORKSPACE_DIR}:/workspace:Z" \
             -w /workspace \
             --userns=keep-id \
-            podllama-client:latest
+            podllama-cli:latest
         ;;
 
     status)

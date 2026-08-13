@@ -61,7 +61,7 @@ general_settings:
 
 router_settings:
   num_retries: 0
-  timeout: 120
+  timeout: 600
 
 litellm_settings:
   max_tokens: 65536
