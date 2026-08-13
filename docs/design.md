@@ -17,7 +17,7 @@ The system employs a containerized microservices architecture organized into fou
 flowchart TB
     subgraph IDE_CLIENT_LAYER["1. Client & IDE Integration Layer"]
         VSCodeExt["PodLlama Code VS Code Extension\n(Webview Chat, Inline Diff, Offline Ligatures)"]
-        QwenCLI["podllama-cli Container CLI\n(charmbracelet/crush Workspace Agent)"]
+        PodLlamaCLI["podllama-cli Container CLI\n(charmbracelet/crush Workspace Agent)"]
         ExternalIDE["Third-Party IDE Extensions\n(Continue.dev, Cline, Cursor, Roo Code)"]
     end
 
@@ -47,7 +47,7 @@ flowchart TB
 
     %% Flow Connections
     VSCodeExt -->|OpenAI REST API| LiteLLMProxy
-    QwenCLI -->|OpenAI REST API| LiteLLMProxy
+    PodLlamaCLI -->|OpenAI REST API| LiteLLMProxy
     ExternalIDE -->|OpenAI REST API| LiteLLMProxy
 
     LiteLLMProxy -->|Route podllama-chat / podllama-thinking| Swapper

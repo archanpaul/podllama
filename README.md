@@ -38,7 +38,7 @@ This project addresses these challenges by delivering an enterprise-ready, self-
 |                                 1. CLIENT & IDE INTEGRATION LAYER                                 |
 |                                                                                                   |
 |   +--------------------------+    +--------------------------+    +---------------------------+   |
-|   | PodLlama Code Extension  |    |  podllama-cli Agent   |    |  Third-Party Extensions   |   |
+|   | PodLlama Code Extension  |    |   podllama-cli Agent    |    |  Third-Party Extensions   |   |
 |   |  (Webview Chat & Diff)   |    |  (charmbracelet/crush CLI)  |    |  (Continue / Cline/ Roo)  |   |
 |   +------------+-------------+    +------------+-------------+    +-------------+-------------+   |
 +----------------|-------------------------------|--------------------------------|-----------------+
@@ -96,7 +96,7 @@ This project addresses these challenges by delivering an enterprise-ready, self-
 flowchart TB
     subgraph IDE_CLIENT_LAYER["1. Client & IDE Integration Layer"]
         VSCodeExt["PodLlama Code VS Code Extension\n(Webview Chat, Inline Diff, Offline Ligatures)"]
-        QwenCLI["podllama-cli Container CLI\n(charmbracelet/crush Workspace Agent)"]
+        PodLlamaCLI["podllama-cli Container CLI\n(charmbracelet/crush Workspace Agent)"]
         ExternalIDE["Third-Party IDE Extensions\n(Continue.dev, Cline, Cursor, Roo Code)"]
     end
 
@@ -126,7 +126,7 @@ flowchart TB
 
     %% Flow Connections
     VSCodeExt -->|OpenAI REST API| LiteLLMProxy
-    QwenCLI -->|OpenAI REST API| LiteLLMProxy
+    PodLlamaCLI -->|OpenAI REST API| LiteLLMProxy
     ExternalIDE -->|OpenAI REST API| LiteLLMProxy
 
     LiteLLMProxy -->|Route podllama-chat / podllama-thinking| Swapper
