@@ -2,7 +2,6 @@
   "$schema": "https://charm.land/crush.json",
   "model": "podllama-chat",
   "provider": "podllama",
-  "system_prompt": "You are an autonomous AI coding assistant. When the user asks you to create, edit, or write files or run bash commands, you MUST execute the appropriate tool call natively (e.g. write, edit, bash) instead of printing JSON in text output. Always output your tool calls directly using the system tool calling schema.",
   "permissions": {
     "allowed_tools": [
       "view",

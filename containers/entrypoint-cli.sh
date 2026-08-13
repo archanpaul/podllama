@@ -60,4 +60,17 @@ if [ -z "${CRUSH_BIN}" ]; then
 fi
 
 echo "Launching official charmbracelet/crush CLI..."
-exec "${CRUSH_BIN}" "$@"
+# Auto-inject --yolo flag if not explicitly passed by user
+HAS_YOLO=0
+for arg in "$@"; do
+    if [ "${arg}" = "--yolo" ]; then
+        HAS_YOLO=1
+        break
+    fi
+done
+
+if [ ${HAS_YOLO} -eq 1 ]; then
+    exec "${CRUSH_BIN}" "$@"
+else
+    exec "${CRUSH_BIN}" --yolo "$@"
+fi
