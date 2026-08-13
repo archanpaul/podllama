@@ -6,7 +6,7 @@ WORKSPACE_DIR="${2:-$(pwd)}"
 MODELS_DIR="${MODELS_DIR:-$(dirname $(dirname $(realpath $0)))/models}"
 POD_NAME="podllama_pod"
 SERVER_CONTAINER_NAME="podllama"
-CLIENT_CONTAINER_NAME="podllama_client"
+CLIENT_CONTAINER_NAME="podllama_cli"
 
 mkdir -p "${MODELS_DIR}"
 WORKSPACE_DIR=$(realpath "${WORKSPACE_DIR}")
@@ -45,7 +45,7 @@ case "${MODE}" in
     pod)
         echo "Creating and running PodLlama Pod..."
         podman pod create --name "${POD_NAME}" -p 4000:4000 -p 8080:8080 -p 8081:8081 --replace
-        
+
         echo "Launching Model Server in Pod..."
         podman run -d \
             --pod "${POD_NAME}" \
@@ -87,4 +87,3 @@ case "${MODE}" in
         exit 1
         ;;
 esac
-
