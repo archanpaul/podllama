@@ -16,7 +16,7 @@ exec podman run -it --rm \
     --network host \
     -e PODLLAMA_SERVER_HOST="${PODLLAMA_SERVER_HOST}" \
     -e PODLLAMA_SERVER_PORT="${PODLLAMA_SERVER_PORT}" \
-    -v "${WORKSPACE_DIR}:/workspace:Z" \
+    -v "${WORKSPACE_DIR}:/workspace:z" \
     -w /workspace \
     --userns=keep-id \
     "${CLI_IMAGE}"

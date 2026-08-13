@@ -36,7 +36,7 @@ case "${MODE}" in
             --network host \
             -e PODLLAMA_SERVER_HOST="127.0.0.1" \
             -e PODLLAMA_SERVER_PORT="8080" \
-            -v "${WORKSPACE_DIR}:/workspace:Z" \
+            -v "${WORKSPACE_DIR}:/workspace:z" \
             -w /workspace \
             --userns=keep-id \
             podllama-cli:latest
@@ -63,7 +63,7 @@ case "${MODE}" in
             -e PODLLAMA_SERVER_HOST="127.0.0.1" \
             -e PODLLAMA_SERVER_PORT="4000" \
             -e OPENAI_MODEL="podllama-chat" \
-            -v "${WORKSPACE_DIR}:/workspace:Z" \
+            -v "${WORKSPACE_DIR}:/workspace:z" \
             -w /workspace \
             --userns=keep-id \
             podllama-cli:latest
