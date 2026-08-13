@@ -14,7 +14,7 @@
   },
   "providers": {
     "podllama": {
-      "type": "openai-compat",
+      "type": "openai",
       "base_url": "${SERVER_URL}",
       "api_key": "${OPENAI_API_KEY}",
       "models": [
