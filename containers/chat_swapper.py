@@ -6,6 +6,7 @@ Handles on-demand chat model auto-swapping and 10-minute idle auto-shutdown (0 M
 
 import os
 import sys
+import re
 import time
 import json
 import signal
@@ -49,40 +50,10 @@ def load_config():
     global config_data
     if os.path.exists(CONFIG_FILE):
         try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            with open(CONFIG_FILE, "r") as f:
                 config_data = yaml.safe_load(f) or {}
         except Exception as e:
-            print(f"[Swapper] Error reading config file {CONFIG_FILE}: {e}", flush=True)
-
-
-def resolve_model_filename(requested_name):
-    """Resolves a model name/alias (e.g. 'podllama-thinking', 'qwen-chat', 'qwen2.5-coder-3b-instruct') to GGUF filename."""
-    load_config()
-    models = config_data.get("models", {})
-    model_role = os.environ.get("MODEL_ROLE", "chat")
-    default_model = config_data.get("active_autocomplete_model" if model_role == "autocomplete" else "active_chat_model", "")
-    thinking_model = config_data.get("active_thinking_model", "")
-    autocomplete_model = config_data.get("active_autocomplete_model", "")
-
-    if requested_name in ["podllama-thinking", "deepseek-r1", "thinking"]:
-        return thinking_model or default_model
-
-    if requested_name in ["podllama-autocomplete", "autocomplete"]:
-        return autocomplete_model or default_model
-
-    if not requested_name or requested_name in ["podllama-chat", "podllama", "qwen-chat", "qwen2.5-coder", "gpt-3.5-turbo", "default"]:
-        return default_model
-
-    # Direct match in model_conf.yaml
-    if requested_name in models:
-        return requested_name
-
-    # Partial / substring match (e.g., 'qwen2.5-coder-3b-instruct' -> 'qwen2.5-coder-3b-instruct-q4_k_m.gguf')
-    for model_file in models:
-        if requested_name in model_file or model_file.startswith(requested_name):
-            return model_file
-
-    return default_model
+            print(f"[Swapper] Error reading config {CONFIG_FILE}: {e}", flush=True)
 
 
 def stop_llama_server():
@@ -103,51 +74,19 @@ def stop_llama_server():
         print("[Swapper] llama-server stopped. Memory freed (0 MB LLM RAM/VRAM mode).", flush=True)
 
 
-def check_gpu_availability():
-    vulkan_found = False
-    try:
-        res = subprocess.run(["vulkaninfo", "--summary"], capture_output=True, text=True, timeout=5)
-        if res.returncode == 0 and "deviceName" in res.stdout:
-            vulkan_found = True
-    except Exception:
-        pass
-
-    if not vulkan_found and os.path.exists("/dev/dri"):
-        vulkan_found = True
-
-    gpu_layers = config_data.get("vulkan_gpu_layers", 99)
-    if not vulkan_found:
-        print("[Swapper] No Vulkan GPU hardware detected. Using CPU layers (gpu_layers=0).", flush=True)
-        gpu_layers = 0
-    else:
-        print(f"[Swapper] Vulkan GPU acceleration enabled ({gpu_layers} layers offloaded).", flush=True)
-    return gpu_layers
-
-
 def start_llama_server(target_model_file):
     global llama_process, current_model
     load_config()
-
-    models = config_data.get("models", {})
-    if target_model_file not in models:
-        print(f"[Swapper] Model file '{target_model_file}' not found in configuration models section!", flush=True)
-        # Fall back to active_chat_model if missing
-        target_model_file = config_data.get("active_chat_model", list(models.keys())[0] if models else "")
-
+    model_meta = config_data.get("models", {}).get(target_model_file, {})
     model_path = os.path.join(MODELS_DIR, target_model_file)
-    if not os.path.exists(model_path):
-        print(f"[Swapper] Model file missing at {model_path}. Running download/verification...", flush=True)
-        model_meta = models.get(target_model_file, {})
-        url = model_meta.get("url", "")
-        if url:
-            os.makedirs(MODELS_DIR, exist_ok=True)
-            tmp_path = f"{model_path}.tmp"
-            print(f"[Swapper] Downloading {url}...", flush=True)
-            subprocess.run(["curl", "-L", "--fail", "--progress-bar", "-o", tmp_path, url], check=True)
-            os.rename(tmp_path, model_path)
 
-    gpu_layers = check_gpu_availability()
+    if not os.path.exists(model_path):
+        print(f"[Swapper] ERROR: Target model file {model_path} does not exist!", flush=True)
+        return
+
+    gpu_layers = config_data.get("vulkan_gpu_layers", 99)
     model_role = os.environ.get("MODEL_ROLE", "chat")
+
     if model_role == "autocomplete":
         cpu_threads = config_data.get("autocomplete_cpu_threads", config_data.get("cpu_threads", 4))
         ctx_size = config_data.get("autocomplete_context_size", 4096)
@@ -178,7 +117,6 @@ def start_llama_server(target_model_file):
     llama_process = subprocess.Popen(cmd)
     current_model = target_model_file
 
-    # Wait for llama-server readiness
     health_url = f"http://127.0.0.1:{LLAMA_PORT}/health"
     start_time = time.time()
     ready = False
@@ -199,33 +137,174 @@ def start_llama_server(target_model_file):
         print(f"[Swapper] WARNING: llama-server did not respond OK on {health_url} within 45s.", flush=True)
 
 
+
+def resolve_model_filename(requested_model_name):
+    load_config()
+    model_role = os.environ.get("MODEL_ROLE", "chat")
+    if model_role == "autocomplete" or requested_model_name == "podllama-autocomplete":
+        return config_data.get("active_autocomplete_model")
+    if requested_model_name == "podllama-thinking":
+        return config_data.get("active_thinking_model", config_data.get("active_chat_model"))
+    if requested_model_name == "podllama-chat":
+        return config_data.get("active_chat_model")
+    if requested_model_name in config_data.get("models", {}):
+        return requested_model_name
+    for key in config_data.get("models", {}):
+        if requested_model_name in key:
+            return key
+    return config_data.get("active_chat_model")
+
+
 def ensure_model_running(requested_model_name):
     global last_request_time
     last_request_time = time.time()
 
-    target_file = resolve_model_filename(requested_model_name)
-    display_name = requested_model_name if requested_model_name else "podllama-chat"
-
     with state_lock:
-        if llama_process is None:
-            print(f"[Swapper] [Cold-Start] [{display_name}] Booting backend model '{target_file}'...", flush=True)
-            start_llama_server(target_file)
-        elif current_model != target_file:
-            print(f"[Swapper] [Auto-Swap] [{display_name}] Model swap requested: current='{current_model}' -> target='{target_file}'", flush=True)
+        load_config()
+        model_role = os.environ.get("MODEL_ROLE", "chat")
+
+        target_model = None
+        if model_role == "autocomplete":
+            target_model = config_data.get("active_autocomplete_model")
+        elif requested_model_name == "podllama-thinking":
+            target_model = config_data.get("active_thinking_model", config_data.get("active_chat_model"))
+        elif requested_model_name in config_data.get("models", {}):
+            target_model = requested_model_name
+        else:
+            target_model = config_data.get("active_chat_model")
+
+        if not target_model:
+            if os.path.exists(MODELS_DIR):
+                models_found = [f for f in os.listdir(MODELS_DIR) if f.endswith(".gguf")]
+                if models_found:
+                    target_model = models_found[0]
+
+        if not target_model:
+            print("[Swapper] ERROR: No target model configured or found in /models", flush=True)
+            return
+
+        if current_model == target_model and llama_process is not None:
+            if llama_process.poll() is None:
+                return
+            else:
+                print(f"[Swapper] llama-process died unexpectedly. Restarting '{target_model}'...", flush=True)
+                stop_llama_server()
+
+        if current_model != target_model:
+            print(f"[Swapper] Auto-swapping model: '{current_model}' -> '{target_model}'...", flush=True)
             stop_llama_server()
-            start_llama_server(target_file)
+
+        start_llama_server(target_model)
+
+
+def parse_and_normalize_args(args):
+    """Normalize file_path -> path and strip /workspace/ prefix."""
+    if not isinstance(args, dict):
+        return args
+    norm_args = dict(args)
+    if "file_path" in norm_args and "path" not in norm_args:
+        norm_args["path"] = norm_args.pop("file_path")
+    if "path" in norm_args and isinstance(norm_args["path"], str):
+        p = norm_args["path"]
+        if p.startswith("/workspace/"):
+            norm_args["path"] = p[len("/workspace/"):].lstrip("/")
+        elif p.startswith("/"):
+            norm_args["path"] = p.lstrip("/")
+    return norm_args
+
+
+def extract_tool_call_from_text(content):
+    """Extract tool call structure from plain text JSON blocks if model failed to output tool_calls frame."""
+    if not content or not isinstance(content, str):
+        return None
+    
+    pattern = r"```json\s*(\{.*?\})\s*```|(\{.*\"name\".*\"arguments\".*\})"
+    match = re.search(pattern, content, re.DOTALL)
+    if match:
+        raw_json = match.group(1) or match.group(2)
+        try:
+            obj = json.loads(raw_json)
+            if "name" in obj and "arguments" in obj:
+                name = obj["name"]
+                args = obj["arguments"]
+                if isinstance(args, str):
+                    try:
+                        args = json.loads(args)
+                    except Exception:
+                        pass
+                norm_args = parse_and_normalize_args(args)
+                return name, norm_args
+        except Exception:
+            pass
+    return None
+
+
+def normalize_chat_response_payload(response_bytes):
+    """Normalize chat response to convert plain text tool calls into proper OpenAI tool_calls structure."""
+    try:
+        data = json.loads(response_bytes.decode("utf-8"))
+        choices = data.get("choices", [])
+        if not choices:
+            return response_bytes
+
+        modified = False
+        for choice in choices:
+            msg = choice.get("message", {})
+            
+            # Check existing tool_calls
+            if msg.get("tool_calls"):
+                for tc in msg["tool_calls"]:
+                    fn = tc.get("function", {})
+                    if fn.get("arguments"):
+                        try:
+                            args = json.loads(fn["arguments"]) if isinstance(fn["arguments"], str) else fn["arguments"]
+                            norm_args = parse_and_normalize_args(args)
+                            fn["arguments"] = json.dumps(norm_args)
+                            modified = True
+                        except Exception:
+                            pass
+            else:
+                # Attempt extracting text-formatted tool call
+                content = msg.get("content", "")
+                parsed = extract_tool_call_from_text(content)
+                if parsed:
+                    name, norm_args = parsed
+                    tc_id = f"call_auto_{int(time.time()*1000)}"
+                    msg["tool_calls"] = [
+                        {
+                            "id": tc_id,
+                            "type": "function",
+                            "function": {
+                                "name": name,
+                                "arguments": json.dumps(norm_args)
+                            }
+                        }
+                    ]
+                    msg["content"] = None
+                    choice["finish_reason"] = "tool_calls"
+                    modified = True
+
+        if modified:
+            return json.dumps(data).encode("utf-8")
+    except Exception as ex:
+        pass
+
+    return response_bytes
 
 
 def idle_supervisor_thread():
     """Monitors idle time and stops llama-server after idle threshold of inactivity."""
     while True:
         time.sleep(10)
-        timeout_sec = get_idle_timeout()
+        idle_timeout = get_idle_timeout()
+        if idle_timeout <= 0:
+            continue
+
         with state_lock:
             if llama_process is not None:
-                idle_duration = time.time() - last_request_time
-                if idle_duration >= timeout_sec:
-                    print(f"[Swapper] [Auto-Stop] No requests received for {int(idle_duration)}s (threshold: {timeout_sec}s).", flush=True)
+                elapsed = time.time() - last_request_time
+                if elapsed >= idle_timeout:
+                    print(f"[Swapper] [Auto-Stop] No requests received for {int(elapsed)}s (threshold: {idle_timeout}s).", flush=True)
                     stop_llama_server()
 
 
@@ -255,14 +334,10 @@ class ProxyHandler(BaseHTTPRequestHandler):
             except Exception:
                 pass
 
-        # Ensure active model is running and auto-swapped if needed
         ensure_model_running(requested_model)
 
         print(f"[Swapper] [Proxy Request] [{self.command} {self.path}] Model: '{requested_model}' -> Serving with: '{current_model}'", flush=True)
 
-        # LiteLLM converts POST /v1/completions -> POST /v1/chat/completions before forwarding.
-        # For autocomplete role, detect this transformation and re-convert back to raw /v1/completions
-        # so llama-server receives a proper FIM prompt instead of a chat-formatted request.
         model_role = os.environ.get("MODEL_ROLE", "chat")
         forward_path = self.path
         forward_body = body
@@ -271,7 +346,6 @@ class ProxyHandler(BaseHTTPRequestHandler):
         if (model_role == "autocomplete"
                 and self.path.rstrip("/").endswith("/chat/completions")
                 and "messages" in payload):
-            # Extract FIM prompt from last user message
             messages = payload.get("messages", [])
             fim_prompt = ""
             for msg in reversed(messages):
@@ -280,15 +354,13 @@ class ProxyHandler(BaseHTTPRequestHandler):
                     fim_prompt = content
                     break
 
-            # Rebuild body as a /v1/completions request
             completions_payload = {k: v for k, v in payload.items() if k != "messages"}
             completions_payload["prompt"] = fim_prompt
             forward_body = json.dumps(completions_payload).encode("utf-8")
             forward_path = self.path.rstrip("/").replace("/chat/completions", "/completions")
             reconstruct_as_chat_response = True
-            print(f"[Swapper] [Autocomplete] LiteLLM chat→completions rewrite active. FIM prompt: {repr(fim_prompt[:60])}", flush=True)
+            print(f"[Swapper] [Autocomplete] LiteLLM chat->completions rewrite active. FIM prompt: {repr(fim_prompt[:60])}", flush=True)
 
-        # Forward request to internal llama-server
         target_url = f"http://127.0.0.1:{LLAMA_PORT}{forward_path}"
         fwd_headers = {k: v for k, v in self.headers.items() if k.lower() not in ['host', 'content-length']}
         fwd_headers['Content-Length'] = str(len(forward_body))
@@ -363,17 +435,18 @@ class ProxyHandler(BaseHTTPRequestHandler):
                             self.wfile.flush()
                     else:
                         resp_body = resp.read()
-                        self.send_header('Content-Length', str(len(resp_body)))
+                        norm_body = normalize_chat_response_payload(resp_body)
+                        self.send_header('Content-Length', str(len(norm_body)))
                         self.end_headers()
-                        self.wfile.write(resp_body)
+                        self.wfile.write(norm_body)
         except (BrokenPipeError, ConnectionResetError):
-            # Client disconnected before request completed (e.g. user stopped generation in UI)
             print("[Swapper] Client disconnected during proxy streaming.", flush=True)
         except urllib.error.HTTPError as e:
             try:
                 self.send_response(e.code)
                 self.end_headers()
-                self.wfile.write(e.read())
+                err_body = e.read()
+                self.wfile.write(err_body)
             except (BrokenPipeError, ConnectionResetError):
                 pass
         except Exception as e:
@@ -391,6 +464,15 @@ class ProxyHandler(BaseHTTPRequestHandler):
         else:
             self.handle_proxy()
 
+    def do_POST(self):
+        self.handle_proxy()
+
+    def do_PUT(self):
+        self.handle_proxy()
+
+    def do_DELETE(self):
+        self.handle_proxy()
+
     def send_models_list(self):
         load_config()
         models = config_data.get("models", {})
@@ -399,12 +481,10 @@ class ProxyHandler(BaseHTTPRequestHandler):
         active_autocomplete = config_data.get("active_autocomplete_model", "")
 
         model_entries = []
-        # Add registered role aliases
         model_entries.append({"id": "podllama-chat", "object": "model", "owned_by": "podllama-swapper", "active_target": active_chat})
         model_entries.append({"id": "podllama-thinking", "object": "model", "owned_by": "podllama-swapper", "active_target": active_thinking})
         model_entries.append({"id": "podllama-autocomplete", "object": "model", "owned_by": "podllama-swapper", "active_target": active_autocomplete})
 
-        # Add all configured GGUF files
         for model_file, meta in models.items():
             model_entries.append({
                 "id": model_file,
@@ -420,54 +500,40 @@ class ProxyHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(response_body)
 
-    def do_POST(self):
-        self.handle_proxy()
-
-    def do_OPTIONS(self):
-        self.handle_proxy()
-
-    def do_HEAD(self):
-        self.handle_proxy()
-
-    def do_PUT(self):
-        self.handle_proxy()
-
-    def do_DELETE(self):
-        self.handle_proxy()
-
 
 def main():
-    timeout_sec = get_idle_timeout()
     print(f"=== Qwen Chat Swapper & Idle Supervisor Starting ===", flush=True)
     print(f"Listening Port: {SERVER_PORT}", flush=True)
     print(f"Internal Llama Port: {LLAMA_PORT}", flush=True)
-    print(f"Idle Timeout: {timeout_sec}s ({timeout_sec // 60} minutes)", flush=True)
+    print(f"Idle Timeout: {get_idle_timeout()}s ({get_idle_timeout()//60} minutes)", flush=True)
 
     load_config()
     model_role = os.environ.get("MODEL_ROLE", "chat")
-    default_model = config_data.get("active_autocomplete_model" if model_role == "autocomplete" else "active_chat_model", "")
+
+    if model_role == "autocomplete":
+        default_model = config_data.get("active_autocomplete_model", "")
+    else:
+        default_model = config_data.get("active_chat_model", "")
+
     print(f"Default Active Model ({model_role}): {default_model}", flush=True)
 
-    # Initial start of default model
     if default_model:
         ensure_model_running(default_model)
 
-    # Start idle supervisor background thread
     t = threading.Thread(target=idle_supervisor_thread, daemon=True)
     t.start()
 
-    # Graceful signal handling
-    def signal_handler(sig, frame):
-        print("[Swapper] Received shutdown signal. Terminating...", flush=True)
-        with state_lock:
-            stop_llama_server()
+    server = HTTPServer(("0.0.0.0", SERVER_PORT), ProxyHandler)
+    print(f"[Swapper] Proxy listening on 0.0.0.0:{SERVER_PORT} ready!", flush=True)
+
+    def signal_handler(signum, frame):
+        print("[Swapper] Received shutdown signal. Cleaning up...", flush=True)
+        stop_llama_server()
         sys.exit(0)
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    server = HTTPServer(("0.0.0.0", SERVER_PORT), ProxyHandler)
-    print(f"[Swapper] Proxy listening on 0.0.0.0:{SERVER_PORT} ready!", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

@@ -1,0 +1,41 @@
+# Workspace Agent Container using Official pi.dev (Pi Coding Agent)
+# Base image per official pi.dev docs: https://pi.dev/docs/latest/containerization
+FROM node:24-bookworm-slim
+
+ARG PI_VERSION=""
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    bash \
+    ca-certificates \
+    git \
+    ripgrep \
+    curl \
+    python3 \
+    python3-requests \
+    python3-urllib3 \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install official pi coding agent package (--ignore-scripts per pi.dev docs)
+RUN if [ -n "${PI_VERSION}" ]; then \
+    npm install -g --ignore-scripts "@earendil-works/pi-coding-agent@${PI_VERSION#v}"; \
+    else \
+    npm install -g --ignore-scripts @earendil-works/pi-coding-agent; \
+    fi
+
+# Allow entrypoint to register mapped UID in /etc/passwd under --userns=keep-id
+# (Node.js os.userInfo() calls getpwuid() which segfaults if UID has no passwd entry)
+RUN chmod 666 /etc/passwd
+
+# Set up application workspace & configuration files
+WORKDIR /app
+COPY config/model_conf.yaml /app/config/model_conf.yaml
+COPY config/pi.json /app/config/pi.json
+COPY containers/entrypoint-cli.sh /app/entrypoint-cli.sh
+RUN chmod +x /app/entrypoint-cli.sh
+
+# Restricted workspace mount point
+WORKDIR /workspace
+VOLUME ["/workspace"]
+
+ENTRYPOINT ["/app/entrypoint-cli.sh"]

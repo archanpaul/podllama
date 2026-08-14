@@ -1,6 +1,6 @@
 # PodLlama Container Environment
 
-A high-performance, containerized AI coding environment powered by PodLlama running in Podman, with Vulkan GPU Acceleration, LiteLLM Unified Proxy API, Podman Compose Orchestration, and Official charmbracelet/crush CLI Integration.
+A high-performance, containerized AI coding environment powered by PodLlama running in Podman, with Vulkan GPU Acceleration, LiteLLM Unified Proxy API, Podman Compose Orchestration, and Official pi.dev CLI Integration.
 
 ---
 
@@ -25,7 +25,7 @@ This project addresses these challenges by delivering an enterprise-ready, self-
 - **Dual Model Support & Dynamic Auto-Swapping**: Run dedicated Chat (`qwen2.5-coder-7b-instruct`) and Autocomplete (`qwen2.5-coder-0.5b` or `1.5b`) models simultaneously. Automatically swaps chat models on demand.
 - **Configurable Idle Auto-Stop (0 MB LLM VRAM/RAM Mode)**: Automatically shuts down the chat container backend process after a configurable idle duration (`idle_timeout_seconds`, defaulting to 10 minutes / 600s), freeing 100% of LLM VRAM and host RAM until cold-started by the next request.
 - **Unified LiteLLM Proxy API (Port 4000)**: Exposes a single, multithreaded OpenAI-compatible API endpoint on port 4000 (`http://localhost:4000/v1`) that dynamically routes requests to the appropriate model server backend based on the model name in API requests.
-- **Official charmbracelet/crush CLI Integration**: The workspace agent container (`Containerfile.crush`) automatically installs the latest release of [charmbracelet/crush](https://github.com/charmbracelet/crush) directly from GitHub releases without API rate limits or hardcoded versions. Supports build-time version pinning via `CRUSH_VERSION`.
+- **Official pi.dev CLI Integration**: The workspace agent container (`Containerfile.pi`) packages the official [pi.dev](https://pi.dev) terminal coding agent (`@earendil-works/pi-coding-agent`) built on `node:24-bookworm-slim` per pi.dev containerization specifications. Supports build-time version pinning via `PI_VERSION`.
 - **Podman Compose Orchestration**: Easily manage the entire stack (`podllama_chat`, `podllama_autocomplete`, `podllama_proxy`) with a single command (`make service-up`).
 ---
 
@@ -39,7 +39,7 @@ This project addresses these challenges by delivering an enterprise-ready, self-
 |                                                                                                   |
 |   +--------------------------+    +--------------------------+    +---------------------------+   |
 |   | PodLlama Code Extension  |    |   podllama-cli Agent    |    |  Third-Party Extensions   |   |
-|   |  (Webview Chat & Diff)   |    |  (charmbracelet/crush CLI)  |    |  (Continue / Cline/ Roo)  |   |
+|   |  (Webview Chat & Diff)   |    |  (pi.dev CLI)  |    |  (Continue / Cline/ Roo)  |   |
 |   +------------+-------------+    +------------+-------------+    +-------------+-------------+   |
 +----------------|-------------------------------|--------------------------------|-----------------+
                  |                               |                                |
@@ -96,7 +96,7 @@ This project addresses these challenges by delivering an enterprise-ready, self-
 flowchart TB
     subgraph IDE_CLIENT_LAYER["1. Client & IDE Integration Layer"]
         VSCodeExt["PodLlama Code VS Code Extension\n(Webview Chat, Inline Diff, Offline Ligatures)"]
-        PodLlamaCLI["podllama-cli Container CLI\n(charmbracelet/crush Workspace Agent)"]
+        PodLlamaCLI["podllama-cli Container CLI\n(pi.dev Workspace Agent)"]
         ExternalIDE["Third-Party IDE Extensions\n(Continue.dev, Cline, Cursor, Roo Code)"]
     end
 
@@ -188,10 +188,10 @@ An official extension, **PodLlama Code**, is packaged in [`vscode-extension/podl
 │   └── continue.yaml            # Continue IDE extension configuration template
 ├── containers/
 │   ├── Containerfile.llamacpp    # Fedora 44 Minimal image for llama-server (Vulkan & RPMs)
-│   ├── Containerfile.crush  # Fedora 44 Minimal image for Qwen workspace agent
+│   ├── Containerfile.pi         # Node 24 Debian Slim image for official pi.dev workspace agent
 │   ├── compose.yaml             # Podman Compose orchestration stack
 │   ├── entrypoint-llamacpp.sh   # Server entrypoint (Vulkan GPU check, checksums, auto-download)
-│   └── entrypoint-client.sh     # Client agent entrypoint
+│   └── entrypoint-cli.sh        # Client agent entrypoint (pi.dev)
 ├── docs/
 │   ├── api.md                   # Complete API specification & IDE setup guide
 │   ├── build_notes.md           # Multi-stage build system & compilation caching notes
@@ -202,7 +202,7 @@ An official extension, **PodLlama Code**, is packaged in [`vscode-extension/podl
 ├── scripts/
 │   ├── download_models.py       # Python downloader and SHA256 verifier
 │   ├── run_podman.sh            # Podman container launcher script
-│   └── run_crush.sh          # Interactive workspace agent launcher script
+│   └── run_pi.sh          # Interactive workspace agent launcher script
 ├── tests/
 │   ├── unit_tests.py            # Automated unit test suite
 │   └── smoke_tests.py           # Live endpoint smoke test suite (Chat, Autocomplete, Tool Calling)
@@ -344,14 +344,14 @@ Run the workspace agent inside your current project folder:
 
 ```bash
 # Option A: From inside the qwen_code_container directory
-make run-crush
+make run-pi
 
 # Option B: From inside any target project directory
 cd /path/to/your/project
-make -C /path/to/qwen_code_container run-crush WORKSPACE_DIR=$(pwd)
+make -C /path/to/qwen_code_container run-pi WORKSPACE_DIR=$(pwd)
 
 # Option C: Direct script invocation
-/path/to/qwen_code_container/scripts/run_crush.sh /path/to/your/project
+/path/to/qwen_code_container/scripts/run_pi.sh /path/to/your/project
 ```
 
 ---
@@ -610,7 +610,7 @@ This runs `tests/smoke_tests.py` to perform verbose end-to-end verification acro
 
 ## Security & Workspace Isolation
 
-The workspace agent container (`Containerfile.crush`) is launched with:
+The workspace agent container (`Containerfile.pi`) is launched with:
 - `-v "$(pwd):/workspace:Z"`: SELinux-labeled volume mount restricted strictly to the current working directory.
 - `--userns=keep-id`: Preserves host user UID/GID without root privileges in workspace.
 
@@ -621,7 +621,7 @@ The workspace agent container (`Containerfile.crush`) is launched with:
 | Command | Description |
 | :--- | :--- |
 | `make check-infra` | Verifies host build and runtime infrastructure (Podman, Python 3, PyYAML, curl, DRI) |
-| `make build` | Builds `podllama-server` and `qwen-client` Podman images |
+| `make build` | Builds `podllama-server` and `podllama-cli` Podman images |
 | `make service-up` | Launches Chat Server, Autocomplete Server & LiteLLM Proxy via Podman Compose |
 | `make service-down` | Stops Podman Compose stack |
 | `make service-logs` | Displays live logs from all running containers |
@@ -642,7 +642,7 @@ The workspace agent container (`Containerfile.crush`) is launched with:
 | `make smoke-test` | Alias for `make smoke-tests` |
 | `make download-active-models` | Downloads active chat and autocomplete models into models directory |
 | `make download-models` | Downloads ALL configured GGUF models into models directory |
-| `make run-crush` | Runs Qwen workspace agent CLI client in current workspace directory |
+| `make run-pi` | Runs official pi.dev workspace agent CLI in current workspace directory |
 | `make run-pod` | Runs server and client together inside a single Podman pod |
 | `make clean` | Cleans Podman container images and temporary files |
 

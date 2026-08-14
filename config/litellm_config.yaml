@@ -6,11 +6,6 @@ model_list:
       api_base: http://podllama_chat:8080/v1
       api_key: sk-local
       drop_params: true
-      # Force grammar-constrained tool calling so llama-server parses
-      # <tool_call> tags into proper tool_calls objects. Without this,
-      # Qwen2.5-Coder outputs non-standard XML that llama-server cannot
-      # parse, causing tool calls to be returned as plain text content.
-      tool_choice: required
 
   - model_name: podllama-autocomplete
     litellm_params:
@@ -25,8 +20,28 @@ model_list:
       api_base: http://podllama_chat:8080/v1
       api_key: sk-local
       drop_params: true
-      # Same tool_choice fix as podllama-chat (same backend model)
-      tool_choice: required
+
+  # Fallback aliases for external CLI tools/defaults (Pi (pi.dev), Cursor, OpenAI clients)
+  - model_name: gpt-5.6-sol
+    litellm_params:
+      model: openai/qwen2.5-coder
+      api_base: http://podllama_chat:8080/v1
+      api_key: sk-local
+      drop_params: true
+
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/qwen2.5-coder
+      api_base: http://podllama_chat:8080/v1
+      api_key: sk-local
+      drop_params: true
+
+  - model_name: gpt-4
+    litellm_params:
+      model: openai/qwen2.5-coder
+      api_base: http://podllama_chat:8080/v1
+      api_key: sk-local
+      drop_params: true
 
   # Available Backend GGUF Models for Direct Auto-Swapping
   - model_name: qwen2.5-coder-0.5b-instruct-q4_k_m.gguf

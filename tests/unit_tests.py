@@ -124,7 +124,7 @@ def test_container_definitions():
     compose_file = os.path.join(PROJECT_ROOT, "containers", "compose.yaml")
     container_files = [
         os.path.join(PROJECT_ROOT, "containers", "Containerfile.llamacpp"),
-        os.path.join(PROJECT_ROOT, "containers", "Containerfile.crush"),
+        os.path.join(PROJECT_ROOT, "containers", "Containerfile.pi"),
         compose_file,
         os.path.join(PROJECT_ROOT, "containers", "chat_swapper.py"),
     ]

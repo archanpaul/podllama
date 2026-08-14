@@ -46,11 +46,12 @@ The **PodLlama Container Environment** provides a local, GPU-accelerated, contai
 
 ---
 
-## 5. Official QwenLM CLI Integration
+## 5. Official pi.dev CLI Integration
 
-- **`Containerfile.crush`**: Packages the official [charmbracelet/crush](https://github.com/charmbracelet/crush) terminal agent inside a Fedora 44 Minimal container.
-- **Dynamic Binary Fetching**: Fetches the latest GitHub release of `qwen-code` at build time without hardcoded version locks, with optional version pinning via `--build-arg CRUSH_VERSION=vX.Y.Z`.
-- **Interactive Workspace Shell**: Runs inside user workspaces with full access to project file trees.
+- **`Containerfile.pi`**: Packages the official [pi.dev](https://pi.dev) terminal agent on `node:24-bookworm-slim` per containerization standards.
+- **Automatic Configuration Injection**: Automatically generates `${PI_CODING_AGENT_DIR}/models.json`, `auth.json`, `settings.json`, and `trust.json` pre-configured to connect seamlessly to the local PodLlama LiteLLM endpoint.
+- **Version Pinning**: Supports custom release pinning via `--build-arg PI_VERSION=vX.Y.Z`.
+- **Interactive Workspace Shell**: Runs inside user workspaces with full access to project file trees (`make run-pi`).
 
 ---
 
@@ -61,9 +62,9 @@ The **PodLlama Container Environment** provides a local, GPU-accelerated, contai
 
 ---
 
-## 7. Zero-Compilation Fedora 44 Minimal Base
+## 7. Zero-Compilation Base Images
 
-- **Prebuilt RPM Packages**: Uses `fedora-minimal:latest` base images and installs precompiled `llama.cpp` and `llama.cpp-vulkan` binaries directly via `microdnf`.
+- **Prebuilt RPM Packages**: Server container uses `fedora-minimal:latest` base image and installs precompiled `llama.cpp` and `llama.cpp-vulkan` binaries directly via `microdnf`.
 - **Fast Build Times**: Eliminates lengthy C++ source builds, lowering container build time from tens of minutes to seconds.
 
 ---
@@ -80,7 +81,7 @@ The **PodLlama Container Environment** provides a local, GPU-accelerated, contai
 
 ## 9. Automated Testing & Live Smoke Verification
 
-- **Unit Test Suite (`make unit-tests` / `tests/unit_tests.py`)**: Validates YAML configuration schemas, file permissions, container definition files, and idle supervisor configuration.
+- **Unit Test Suite (`make test` / `tests/unit_tests.py`)**: Validates YAML configuration schemas, file permissions, container definition files, and idle supervisor configuration.
 - **Live Smoke Test Suite (`make smoke-tests` / `tests/smoke_tests.py`)**: Executes live end-to-end verification against the running Podman stack with verbose diagnostic logs for 7 distinct API endpoints:
   - **1. Proxy Liveliness**: Probes `GET /health/liveliness`.
   - **2. List Models API**: Probes `GET /v1/models` and verifies registered model aliases.
