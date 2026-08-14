@@ -198,49 +198,131 @@ def ensure_model_running(requested_model_name):
 
 
 def parse_and_normalize_args(args):
-    """Normalize file_path -> path and strip /workspace/ prefix."""
+    """Normalize file_path -> path, strip leading @, and strip /workspace/ prefix."""
     if not isinstance(args, dict):
         return args
     norm_args = dict(args)
     if "file_path" in norm_args and "path" not in norm_args:
         norm_args["path"] = norm_args.pop("file_path")
     if "path" in norm_args and isinstance(norm_args["path"], str):
-        p = norm_args["path"]
+        p = norm_args["path"].strip()
+        if p.startswith("@"):
+            p = p[1:]
         if p.startswith("/workspace/"):
-            norm_args["path"] = p[len("/workspace/"):].lstrip("/")
+            p = p[len("/workspace/"):].lstrip("/")
         elif p.startswith("/"):
-            norm_args["path"] = p.lstrip("/")
+            p = p.lstrip("/")
+        if p.startswith("./"):
+            p = p[2:]
+        norm_args["path"] = p
     return norm_args
 
 
-def extract_tool_call_from_text(content):
-    """Extract tool call structure from plain text JSON blocks if model failed to output tool_calls frame."""
+def extract_tool_call_and_prefix(content):
+    """Extract tool call structure from plain text JSON blocks or XML tags if model emitted text rather than tool_calls frame."""
     if not content or not isinstance(content, str):
-        return None
-    
-    pattern = r"```json\s*(\{.*?\})\s*```|(\{.*\"name\".*\"arguments\".*\})"
-    match = re.search(pattern, content, re.DOTALL)
-    if match:
-        raw_json = match.group(1) or match.group(2)
+        return content, None, None
+
+    # Pattern 1: <tool_call> ... </tool_call>
+    m_tc = re.search(r"<(?:function|function_call|tool_call)>\s*(.*?)\s*</(?:function|function_call|tool_call)>", content, re.DOTALL)
+    if m_tc:
+        prefix = content[:m_tc.start()]
+        raw_json = m_tc.group(1).strip()
         try:
             obj = json.loads(raw_json)
             if "name" in obj and "arguments" in obj:
-                name = obj["name"]
                 args = obj["arguments"]
                 if isinstance(args, str):
                     try:
                         args = json.loads(args)
                     except Exception:
                         pass
-                norm_args = parse_and_normalize_args(args)
-                return name, norm_args
+                return prefix, obj["name"], parse_and_normalize_args(args)
         except Exception:
             pass
+
+    # Pattern 2: ```json ... ``` code block
+    m_json = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", content, re.DOTALL)
+    if m_json:
+        prefix = content[:m_json.start()]
+        raw_json = m_json.group(1).strip()
+        try:
+            obj = json.loads(raw_json)
+            if "name" in obj and "arguments" in obj:
+                args = obj["arguments"]
+                if isinstance(args, str):
+                    try:
+                        args = json.loads(args)
+                    except Exception:
+                        pass
+                return prefix, obj["name"], parse_and_normalize_args(args)
+        except Exception:
+            pass
+
+    # Pattern 3: <{ "name": ..., "arguments": ... }>
+    m_bracket = re.search(r"<(\{\s*\"name\"\s*:\s*\"[^\"]+\"\s*,\s*\"arguments\"\s*:.*?\})>", content, re.DOTALL)
+    if m_bracket:
+        prefix = content[:m_bracket.start()]
+        try:
+            obj = json.loads(m_bracket.group(1))
+            if "name" in obj and "arguments" in obj:
+                args = obj["arguments"]
+                if isinstance(args, str):
+                    try:
+                        args = json.loads(args)
+                    except Exception:
+                        pass
+                return prefix, obj["name"], parse_and_normalize_args(args)
+        except Exception:
+            pass
+
+    # Pattern 4: XML tag for read (<read path="..." /> or <read>...</read>)
+    m_read = re.search(r"<read\s+path=[\"\']?([^\"\'>\s]+)[\"\']?\s*(?:/>|></read>|>)", content, re.IGNORECASE)
+    if m_read:
+        prefix = content[:m_read.start()]
+        return prefix, "read", parse_and_normalize_args({"path": m_read.group(1)})
+    
+    m_read_tag = re.search(r"<read>([^<]+)</read>", content, re.IGNORECASE)
+    if m_read_tag:
+        prefix = content[:m_read_tag.start()]
+        return prefix, "read", parse_and_normalize_args({"path": m_read_tag.group(1).strip()})
+
+    # Pattern 5: XML tag for write (<write path="...">content</write>)
+    m_write = re.search(r"<write\s+path=[\"\']?([^\"\'>\s]+)[\"\']?>(.*?)</write>", content, re.DOTALL | re.IGNORECASE)
+    if m_write:
+        prefix = content[:m_write.start()]
+        return prefix, "write", parse_and_normalize_args({"path": m_write.group(1), "content": m_write.group(2)})
+
+    # Pattern 6: XML tag for edit (<edit path="...">content</edit>)
+    m_edit = re.search(r"<edit\s+path=[\"\']?([^\"\'>\s]+)[\"\']?>(.*?)</edit>", content, re.DOTALL | re.IGNORECASE)
+    if m_edit:
+        prefix = content[:m_edit.start()]
+        return prefix, "edit", parse_and_normalize_args({"path": m_edit.group(1), "content": m_edit.group(2)})
+
+    # Pattern 7: XML tag for bash (<bash>command</bash> or <bash command="..."/>)
+    m_bash = re.search(r"<bash>(.*?)</bash>", content, re.DOTALL | re.IGNORECASE)
+    if m_bash:
+        prefix = content[:m_bash.start()]
+        return prefix, "bash", {"command": m_bash.group(1).strip()}
+
+    m_bash_attr = re.search(r"<bash\s+command=[\"\'](.*?)[\"\']\s*(?:/>|>)", content, re.DOTALL | re.IGNORECASE)
+    if m_bash_attr:
+        prefix = content[:m_bash_attr.start()]
+        return prefix, "bash", {"command": m_bash_attr.group(1).strip()}
+
+    return content, None, None
+
+
+def extract_tool_call_from_text(content):
+    """Extract tool call structure from plain text JSON blocks or XML tags."""
+    _, name, norm_args = extract_tool_call_and_prefix(content)
+    if name:
+        return name, norm_args
     return None
 
 
 def normalize_chat_response_payload(response_bytes):
-    """Normalize chat response to convert plain text tool calls into proper OpenAI tool_calls structure."""
+    """Normalize non-streaming chat response to convert plain text tool calls into proper OpenAI tool_calls structure."""
     try:
         data = json.loads(response_bytes.decode("utf-8"))
         choices = data.get("choices", [])
@@ -266,9 +348,8 @@ def normalize_chat_response_payload(response_bytes):
             else:
                 # Attempt extracting text-formatted tool call
                 content = msg.get("content", "")
-                parsed = extract_tool_call_from_text(content)
-                if parsed:
-                    name, norm_args = parsed
+                prefix, name, norm_args = extract_tool_call_and_prefix(content)
+                if name:
                     tc_id = f"call_auto_{int(time.time()*1000)}"
                     msg["tool_calls"] = [
                         {
@@ -280,7 +361,7 @@ def normalize_chat_response_payload(response_bytes):
                             }
                         }
                     ]
-                    msg["content"] = None
+                    msg["content"] = prefix.strip() if (prefix and prefix.strip()) else None
                     choice["finish_reason"] = "tool_calls"
                     modified = True
 
@@ -290,6 +371,117 @@ def normalize_chat_response_payload(response_bytes):
         pass
 
     return response_bytes
+
+
+def proxy_and_normalize_stream(resp, wfile):
+    """Read SSE stream from llama-server and normalize tool calls if emitted as plain text."""
+    buffered_chunks = []
+    accumulated_content = []
+    already_has_tool_calls = False
+    last_chunk_obj = None
+
+    while True:
+        line_bytes = resp.readline()
+        if not line_bytes:
+            break
+        
+        buffered_chunks.append(line_bytes)
+        line_str = line_bytes.decode("utf-8", errors="replace").strip()
+        
+        if line_str == "data: [DONE]":
+            break
+        if line_str.startswith("data: "):
+            payload_str = line_str[6:]
+            try:
+                chunk_json = json.loads(payload_str)
+                last_chunk_obj = chunk_json
+                choices = chunk_json.get("choices", [])
+                if choices:
+                    delta = choices[0].get("delta", {})
+                    if delta.get("tool_calls"):
+                        already_has_tool_calls = True
+                    if "content" in delta and delta["content"]:
+                        accumulated_content.append(delta["content"])
+            except Exception:
+                pass
+
+    full_text = "".join(accumulated_content)
+    
+    if not already_has_tool_calls and full_text:
+        prefix, tool_name, tool_args = extract_tool_call_and_prefix(full_text)
+        if tool_name:
+            print(f"[Swapper] [Stream Normalizer] Detected tool call '{tool_name}' in stream. Normalizing to tool_calls SSE events.", flush=True)
+            chunk_id = (last_chunk_obj.get("id") if last_chunk_obj else None) or f"chatcmpl-tool-{int(time.time()*1000)}"
+            model_name = (last_chunk_obj.get("model") if last_chunk_obj else None) or "podllama-chat"
+            created_ts = (last_chunk_obj.get("created") if last_chunk_obj else None) or int(time.time())
+            tc_id = f"call_auto_{int(time.time()*1000)}"
+
+            # 1. If prefix text exists, emit as content delta
+            if prefix and prefix.strip():
+                prefix_chunk = {
+                    "id": chunk_id,
+                    "object": "chat.completion.chunk",
+                    "created": created_ts,
+                    "model": model_name,
+                    "choices": [{
+                        "index": 0,
+                        "delta": {"role": "assistant", "content": prefix.strip() + "\n"},
+                        "finish_reason": None
+                    }]
+                }
+                wfile.write(f"data: {json.dumps(prefix_chunk)}\n\n".encode("utf-8"))
+                wfile.flush()
+
+            # 2. Emit tool_calls delta
+            tool_chunk = {
+                "id": chunk_id,
+                "object": "chat.completion.chunk",
+                "created": created_ts,
+                "model": model_name,
+                "choices": [{
+                    "index": 0,
+                    "delta": {
+                        "role": "assistant",
+                        "tool_calls": [{
+                            "index": 0,
+                            "id": tc_id,
+                            "type": "function",
+                            "function": {
+                                "name": tool_name,
+                                "arguments": json.dumps(tool_args)
+                            }
+                        }]
+                    },
+                    "finish_reason": None
+                }]
+            }
+            wfile.write(f"data: {json.dumps(tool_chunk)}\n\n".encode("utf-8"))
+            wfile.flush()
+
+            # 3. Emit finish_reason: tool_calls chunk
+            finish_chunk = {
+                "id": chunk_id,
+                "object": "chat.completion.chunk",
+                "created": created_ts,
+                "model": model_name,
+                "choices": [{
+                    "index": 0,
+                    "delta": {},
+                    "finish_reason": "tool_calls"
+                }]
+            }
+            wfile.write(f"data: {json.dumps(finish_chunk)}\n\n".encode("utf-8"))
+            wfile.flush()
+
+            # 4. Emit [DONE]
+            wfile.write(b"data: [DONE]\n\n")
+            wfile.flush()
+            return
+
+    # If already had tool calls or no tool call in text, flush all buffered chunks
+    for chunk in buffered_chunks:
+        wfile.write(chunk)
+    wfile.flush()
 
 
 def idle_supervisor_thread():
@@ -427,12 +619,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
                     if is_streaming:
                         self.send_header('Cache-Control', 'no-cache')
                         self.end_headers()
-                        while True:
-                            chunk = resp.read(256)
-                            if not chunk:
-                                break
-                            self.wfile.write(chunk)
-                            self.wfile.flush()
+                        proxy_and_normalize_stream(resp, self.wfile)
                     else:
                         resp_body = resp.read()
                         norm_body = normalize_chat_response_payload(resp_body)
