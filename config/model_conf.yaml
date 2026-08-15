@@ -1,4 +1,4 @@
-active_chat_model: qwen2.5-coder-7b-instruct-q4_k_m.gguf
+active_chat_model: Qwen3.5-9B-Q4_K_M.gguf
 active_autocomplete_model: qwen2.5-coder-0.5b-instruct-q4_k_m.gguf
 active_thinking_model: DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf
 chat_server_port: 8080
@@ -16,6 +16,13 @@ batch_size: 2048
 ubatch_size: 512
 
 models:
+  Qwen3.5-9B-Q4_K_M.gguf:
+    name: Qwen3.5-9B (Q4_K_M)
+    repo: unsloth/Qwen3.5-9B-GGUF
+    file: Qwen3.5-9B-Q4_K_M.gguf
+    url: https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/main/Qwen3.5-9B-Q4_K_M.gguf
+    sha256: auto-verify-on-download
+
   qwen2.5-coder-0.5b-instruct-q4_k_m.gguf:
     name: Qwen2.5-Coder-0.5B-Instruct (Q4_K_M)
     repo: Qwen/Qwen2.5-Coder-0.5B-Instruct-GGUF
