@@ -87,9 +87,10 @@ The **PodLlama Container Environment** provides a local, GPU-accelerated, contai
   - **2. List Models API**: Probes `GET /v1/models` and verifies registered model aliases.
   - **3. Chat Completions & Prompt Processing**: Sends `podllama-chat` prompt and verifies `prompt_tokens` accounting.
   - **4. Deep Thinking & Reasoning**: Sends `podllama-thinking` request and verifies reasoning model output.
-  - **5. Chat Model Streaming**: Sends `podllama-chat` streaming request and validates SSE token chunk streaming.
-  - **6. Autocomplete Model Completion**: Sends `podllama-autocomplete` FIM request and validates inline code completion.
-  - **7. Function & Tool Calling**: Sends tool definitions to validate tool support without server error.
+  - **5. Instruct Completions**: Sends `podllama-instruct` request and verifies Qwen 2.5 Coder 7B Instruct output.
+  - **6. Chat Model Streaming**: Sends `podllama-chat` streaming request and validates SSE token chunk streaming.
+  - **7. Autocomplete Model Completion**: Sends `podllama-autocomplete` FIM request and validates inline code completion.
+  - **8. Function & Tool Calling**: Sends tool definitions to validate tool support without server error.
 
 ---
 
@@ -102,6 +103,7 @@ A companion extension, **PodLlama Code**, is bundled with the project to streaml
 - **Resilient Fallback Live Markdown Renderer**: Formats Markdown live during streaming with `fallbackMarkdown` protection against CDN script unavailability, unparsed tokens, split backticks, and TCP packet fragmentation.
 - **Multi-Field SSE Delta Streaming**: Extracts and streams token chunks seamlessly across standard responses (`content`), DeepSeek reasoning traces (`reasoning_content`), and thinking models (`thinking`).
 - **Context Attachments**: Injects complete files into chat inputs via a custom `+` context attachment button.
+- **Service Availability Status Bar Monitor**: Continuously polls service liveliness, displaying `$(circle-slash) PodLlama Unavailable` in grey when the stack is stopped.
 - **Editor Integration ('Chat' Menu)**: Right-clicking highlighted code pastes it instantly as active chat context.
 - **Inline Proposed Change Diffing**: Allows reviewing applied code patches inline using VS Code's native accept/reject actions.
 - **Asynchronous Context Summarization Engine**: Triggers context summarization asynchronously via `podllama-chat` once a conversation exceeds 6 message turns. Compresses details into structured context points to save token history overhead while allowing live chat completions to stream immediately without blocking.

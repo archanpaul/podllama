@@ -28,7 +28,7 @@ flowchart TB
     subgraph BACKEND_STACK["3. Podman Container Microservices Stack (containers_default network)"]
         subgraph CHAT_SUPERVISOR["Chat & Reasoning Supervisor (Port 8080)"]
             Swapper["chat_swapper.py Supervisor"]
-            LlamaChat["llama-server Backend Process\n(podllama-chat / podllama-thinking)"]
+            LlamaChat["llama-server Backend Process\n(podllama-chat / podllama-thinking / podllama-instruct)"]
             IdleTimer["Idle Auto-Stop Timer\n(0 MB RAM/VRAM when idle > 600s)"]
             Swapper --> LlamaChat
             LlamaChat --> IdleTimer
@@ -50,7 +50,7 @@ flowchart TB
     PodLlamaCLI -->|OpenAI REST API| LiteLLMProxy
     ExternalIDE -->|OpenAI REST API| LiteLLMProxy
 
-    LiteLLMProxy -->|Route podllama-chat / podllama-thinking| Swapper
+    LiteLLMProxy -->|Route podllama-chat / podllama-thinking / podllama-instruct| Swapper
     LiteLLMProxy -->|Route podllama-autocomplete| LlamaAuto
 
     LlamaChat -->|Offload Vulkan Layers -ngl 99| VulkanGPU
