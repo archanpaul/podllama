@@ -62,6 +62,7 @@ def test_yaml_configurations():
     assert "podllama-chat" in litellm_models, "podllama-chat alias missing in litellm_config.yaml"
     assert "podllama-autocomplete" in litellm_models, "podllama-autocomplete alias missing in litellm_config.yaml"
     assert "podllama-thinking" in litellm_models, "podllama-thinking alias missing in litellm_config.yaml"
+    assert "podllama-instruct" in litellm_models, "podllama-instruct alias missing in litellm_config.yaml"
 
     # Ensure all model_conf.yaml GGUF files are exposed in litellm_config.yaml
     for gguf_file in models_map.keys():
@@ -86,6 +87,9 @@ def test_model_resolution_logic():
 
         think_res = chat_swapper.resolve_model_filename("podllama-thinking")
         assert think_res == "DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf", f"podllama-thinking resolved to unexpected '{think_res}'"
+
+        instruct_res = chat_swapper.resolve_model_filename("podllama-instruct")
+        assert instruct_res == "qwen2.5-coder-7b-instruct-q4_k_m.gguf", f"podllama-instruct resolved to unexpected '{instruct_res}'"
 
         # Direct exact match
         direct_res = chat_swapper.resolve_model_filename("qwen2.5-coder-3b-instruct-q4_k_m.gguf")

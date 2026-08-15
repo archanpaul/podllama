@@ -154,6 +154,8 @@ def resolve_model_filename(requested_model_name):
         return config_data.get("active_autocomplete_model")
     if requested_model_name == "podllama-thinking":
         return config_data.get("active_thinking_model", config_data.get("active_chat_model"))
+    if requested_model_name == "podllama-instruct":
+        return "qwen2.5-coder-7b-instruct-q4_k_m.gguf"
     if requested_model_name == "podllama-chat":
         return config_data.get("active_chat_model")
     if requested_model_name in config_data.get("models", {}):
@@ -177,6 +179,8 @@ def ensure_model_running(requested_model_name):
             target_model = config_data.get("active_autocomplete_model")
         elif requested_model_name == "podllama-thinking":
             target_model = config_data.get("active_thinking_model", config_data.get("active_chat_model"))
+        elif requested_model_name == "podllama-instruct":
+            target_model = "qwen2.5-coder-7b-instruct-q4_k_m.gguf"
         elif requested_model_name in config_data.get("models", {}):
             target_model = requested_model_name
         else:
@@ -580,6 +584,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
         model_entries = []
         model_entries.append({"id": "podllama-chat", "object": "model", "owned_by": "podllama-swapper", "active_target": active_chat})
         model_entries.append({"id": "podllama-thinking", "object": "model", "owned_by": "podllama-swapper", "active_target": active_thinking})
+        model_entries.append({"id": "podllama-instruct", "object": "model", "owned_by": "podllama-swapper", "active_target": "qwen2.5-coder-7b-instruct-q4_k_m.gguf"})
         model_entries.append({"id": "podllama-autocomplete", "object": "model", "owned_by": "podllama-swapper", "active_target": active_autocomplete})
 
         for model_file, meta in models.items():

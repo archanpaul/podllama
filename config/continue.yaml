@@ -22,6 +22,16 @@ models:
     roles:
       - chat
 
+  - name: PodLlama Instruct (Qwen2.5 Coder 7B)
+    provider: openai
+    model: podllama-instruct
+    apiBase: http://localhost:4000/v1
+    apiKey: sk-local
+    contextLength: 16384
+    roles:
+      - chat
+      - edit
+
   - name: PodLlama Autocomplete (Local Vulkan)
     provider: openai
     model: podllama-autocomplete

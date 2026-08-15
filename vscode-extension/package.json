@@ -91,6 +91,11 @@
           "default": "podllama-thinking",
           "description": "Default model ID for reasoning and deep thinking."
         },
+        "podllama.instructModel": {
+          "type": "string",
+          "default": "podllama-instruct",
+          "description": "Default model ID for instruct code generation (Qwen 2.5 Coder 7B)."
+        },
         "podllama.autocompleteModel": {
           "type": "string",
           "default": "podllama-autocomplete",

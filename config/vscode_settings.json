@@ -33,6 +33,15 @@
           "vision": false,
           "maxInputTokens": 16384,
           "maxOutputTokens": 4096
+        },
+        {
+          "id": "podllama-instruct",
+          "name": "PodLlama Instruct (Qwen 2.5 Coder 7B Instruct)",
+          "url": "http://localhost:4000/v1/chat/completions",
+          "toolCalling": true,
+          "vision": false,
+          "maxInputTokens": 16384,
+          "maxOutputTokens": 4096
         }
       ]
     }

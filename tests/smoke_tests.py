@@ -138,9 +138,46 @@ def test_thinking_model_api():
         sys.exit(1)
 
 
+
+
+def test_instruct_model_api():
+    log("--------------------------------------------------")
+    log("API TEST 5: Instruct Completions (POST /v1/chat/completions - 'podllama-instruct')")
+    payload = {
+        "model": "podllama-instruct",
+        "messages": [
+            {"role": "system", "content": "You are a code assistant."},
+            {"role": "user", "content": "Write a python function to compute factorial."}
+        ],
+        "max_tokens": 48,
+        "temperature": 0.1
+    }
+    url = f"{BASE_URL}/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {API_KEY}"
+    }
+    log(f"  Target URL: {url}")
+    log(f"  Request Model: {payload['model']}")
+    log("  Expected: Status 200 OK with Qwen 2.5 Coder 7B Instruct output")
+
+    try:
+        req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            assert resp.status == 200, f"Expected 200, got {resp.status}"
+            msg = data.get("choices", [{}])[0].get("message", {})
+            content = msg.get("content", "")
+            log(f"  Response Status: {resp.status}")
+            log(f"  Instruct Output Sample: {repr(content.strip())}")
+            log("  -> PASSED: Instruct model (podllama-instruct) completions API verified successfully.")
+    except Exception as e:
+        log(f"  -> FAILED: Instruct model API request failed: {e}")
+        sys.exit(1)
+
 def test_chat_model_streaming():
     log("--------------------------------------------------")
-    log("API TEST 5: Chat Streaming SSE (POST /v1/chat/completions with stream=true)")
+    log("API TEST 6: Chat Streaming SSE (POST /v1/chat/completions with stream=true)")
     payload = {
         "model": "podllama-chat",
         "messages": [
@@ -197,7 +234,7 @@ def test_chat_model_streaming():
 
 def test_autocomplete_model():
     log("--------------------------------------------------")
-    log("API TEST 6: Text Completions / Autocomplete (POST /v1/completions - 'podllama-autocomplete')")
+    log("API TEST 7: Text Completions / Autocomplete (POST /v1/completions - 'podllama-autocomplete')")
     payload = {
         "model": "podllama-autocomplete",
         "prompt": "<|fim_prefix|>def fibonacci(n: int) -> int:\n    if n <= 1:\n        return n\n    return <|fim_suffix|>\n<|fim_middle|>",
@@ -240,7 +277,7 @@ def test_autocomplete_model():
 
 def test_tool_calling():
     log("--------------------------------------------------")
-    log("API TEST 7: Function & Tool Calling (POST /v1/chat/completions - 'podllama-chat')")
+    log("API TEST 8: Function & Tool Calling (POST /v1/chat/completions - 'podllama-chat')")
     payload = {
         "model": "podllama-chat",
         "messages": [
@@ -293,6 +330,7 @@ def main():
     test_list_models_api()
     test_prompt_processing()
     test_thinking_model_api()
+    test_instruct_model_api()
     test_chat_model_streaming()
     test_autocomplete_model()
     test_tool_calling()

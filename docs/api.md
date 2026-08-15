@@ -134,6 +134,7 @@ curl http://localhost:4000/v1/models \
     { "id": "podllama-chat", "object": "model", "owned_by": "litellm" },
     { "id": "podllama-autocomplete", "object": "model", "owned_by": "litellm" },
     { "id": "podllama-thinking", "object": "model", "owned_by": "litellm" },
+    { "id": "podllama-instruct", "object": "model", "owned_by": "litellm" },
     { "id": "qwen2.5-coder-0.5b-instruct-q4_k_m.gguf", "object": "model", "owned_by": "litellm" },
     { "id": "qwen2.5-coder-1.5b-instruct-q4_k_m.gguf", "object": "model", "owned_by": "litellm" },
     { "id": "qwen2.5-coder-3b-instruct-q4_k_m.gguf", "object": "model", "owned_by": "litellm" },
@@ -168,6 +169,7 @@ curl http://localhost:4000/health/liveliness
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `podllama-chat` | Default Chat | `podllama_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` | ~4.68 GB | Auto-swaps on port 8080 (Single active chat/thinking model) |
 | `podllama-thinking` | Default Reasoning | `podllama_chat:8080` | `DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf` | ~4.68 GB | Auto-swaps on port 8080 (Single active chat/thinking model) |
+| `podllama-instruct` | Instruct (Qwen 7B) | `podllama_chat:8080` | `qwen2.5-coder-7b-instruct-q4_k_m.gguf` | ~4.68 GB | Auto-swaps on port 8080 (Single active chat/thinking model) |
 | `podllama-autocomplete` | Default Autocomplete | `podllama_autocomplete:8081` | `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` | ~491 MB | Dedicated port 8081 (Runs in parallel with chat) |
 | `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` | Direct File (Autocomplete) | `podllama_autocomplete:8081` | `qwen2.5-coder-0.5b-instruct-q4_k_m.gguf` | ~491 MB | Dedicated port 8081 (Real-time FIM inline completions) |
 | `qwen2.5-coder-1.5b-instruct-q4_k_m.gguf` | Direct File (Autocomplete/Chat) | `podllama_autocomplete:8081` | `qwen2.5-coder-1.5b-instruct-q4_k_m.gguf` | ~1.12 GB | Dedicated port 8081 (Enhanced multi-line completions) |

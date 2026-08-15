@@ -115,7 +115,8 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
             session: conv,
             models: models.length > 0 ? models : [
                 { id: settings.chatModel, object: 'model', owned_by: 'litellm' },
-                { id: settings.thinkingModel, object: 'model', owned_by: 'litellm' }
+                { id: settings.thinkingModel, object: 'model', owned_by: 'litellm' },
+                { id: 'podllama-instruct', object: 'model', owned_by: 'litellm' }
             ],
             selectedModel: settings.chatModel
         });

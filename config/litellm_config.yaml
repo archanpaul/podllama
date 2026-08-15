@@ -17,6 +17,12 @@ model_list:
     api_base: http://podllama_chat:8080/v1
     api_key: sk-local
     drop_params: true
+- model_name: podllama-instruct
+  litellm_params:
+    model: openai/qwen2.5-coder-7b-instruct-q4_k_m.gguf
+    api_base: http://podllama_chat:8080/v1
+    api_key: sk-local
+    drop_params: true
 - model_name: gpt-5.6-sol
   litellm_params:
     model: openai/qwen2.5-coder

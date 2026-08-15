@@ -28,6 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
             apiKey: config.get<string>('apiKey', 'sk-local'),
             chatModel: config.get<string>('chatModel', 'podllama-chat'),
             thinkingModel: config.get<string>('thinkingModel', 'podllama-thinking'),
+            instructModel: config.get<string>('instructModel', 'podllama-instruct'),
             autocompleteModel: config.get<string>('autocompleteModel', 'podllama-autocomplete'),
             enableInline: config.get<boolean>('enableInlineCompletion', true),
             enableDropdown: config.get<boolean>('enableDropdownCompletion', true),
