@@ -7,6 +7,7 @@ import { ChatWebviewProvider } from './chatWebviewProvider';
 import { DiffContentProvider } from './diffContentProvider';
 
 let statusBarItem: vscode.StatusBarItem;
+let isServiceOnline = false;
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('[PodLlama Code] Activating extension...');
@@ -45,6 +46,31 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     const conversationManager = new ConversationManager(context);
+
+    // Status bar updater helper
+    const updateStatusBar = (enabled: boolean, online: boolean = isServiceOnline) => {
+        if (!online) {
+            statusBarItem.text = '$(circle-slash) PodLlama Unavailable';
+            statusBarItem.tooltip = 'PodLlama Service is not reachable (Check if container stack is running: make service-up)';
+            statusBarItem.color = '#888888';
+        } else if (enabled) {
+            statusBarItem.text = '$(sparkle) PodLlama: Active';
+            statusBarItem.tooltip = 'PodLlama Code Autocomplete is Enabled (Click to Disable)';
+            statusBarItem.color = '#38bdf8';
+        } else {
+            statusBarItem.text = '$(circle-slash) PodLlama: Disabled';
+            statusBarItem.tooltip = 'PodLlama Code Autocomplete is Disabled (Click to Enable)';
+            statusBarItem.color = '#888888';
+        }
+        statusBarItem.show();
+    };
+
+    const checkServiceHealthAndUpdateStatusBar = async () => {
+        const settings = getSettings();
+        const online = await client.isServiceAvailable();
+        isServiceOnline = online;
+        updateStatusBar(settings.enableInline || settings.enableDropdown, online);
+    };
 
     // 3. Register Antigravity IDE-style Chat Webview View
     const chatWebviewProvider = new ChatWebviewProvider(
@@ -103,7 +129,9 @@ export function activate(context: vscode.ExtensionContext) {
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusBarItem.command = 'podllama.toggleAutocomplete';
     context.subscriptions.push(statusBarItem);
-    updateStatusBar(getSettings().enableInline || getSettings().enableDropdown);
+    
+    // Initial status and health check
+    checkServiceHealthAndUpdateStatusBar();
 
     // 7. Command Registrations
     context.subscriptions.push(
@@ -115,7 +143,7 @@ export function activate(context: vscode.ExtensionContext) {
             await config.update('enableInlineCompletion', newValue, vscode.ConfigurationTarget.Global);
             await config.update('enableDropdownCompletion', newValue, vscode.ConfigurationTarget.Global);
 
-            updateStatusBar(newValue);
+            updateStatusBar(newValue, isServiceOnline);
             vscode.window.showInformationMessage(
                 `PodLlama Autocomplete: ${newValue ? 'Enabled' : 'Disabled'}`
             );
@@ -129,6 +157,7 @@ export function activate(context: vscode.ExtensionContext) {
             await config.update('apiKey', undefined, vscode.ConfigurationTarget.Global);
             await config.update('chatModel', undefined, vscode.ConfigurationTarget.Global);
             await config.update('thinkingModel', undefined, vscode.ConfigurationTarget.Global);
+            await config.update('instructModel', undefined, vscode.ConfigurationTarget.Global);
             await config.update('autocompleteModel', undefined, vscode.ConfigurationTarget.Global);
             await config.update('enableInlineCompletion', undefined, vscode.ConfigurationTarget.Global);
             await config.update('enableDropdownCompletion', undefined, vscode.ConfigurationTarget.Global);
@@ -136,7 +165,7 @@ export function activate(context: vscode.ExtensionContext) {
             await config.update('maxTokens', undefined, vscode.ConfigurationTarget.Global);
             await config.update('temperature', undefined, vscode.ConfigurationTarget.Global);
 
-            updateStatusBar(true);
+            checkServiceHealthAndUpdateStatusBar();
             chatWebviewProvider.refreshWebviewSession();
             vscode.window.showInformationMessage('PodLlama Code: Settings reset to default values.');
         })
@@ -180,7 +209,7 @@ export function activate(context: vscode.ExtensionContext) {
                 statusBarItem.text = '$(sync~spin) PodLlama: Thinking...';
                 statusBarItem.color = '#facc15'; // yellow color during generation
             } else {
-                updateStatusBar(getSettings().enableInline || getSettings().enableDropdown);
+                updateStatusBar(getSettings().enableInline || getSettings().enableDropdown, isServiceOnline);
             }
         })
     );
@@ -189,37 +218,23 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration(e => {
             if (e.affectsConfiguration('podllama')) {
-                const settings = getSettings();
-                updateStatusBar(settings.enableInline || settings.enableDropdown);
+                checkServiceHealthAndUpdateStatusBar();
                 chatWebviewProvider.refreshWebviewSession();
             }
         })
     );
 
-    // 9. Periodic Model Polling (`GET /v1/models`)
+    // 9. Periodic Service Health & Model Polling (`GET /v1/models`)
     const modelPollInterval = setInterval(async () => {
-        const models = await client.listModels();
-        if (models.length > 0) {
+        await checkServiceHealthAndUpdateStatusBar();
+        if (isServiceOnline) {
             chatWebviewProvider.refreshWebviewSession();
         }
-    }, 30000);
+    }, 10000);
 
     context.subscriptions.push({
         dispose: () => clearInterval(modelPollInterval)
     });
-}
-
-function updateStatusBar(enabled: boolean) {
-    if (enabled) {
-        statusBarItem.text = '$(sparkle) PodLlama: Active';
-        statusBarItem.tooltip = 'PodLlama Code Autocomplete is Enabled (Click to Disable)';
-        statusBarItem.color = '#38bdf8';
-    } else {
-        statusBarItem.text = '$(circle-slash) PodLlama: Disabled';
-        statusBarItem.tooltip = 'PodLlama Code Autocomplete is Disabled (Click to Enable)';
-        statusBarItem.color = '#888888';
-    }
-    statusBarItem.show();
 }
 
 export function deactivate() {}

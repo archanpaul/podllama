@@ -22,6 +22,22 @@ export class PodLlamaClient {
     /**
      * Poll backend models endpoint (GET /v1/models)
      */
+    /**
+     * Check if PodLlama service is available (GET /models or /health/liveliness)
+     */
+    async isServiceAvailable(): Promise<boolean> {
+        const apiBase = this.getApiBase();
+        const apiKey = this.getApiKey();
+        const urlStr = `${apiBase.replace(/\/$/, '')}/models`;
+
+        try {
+            const data = await this.httpGetJson<{ data: ModelItem[] }>(urlStr, apiKey);
+            return Array.isArray(data.data) && data.data.length > 0;
+        } catch (err) {
+            return false;
+        }
+    }
+
     async listModels(): Promise<ModelItem[]> {
         const apiBase = this.getApiBase();
         const apiKey = this.getApiKey();
