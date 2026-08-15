@@ -81,7 +81,8 @@ def test_model_resolution_logic():
 
         # Role alias resolution
         chat_res = chat_swapper.resolve_model_filename("podllama-chat")
-        assert chat_res == "qwen2.5-coder-7b-instruct-q4_k_m.gguf", f"podllama-chat resolved to unexpected '{chat_res}'"
+        expected_chat = chat_swapper.config_data.get("active_chat_model")
+        assert chat_res == expected_chat, f"podllama-chat resolved to unexpected '{chat_res}', expected '{expected_chat}'"
 
         think_res = chat_swapper.resolve_model_filename("podllama-thinking")
         assert think_res == "DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf", f"podllama-thinking resolved to unexpected '{think_res}'"

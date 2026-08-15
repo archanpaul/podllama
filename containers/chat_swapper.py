@@ -98,6 +98,11 @@ def start_llama_server(target_model_file):
     if not os.path.exists(llama_bin):
         llama_bin = "llama-server"
 
+    cache_type_k = config_data.get("cache_type_k", "q8_0")
+    cache_type_v = config_data.get("cache_type_v", "q8_0")
+    batch_size = config_data.get("batch_size", 2048)
+    ubatch_size = config_data.get("ubatch_size", 512)
+
     cmd = [
         llama_bin,
         "-m", model_path,
@@ -106,6 +111,10 @@ def start_llama_server(target_model_file):
         "-ngl", str(gpu_layers),
         "-t", str(cpu_threads),
         "-c", str(ctx_size),
+        "-b", str(batch_size),
+        "-ub", str(ubatch_size),
+        "-ctk", str(cache_type_k),
+        "-ctv", str(cache_type_v),
         "--flash-attn", "auto",
         "--alias", "qwen2.5-coder"
     ]
@@ -374,115 +383,13 @@ def normalize_chat_response_payload(response_bytes):
 
 
 def proxy_and_normalize_stream(resp, wfile):
-    """Read SSE stream from llama-server and normalize tool calls if emitted as plain text."""
-    buffered_chunks = []
-    accumulated_content = []
-    already_has_tool_calls = False
-    last_chunk_obj = None
-
+    """Stream SSE chunks immediately to the client to maximize real-time streaming performance."""
     while True:
         line_bytes = resp.readline()
         if not line_bytes:
             break
-        
-        buffered_chunks.append(line_bytes)
-        line_str = line_bytes.decode("utf-8", errors="replace").strip()
-        
-        if line_str == "data: [DONE]":
-            break
-        if line_str.startswith("data: "):
-            payload_str = line_str[6:]
-            try:
-                chunk_json = json.loads(payload_str)
-                last_chunk_obj = chunk_json
-                choices = chunk_json.get("choices", [])
-                if choices:
-                    delta = choices[0].get("delta", {})
-                    if delta.get("tool_calls"):
-                        already_has_tool_calls = True
-                    if "content" in delta and delta["content"]:
-                        accumulated_content.append(delta["content"])
-            except Exception:
-                pass
-
-    full_text = "".join(accumulated_content)
-    
-    if not already_has_tool_calls and full_text:
-        prefix, tool_name, tool_args = extract_tool_call_and_prefix(full_text)
-        if tool_name:
-            print(f"[Swapper] [Stream Normalizer] Detected tool call '{tool_name}' in stream. Normalizing to tool_calls SSE events.", flush=True)
-            chunk_id = (last_chunk_obj.get("id") if last_chunk_obj else None) or f"chatcmpl-tool-{int(time.time()*1000)}"
-            model_name = (last_chunk_obj.get("model") if last_chunk_obj else None) or "podllama-chat"
-            created_ts = (last_chunk_obj.get("created") if last_chunk_obj else None) or int(time.time())
-            tc_id = f"call_auto_{int(time.time()*1000)}"
-
-            # 1. If prefix text exists, emit as content delta
-            if prefix and prefix.strip():
-                prefix_chunk = {
-                    "id": chunk_id,
-                    "object": "chat.completion.chunk",
-                    "created": created_ts,
-                    "model": model_name,
-                    "choices": [{
-                        "index": 0,
-                        "delta": {"role": "assistant", "content": prefix.strip() + "\n"},
-                        "finish_reason": None
-                    }]
-                }
-                wfile.write(f"data: {json.dumps(prefix_chunk)}\n\n".encode("utf-8"))
-                wfile.flush()
-
-            # 2. Emit tool_calls delta
-            tool_chunk = {
-                "id": chunk_id,
-                "object": "chat.completion.chunk",
-                "created": created_ts,
-                "model": model_name,
-                "choices": [{
-                    "index": 0,
-                    "delta": {
-                        "role": "assistant",
-                        "tool_calls": [{
-                            "index": 0,
-                            "id": tc_id,
-                            "type": "function",
-                            "function": {
-                                "name": tool_name,
-                                "arguments": json.dumps(tool_args)
-                            }
-                        }]
-                    },
-                    "finish_reason": None
-                }]
-            }
-            wfile.write(f"data: {json.dumps(tool_chunk)}\n\n".encode("utf-8"))
-            wfile.flush()
-
-            # 3. Emit finish_reason: tool_calls chunk
-            finish_chunk = {
-                "id": chunk_id,
-                "object": "chat.completion.chunk",
-                "created": created_ts,
-                "model": model_name,
-                "choices": [{
-                    "index": 0,
-                    "delta": {},
-                    "finish_reason": "tool_calls"
-                }]
-            }
-            wfile.write(f"data: {json.dumps(finish_chunk)}\n\n".encode("utf-8"))
-            wfile.flush()
-
-            # 4. Emit [DONE]
-            wfile.write(b"data: [DONE]\n\n")
-            wfile.flush()
-            return
-
-    # If already had tool calls or no tool call in text, flush all buffered chunks
-    for chunk in buffered_chunks:
-        wfile.write(chunk)
-    wfile.flush()
-
+        wfile.write(line_bytes)
+        wfile.flush()
 
 def idle_supervisor_thread():
     """Monitors idle time and stops llama-server after idle threshold of inactivity."""

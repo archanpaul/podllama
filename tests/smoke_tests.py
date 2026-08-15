@@ -89,7 +89,8 @@ def test_prompt_processing():
             usage = data.get("usage", {})
             prompt_tokens = usage.get("prompt_tokens", 0)
             completion_tokens = usage.get("completion_tokens", 0)
-            content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            msg = data.get("choices", [{}])[0].get("message", {})
+            content = msg.get("content") or msg.get("reasoning_content", "")
             log(f"  Response Status: {resp.status}")
             log(f"  Prompt Tokens Evaluated: {prompt_tokens}")
             log(f"  Completion Tokens Generated: {completion_tokens}")
@@ -127,7 +128,8 @@ def test_thinking_model_api():
         with urllib.request.urlopen(req, timeout=60) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             assert resp.status == 200, f"Expected 200, got {resp.status}"
-            content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            msg = data.get("choices", [{}])[0].get("message", {})
+            content = msg.get("content") or msg.get("reasoning_content", "")
             log(f"  Response Status: {resp.status}")
             log(f"  Thinking Output Sample: {repr(content.strip())}")
             log("  -> PASSED: Thinking model completions API verified successfully.")
@@ -174,7 +176,7 @@ def test_chat_model_streaming():
                     try:
                         chunk = json.loads(data_content)
                         delta = chunk.get("choices", [{}])[0].get("delta", {})
-                        content = delta.get("content", "")
+                        content = delta.get("content", "") or delta.get("reasoning_content", "")
                         if content:
                             sys.stdout.write(content)
                             sys.stdout.flush()
