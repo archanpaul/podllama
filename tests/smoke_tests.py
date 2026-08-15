@@ -9,6 +9,8 @@ import sys
 import json
 import urllib.request
 import urllib.error
+import subprocess
+import time
 
 BASE_URL = "http://127.0.0.1:4000/v1"
 HEALTH_URL = "http://127.0.0.1:4000/health/liveliness"
@@ -322,6 +324,63 @@ def test_tool_calling():
         sys.exit(1)
 
 
+def test_auto_stop_and_recovery():
+    log("--------------------------------------------------")
+    log("API TEST 9: Auto-Stop & Recovery Test (POST /v1/chat/completions after model stop)")
+    log("  Simulating model server stop / idle auto-shutdown...")
+    
+    container_cmd = None
+    for tool in ["podman", "docker"]:
+        try:
+            res = subprocess.run([tool, "exec", "podllama_chat", "python3", "-c", "import chat_swapper; chat_swapper.stop_llama_server()"], capture_output=True, text=True, timeout=10)
+            if res.returncode == 0:
+                container_cmd = tool
+                break
+        except Exception:
+            pass
+
+    if container_cmd:
+        log(f"  -> Successfully stopped backend llama-server via {container_cmd} exec.")
+    else:
+        log("  -> WARNING: Could not exec container stop command directly; testing model swap endpoint recovery.")
+
+    time.sleep(1)
+
+    payload = {
+        "model": "podllama-chat",
+        "messages": [
+            {"role": "user", "content": "Ping after auto-stop."}
+        ],
+        "max_tokens": 16,
+        "temperature": 0.1
+    }
+    url = f"{BASE_URL}/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {API_KEY}"
+    }
+    log(f"  Target URL: {url}")
+    log(f"  Request Model: {payload['model']}")
+    log("  Expected: Status 200 OK after automatic model reload & swapper recovery")
+
+    try:
+        start_t = time.time()
+        req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            elapsed = time.time() - start_t
+            assert resp.status == 200, f"Expected 200, got {resp.status}"
+            msg = data.get("choices", [{}])[0].get("message", {})
+            content = msg.get("content", "")
+            log(f"  Response Status: {resp.status}")
+            log(f"  Recovery Latency: {elapsed:.2f}s")
+            log(f"  Response Output Sample: {repr(content.strip())}")
+            log("  -> PASSED: Auto-stop recovery verified successfully.")
+    except Exception as e:
+        log(f"  -> FAILED: Auto-stop & recovery test failed: {e}")
+        sys.exit(1)
+
+
 def main():
     print("==================================================================")
     print("       PodLlama Environment Comprehensive API Smoke Test Suite   ")
@@ -334,6 +393,7 @@ def main():
     test_chat_model_streaming()
     test_autocomplete_model()
     test_tool_calling()
+    test_auto_stop_and_recovery()
     print("==================================================================")
     print(" SUCCESS: All live API endpoint smoke tests passed!               ")
     print("==================================================================")
