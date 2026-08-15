@@ -1,6 +1,6 @@
 # Makefile for PodLlama Container Environment (Vulkan GPU Accelerated)
 
-.PHONY: help build build-server build-cli build-litellm build-proxy build-extension build-vscode-extension install-extension install-vscode-extension start-server stop-server compose-up compose-down compose-logs compose-start compose-stop compose-restart service-up service-down service-start service-stop service-restart service-logs service-status show-live-logs status unit-tests test smoke-tests smoke_tests smoke-test run-pi run-pod check-checksum download-active-models download-models clean
+.PHONY: help build build-server build-cli build-omp build-litellm build-proxy build-extension build-vscode-extension install-extension install-vscode-extension start-server stop-server compose-up compose-down compose-logs compose-start compose-stop compose-restart service-up service-down service-start service-stop service-restart service-logs service-status show-live-logs status unit-tests test smoke-tests smoke_tests smoke-test run-pi run-omp run-pod check-checksum download-active-models download-models clean
 
 # Variables
 PODMAN ?= podman
@@ -10,6 +10,7 @@ WORKSPACE_DIR ?= $(shell pwd)
 SERVER_IMAGE ?= podllama-server:latest
 CLI_IMAGE ?= podllama-cli:latest
 CLIENT_IMAGE ?= $(CLI_IMAGE)
+OMP_IMAGE ?= podllama-omp:latest
 POD_NAME ?= podllama_pod
 LLAMA_CPP_TAG ?= b10327
 
@@ -72,6 +73,10 @@ build-server:
 build-cli:
 	@echo "Building PodLlama CLI Agent image (Fedora 44 Minimal)..."
 	$(PODMAN) build -t $(CLIENT_IMAGE) -f containers/Containerfile.pi .
+
+build-omp:
+	@echo "Building PodLlama OMP CLI Agent image (omp.sh)..."
+	$(PODMAN) build -t $(OMP_IMAGE) -f containers/Containerfile.omp .
 
 build-litellm:
 	@echo "Building LiteLLM Proxy image (Fedora Minimal staged build)..."
@@ -191,6 +196,9 @@ smoke-test: smoke-tests
 run-pi:
 	@CLIENT_IMAGE="$(CLIENT_IMAGE)" ./scripts/run_pi.sh "$(WORKSPACE_DIR)"
 
+run-omp:
+	@OMP_IMAGE="$(OMP_IMAGE)" ./scripts/run_omp.sh "$(WORKSPACE_DIR)"
+
 run-pod:
 	./scripts/run_podman.sh pod "$(WORKSPACE_DIR)"
 
@@ -209,5 +217,5 @@ download-models:
 	@$(MAKE) check-checksum
 
 clean:
-	-$(PODMAN) rmi $(SERVER_IMAGE) $(CLIENT_IMAGE) podllama-litellm:latest qwen-litellm:latest podllama-cli:latest || true
+	-$(PODMAN) rmi $(SERVER_IMAGE) $(CLIENT_IMAGE) podllama-litellm:latest qwen-litellm:latest podllama-cli:latest podllama-omp:latest || true
 

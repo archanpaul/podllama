@@ -11,7 +11,8 @@ This skill provides guidelines and operational procedures for managing the Podma
 
 The repository manages two main container images and a Podman Compose service stack:
 - **Server Image (`podllama-server:latest`)**: Built via `containers/Containerfile.llamacpp`. Runs `llama-server` with Vulkan GPU acceleration on Fedora minimal.
-- **Client Image (`qwen-client:latest`)**: Built via `containers/Containerfile.qwencoder`. Houses the Qwen CLI agent.
+- **Client Image (`podllama-cli:latest`)**: Built via `containers/Containerfile.pi` (pi.dev CLI agent).
+- **OMP Client Image (`podllama-omp:latest`)**: Built via `containers/Containerfile.omp` (Oh My Pi agent via omp.sh).
 - **Compose Stack (`containers/compose.yaml`)**: Manages `podllama_chat` (port 8080), `podllama_autocomplete` (port 8081), and `podllama_proxy` (port 4000).
 
 ## Common Workflow Tasks
@@ -26,7 +27,8 @@ make build
 
 # Build individual targets
 make build-server
-make build-client
+make build-cli
+make build-omp
 ```
 
 ### 2. Service Stack Lifecycle
@@ -55,11 +57,14 @@ make service-restart
 Run the `qwen-code` client agent inside a target workspace:
 
 ```bash
-# Run agent in current workspace directory
-make run-qwencode WORKSPACE_DIR=$(pwd)
+# Run pi.dev agent in current workspace directory
+make run-pi WORKSPACE_DIR=$(pwd)
+
+# Run Oh My Pi (omp.sh) agent in current workspace directory
+make run-omp WORKSPACE_DIR=$(pwd)
 
 # Direct script invocation for external project path
-./scripts/run_qwencode.sh /path/to/target/project
+./scripts/run_omp.sh /path/to/target/project
 ```
 
 ### 4. Health Diagnostics & Troubleshooting

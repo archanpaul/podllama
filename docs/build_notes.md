@@ -15,17 +15,26 @@ The model server container packages `llama-server` with Vulkan GPU acceleration 
 
 ---
 
-## 2. Workspace CLI Agent Container (`Containerfile.pi`)
+## 2. Workspace CLI Agent Containers (`Containerfile.pi` & `Containerfile.omp`)
 
-The workspace agent container packages the official **pi.dev** coding agent (`@earendil-works/pi-coding-agent`).
+The workspace agent containers package terminal AI coding agents for [pi.dev](https://pi.dev) (`Containerfile.pi`) and [Oh My Pi (omp.sh)](https://omp.sh/) (`Containerfile.omp`).
 
-### Build Details:
+### 2.1 Official pi.dev Container (`Containerfile.pi`)
 - **Base Image**: `node:24-bookworm-slim` (per official [pi.dev containerization specification](https://pi.dev/docs/latest/containerization)).
 - **System Utilities**: Packages `bash`, `ca-certificates`, `git`, `ripgrep`, `curl`, `python3`, `python3-requests`, and `python3-urllib3`.
 - **Agent Package Installation**: Installs official `@earendil-works/pi-coding-agent` via `npm install -g --ignore-scripts`.
 - **Version Pinning (`PI_VERSION`)**: You can pin a specific release version during container build:
   ```bash
   podman build --build-arg PI_VERSION="v0.84.2" -t podllama-cli:latest -f containers/Containerfile.pi .
+  ```
+
+### 2.2 Oh My Pi Container (`Containerfile.omp`)
+- **Base Image**: `node:24-bookworm-slim`.
+- **System Utilities & Runtime**: Packages `bash`, `ca-certificates`, `git`, `ripgrep`, `curl`, `unzip`, `bun`, `python3`, `python3-requests`, and `python3-urllib3`.
+- **Agent Package Installation**: Installs `@oh-my-pi/pi-coding-agent` via `npm install -g --ignore-scripts`.
+- **Version Pinning (`OMP_VERSION`)**: You can pin a specific release version during container build:
+  ```bash
+  podman build --build-arg OMP_VERSION="v17.3.4" -t podllama-omp:latest -f containers/Containerfile.omp .
   ```
 - **Rootless User Namespace Isolation**: Runs with `--userns=keep-id` to match host user permissions on mounted workspaces. Automatically registers mapped UIDs into `/etc/passwd` dynamically at runtime.
 
@@ -52,9 +61,11 @@ All model weights are stored in the host `./models/` directory, which is mounted
 | Command | Description |
 | :--- | :--- |
 | `make check-infra` | Verifies host build and runtime infrastructure (Podman, Python 3, PyYAML, curl, DRI) |
-| `make build` | Builds both `podllama-server:latest` and `podllama-cli:latest` images |
+| `make build` | Builds `podllama-server:latest`, `podllama-cli:latest`, and LiteLLM images |
 | `make build-server` | Builds only the model server container image |
 | `make build-cli` | Builds only the pi.dev workspace agent container image |
+| `make build-omp` | Builds only the Oh My Pi (omp.sh) workspace agent container image |
 | `make run-pi` | Launches the interactive pi.dev workspace agent container |
+| `make run-omp` | Launches the interactive Oh My Pi (omp.sh) workspace agent container |
 | `make test` | Executes unit test suite verifying configs and file permissions |
 | `make clean` | Removes built Podman images and temporary files |

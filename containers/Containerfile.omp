@@ -1,0 +1,45 @@
+# Workspace Agent Container using Oh My Pi (omp.sh / @oh-my-pi/pi-coding-agent)
+# Base image: node:24-bookworm-slim
+FROM node:24-bookworm-slim
+
+ARG OMP_VERSION=""
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    bash \
+    ca-certificates \
+    git \
+    ripgrep \
+    curl \
+    unzip \
+    python3 \
+    python3-requests \
+    python3-urllib3 \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install bun runtime required by omp CLI
+RUN npm install -g bun
+
+# Install official omp coding agent package (@oh-my-pi/pi-coding-agent)
+RUN if [ -n "${OMP_VERSION}" ]; then \
+    npm install -g --ignore-scripts "@oh-my-pi/pi-coding-agent@${OMP_VERSION#v}"; \
+    else \
+    npm install -g --ignore-scripts @oh-my-pi/pi-coding-agent; \
+    fi
+
+# Allow entrypoint to register mapped UID in /etc/passwd under --userns=keep-id
+# (Node.js os.userInfo() calls getpwuid() which segfaults if UID has no passwd entry)
+RUN chmod 666 /etc/passwd
+
+# Set up application workspace & configuration files
+WORKDIR /app
+COPY config/model_conf.yaml /app/config/model_conf.yaml
+COPY config/omp.json /app/config/omp.json
+COPY containers/entrypoint-omp.sh /app/entrypoint-omp.sh
+RUN chmod +x /app/entrypoint-omp.sh
+
+# Restricted workspace mount point
+WORKDIR /workspace
+VOLUME ["/workspace"]
+
+ENTRYPOINT ["/app/entrypoint-omp.sh"]

@@ -84,6 +84,11 @@ flowchart TB
 - **Base**: `node:24-bookworm-slim`
 - **Role**: Standalone interactive workspace agent container pre-packaged with official `pi.dev` CLI tool (`@earendil-works/pi-coding-agent`). Mounted directly to the project root directory.
 
+### 2.5 `podllama-omp`
+- **Image**: `podllama-omp:latest` (built from `containers/Containerfile.omp`)
+- **Base**: `node:24-bookworm-slim`
+- **Role**: Standalone interactive workspace agent container pre-packaged with Oh My Pi (`omp.sh` / `@oh-my-pi/pi-coding-agent`) CLI agent and `bun` runtime. Mounted directly to the project root directory.
+
 ---
 
 ## 3. Network Topology & Container Security

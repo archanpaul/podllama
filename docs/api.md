@@ -276,6 +276,11 @@ models:
 - **API Key**: `sk-local`
 - **Model ID**: `podllama-chat`
 
+### 4.3 Terminal Workspace CLI Agents
+
+- **pi.dev Workspace Agent**: `make run-pi` (uses `podllama-cli:latest` container and connects automatically to `http://localhost:4000/v1`).
+- **Oh My Pi (omp.sh) Agent**: `make run-omp` (uses `podllama-omp:latest` container and connects automatically to `http://localhost:4000/v1`).
+
 ---
 
 

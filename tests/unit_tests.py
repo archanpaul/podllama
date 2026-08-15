@@ -109,8 +109,10 @@ def test_script_permissions():
     print("[3/6] Testing Shell Script Executable Permissions...")
     scripts = [
         os.path.join(PROJECT_ROOT, "scripts", "run_podman.sh"),
+        os.path.join(PROJECT_ROOT, "scripts", "run_omp.sh"),
         os.path.join(PROJECT_ROOT, "containers", "entrypoint-llamacpp.sh"),
         os.path.join(PROJECT_ROOT, "containers", "entrypoint-cli.sh"),
+        os.path.join(PROJECT_ROOT, "containers", "entrypoint-omp.sh"),
     ]
 
     for script_path in scripts:
@@ -126,6 +128,7 @@ def test_container_definitions():
     container_files = [
         os.path.join(PROJECT_ROOT, "containers", "Containerfile.llamacpp"),
         os.path.join(PROJECT_ROOT, "containers", "Containerfile.pi"),
+        os.path.join(PROJECT_ROOT, "containers", "Containerfile.omp"),
         compose_file,
         os.path.join(PROJECT_ROOT, "containers", "chat_swapper.py"),
     ]
@@ -191,6 +194,8 @@ def test_makefile_targets():
         "smoke-tests:",
         "download-active-models:",
         "download-models:",
+        "build-omp:",
+        "run-omp:",
     ]
 
     for target in required_targets:

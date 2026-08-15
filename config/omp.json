@@ -1,0 +1,25 @@
+{
+  "defaultProvider": "podllama",
+  "defaultModel": "podllama-chat",
+  "defaultProjectTrust": "always",
+  "providers": {
+    "podllama": {
+      "name": "PodLlama Server",
+      "baseUrl": "${SERVER_URL}",
+      "api": "openai-completions",
+      "apiKey": "${OPENAI_API_KEY}",
+      "models": [
+        {
+          "id": "podllama-chat",
+          "name": "PodLlama Chat",
+          "contextWindow": 16384
+        },
+        {
+          "id": "podllama-thinking",
+          "name": "PodLlama Thinking",
+          "contextWindow": 16384
+        }
+      ]
+    }
+  }
+}

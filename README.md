@@ -25,7 +25,7 @@ This project addresses these challenges by delivering an enterprise-ready, self-
 - **Dual Model Support & Dynamic Auto-Swapping**: Run dedicated Chat (`qwen2.5-coder-7b-instruct`) and Autocomplete (`qwen2.5-coder-0.5b` or `1.5b`) models simultaneously. Automatically swaps chat models on demand.
 - **Configurable Idle Auto-Stop (0 MB LLM VRAM/RAM Mode)**: Automatically shuts down the chat container backend process after a configurable idle duration (`idle_timeout_seconds`, defaulting to 10 minutes / 600s), freeing 100% of LLM VRAM and host RAM until cold-started by the next request.
 - **Unified LiteLLM Proxy API (Port 4000)**: Exposes a single, multithreaded OpenAI-compatible API endpoint on port 4000 (`http://localhost:4000/v1`) that dynamically routes requests to the appropriate model server backend based on the model name in API requests.
-- **Official pi.dev CLI Integration**: The workspace agent container (`Containerfile.pi`) packages the official [pi.dev](https://pi.dev) terminal coding agent (`@earendil-works/pi-coding-agent`) built on `node:24-bookworm-slim` per pi.dev containerization specifications. Supports build-time version pinning via `PI_VERSION`.
+- **Official pi.dev & Oh My Pi CLI Integrations**: Packages workspace agent containers for both [pi.dev](https://pi.dev) (`Containerfile.pi` / `@earendil-works/pi-coding-agent`) and [Oh My Pi (omp.sh)](https://omp.sh/) (`Containerfile.omp` / `@oh-my-pi/pi-coding-agent`) built on `node:24-bookworm-slim`.
 - **Podman Compose Orchestration**: Easily manage the entire stack (`podllama_chat`, `podllama_autocomplete`, `podllama_proxy`) with a single command (`make service-up`).
 ---
 
@@ -190,9 +190,11 @@ An official extension, **PodLlama Code**, is packaged in [`vscode-extension/podl
 ├── containers/
 │   ├── Containerfile.llamacpp    # Fedora 44 Minimal image for llama-server (Vulkan & RPMs)
 │   ├── Containerfile.pi         # Node 24 Debian Slim image for official pi.dev workspace agent
+│   ├── Containerfile.omp        # Node 24 Debian Slim image for Oh My Pi (omp.sh) workspace agent
 │   ├── compose.yaml             # Podman Compose orchestration stack
 │   ├── entrypoint-llamacpp.sh   # Server entrypoint (Vulkan GPU check, checksums, auto-download)
-│   └── entrypoint-cli.sh        # Client agent entrypoint (pi.dev)
+│   ├── entrypoint-cli.sh        # Client agent entrypoint (pi.dev)
+│   └── entrypoint-omp.sh        # Client agent entrypoint (omp.sh)
 ├── docs/
 │   ├── api.md                   # Complete API specification & IDE setup guide
 │   ├── build_notes.md           # Multi-stage build system & compilation caching notes
@@ -341,18 +343,21 @@ make service-down
 
 ### 4. Launch Workspace Agent CLI
 
-Run the workspace agent inside your current project folder:
+Run either workspace agent (pi.dev or Oh My Pi) inside your current project folder:
 
 ```bash
-# Option A: From inside the qwen_code_container directory
+# Option A: Run official pi.dev CLI agent
 make run-pi
 
-# Option B: From inside any target project directory
-cd /path/to/your/project
-make -C /path/to/qwen_code_container run-pi WORKSPACE_DIR=$(pwd)
+# Option B: Run Oh My Pi (omp.sh) CLI agent
+make run-omp
 
-# Option C: Direct script invocation
-/path/to/qwen_code_container/scripts/run_pi.sh /path/to/your/project
+# Option C: From inside any target project directory
+cd /path/to/your/project
+make -C /path/to/podllama.git run-omp WORKSPACE_DIR=$(pwd)
+
+# Option D: Direct script invocation
+/path/to/podllama.git/scripts/run_omp.sh /path/to/your/project
 ```
 
 ---
@@ -611,7 +616,7 @@ This runs `tests/smoke_tests.py` to perform verbose end-to-end verification acro
 
 ## Security & Workspace Isolation
 
-The workspace agent container (`Containerfile.pi`) is launched with:
+The workspace agent containers (`Containerfile.pi` and `Containerfile.omp`) are launched with:
 - `-v "$(pwd):/workspace:Z"`: SELinux-labeled volume mount restricted strictly to the current working directory.
 - `--userns=keep-id`: Preserves host user UID/GID without root privileges in workspace.
 
@@ -623,6 +628,7 @@ The workspace agent container (`Containerfile.pi`) is launched with:
 | :--- | :--- |
 | `make check-infra` | Verifies host build and runtime infrastructure (Podman, Python 3, PyYAML, curl, DRI) |
 | `make build` | Builds `podllama-server` and `podllama-cli` Podman images |
+| `make build-omp` | Builds `podllama-omp` CLI Agent image (omp.sh) |
 | `make service-up` | Launches Chat Server, Autocomplete Server & LiteLLM Proxy via Podman Compose |
 | `make service-down` | Stops Podman Compose stack |
 | `make service-logs` | Displays live logs from all running containers |
@@ -637,6 +643,8 @@ The workspace agent container (`Containerfile.pi`) is launched with:
 | `make start-all` | Launches both standalone model servers |
 | `make stop-server` | Stops all standalone server containers |
 | `make service-status` | Checks running container status and health endpoints |
+| `make run-pi` | Runs pi.dev workspace agent client in current directory |
+| `make run-omp` | Runs Oh My Pi (omp.sh) workspace agent client in current directory |
 | `make unit-tests` | Runs automated unit test suite (config schema, script permissions, container files) |
 | `make test` | Alias for `make unit-tests` |
 | `make smoke-tests` | Runs live smoke test on Chat (streaming), Autocomplete, and Tool Calling endpoints |
