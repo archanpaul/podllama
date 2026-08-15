@@ -300,7 +300,9 @@ This runs `tests/smoke_tests.py` to validate:
 - **2. List Models API**: Probes `GET /v1/models` and parses registered model IDs.
 - **3. Chat Completions**: Sends `POST /v1/chat/completions` with `podllama-chat` to evaluate input code context prompts and verify `prompt_tokens` accounting.
 - **4. Deep Thinking & Reasoning**: Sends `POST /v1/chat/completions` with `podllama-thinking` to test reasoning model output.
-- **5. Chat Model Streaming**: Sends `POST /v1/chat/completions` with `"stream": true` and streams Server-Sent Events (SSE) token chunks.
-- **6. Autocomplete Model Completion**: Sends `POST /v1/completions` with `podllama-autocomplete` to test inline FIM code completion.
-- **7. Tool Calling Support**: Sends function tool definitions (`podllama-chat` with `--jinja`) to ensure tool-calling endpoints function without server errors.
+- **5. Instruct Completions**: Sends `POST /v1/chat/completions` with `podllama-instruct` to verify Qwen 2.5 Coder 7B Instruct output.
+- **6. Chat Model Streaming**: Sends `POST /v1/chat/completions` with `"stream": true` and streams Server-Sent Events (SSE) token chunks.
+- **7. Autocomplete Model Completion**: Sends `POST /v1/completions` with `podllama-autocomplete` to test inline FIM code completion.
+- **8. Tool Calling Support**: Sends function tool definitions (`podllama-chat` with `--jinja`) to ensure tool-calling endpoints function without server errors.
+- **9. Auto-Stop & Recovery Test**: Simulates backend model server stop (`stop_llama_server()`) and verifies automatic cold-start model reload and completion recovery.
 

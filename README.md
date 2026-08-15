@@ -24,7 +24,7 @@ This project addresses these challenges by delivering an enterprise-ready, self-
 - **Vulkan GPU Acceleration & Automated Pre-flight Diagnostics**: Checks for hardware Vulkan GPU devices (`vulkaninfo --summary` & `/dev/dri`). Automatically offloads layers to GPU (`-ngl 99`) or falls back gracefully to CPU if no GPU device is detected.
 - **Dual Model Support & Dynamic Auto-Swapping**: Run dedicated Chat (`qwen2.5-coder-7b-instruct`) and Autocomplete (`qwen2.5-coder-0.5b` or `1.5b`) models simultaneously. Automatically swaps chat models on demand.
 - **Configurable Idle Auto-Stop (0 MB LLM VRAM/RAM Mode)**: Automatically shuts down the chat container backend process after a configurable idle duration (`idle_timeout_seconds`, defaulting to 10 minutes / 600s), freeing 100% of LLM VRAM and host RAM until cold-started by the next request.
-- **Unified LiteLLM Proxy API (Port 4000)**: Exposes a single, multithreaded OpenAI-compatible API endpoint on port 4000 (`http://localhost:4000/v1`) that dynamically routes requests to the appropriate model server backend based on the model name in API requests.
+- **Unified LiteLLM Proxy API (Port 4000) & Multithreaded Swapper**: Exposes a single, multithreaded OpenAI-compatible API endpoint on port 4000 (`http://localhost:4000/v1`) backed by a `ThreadingHTTPServer` swapper proxy (`chat_swapper.py`) that seamlessly reloads models after idle auto-stop.
 - **Official pi.dev & Oh My Pi CLI Integrations**: Packages workspace agent containers for both [pi.dev](https://pi.dev) (`Containerfile.pi` / `@earendil-works/pi-coding-agent`) and [Oh My Pi (omp.sh)](https://omp.sh/) (`Containerfile.omp` / `@oh-my-pi/pi-coding-agent`) built on `node:24-bookworm-slim`.
 - **Podman Compose Orchestration**: Easily manage the entire stack (`podllama_chat`, `podllama_autocomplete`, `podllama_proxy`) with a single command (`make service-up`).
 ---
@@ -613,7 +613,7 @@ make smoke-tests
 make smoke-test
 ```
 
-This runs `tests/smoke_tests.py` to perform verbose end-to-end verification across 7 API endpoints:
+This runs `tests/smoke_tests.py` to perform verbose end-to-end verification across 9 API endpoints:
 - **1. Proxy Liveliness**: Probes `http://localhost:4000/health/liveliness`.
 - **2. List Models API**: Probes `GET /v1/models` and parses registered model IDs.
 - **3. Chat Completions**: Tests `podllama-chat` prompt evaluation tokens (`prompt_tokens`).
@@ -622,6 +622,7 @@ This runs `tests/smoke_tests.py` to perform verbose end-to-end verification acro
 - **6. Chat Model Token Streaming**: Validates real-time SSE chunk streaming output.
 - **7. Autocomplete Model Completion**: Tests `podllama-autocomplete` prompt prefill and FIM code output.
 - **8. Tool Calling Support**: Validates function tool definitions (`podllama-chat` with `--jinja`) without server error.
+- **9. Auto-Stop & Swapper Recovery**: Simulates model server stop (`stop_llama_server()`) and verifies automatic cold-start model reload and completion recovery.
 
 ---
 

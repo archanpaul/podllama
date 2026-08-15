@@ -27,7 +27,7 @@ flowchart TB
 
     subgraph BACKEND_STACK["3. Podman Container Microservices Stack (containers_default network)"]
         subgraph CHAT_SUPERVISOR["Chat & Reasoning Supervisor (Port 8080)"]
-            Swapper["chat_swapper.py Supervisor"]
+            Swapper["chat_swapper.py Multithreaded Supervisor"]
             LlamaChat["llama-server Backend Process\n(podllama-chat / podllama-thinking / podllama-instruct)"]
             IdleTimer["Idle Auto-Stop Timer\n(0 MB RAM/VRAM when idle > 600s)"]
             Swapper --> LlamaChat
