@@ -98,8 +98,9 @@ The **PodLlama Container Environment** provides a local, GPU-accelerated, contai
 A companion extension, **PodLlama Code**, is bundled with the project to streamline developer workflows locally:
 - **Offline Fonts & Styles**: Self-contains Fira Sans and Fira Code fonts, enabling coding ligatures and offline privacy.
 - **Antigravity-inspired Sidebar**: A webview chat panel featuring a compact header, renamed conversation sessions, themed model dropdown controls, and scalable play/stop generation icons.
-- **Decoupled Dual-Buffer Architecture**: Ingestion buffer (`streamDataBuffer`) and presentation buffer (`viewBuffer` / `lastGoodHtml`) decouple network packet reception from browser UI paints.
-- **Exception-Guarded Live Markdown**: Formats Markdown live during streaming with `lastGoodHtml` retry buffer protection against incomplete tokens, split backticks, and TCP packet fragmentation.
+- **Decoupled Dual-Buffer Architecture**: Ingestion buffer (`streamDataBuffer`) and presentation buffer (`viewBuffer` / `lastGoodHtml`) decouple network packet reception from browser UI paints for real-time token-by-token streaming.
+- **Resilient Fallback Live Markdown Renderer**: Formats Markdown live during streaming with `fallbackMarkdown` protection against CDN script unavailability, unparsed tokens, split backticks, and TCP packet fragmentation.
+- **Multi-Field SSE Delta Streaming**: Extracts and streams token chunks seamlessly across standard responses (`content`), DeepSeek reasoning traces (`reasoning_content`), and thinking models (`thinking`).
 - **Context Attachments**: Injects complete files into chat inputs via a custom `+` context attachment button.
 - **Editor Integration ('Chat' Menu)**: Right-clicking highlighted code pastes it instantly as active chat context.
 - **Inline Proposed Change Diffing**: Allows reviewing applied code patches inline using VS Code's native accept/reject actions.

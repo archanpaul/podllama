@@ -408,6 +408,8 @@ def idle_supervisor_thread():
 
 
 class ProxyHandler(BaseHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"
+
     def log_message(self, format, *args):
         pass  # Suppress standard HTTP request logging
 
@@ -525,6 +527,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
 
                     if is_streaming:
                         self.send_header('Cache-Control', 'no-cache')
+                        self.send_header('X-Accel-Buffering', 'no')
                         self.end_headers()
                         proxy_and_normalize_stream(resp, self.wfile)
                     else:

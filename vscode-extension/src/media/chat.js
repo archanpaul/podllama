@@ -316,21 +316,10 @@
                 if (typeof parsed === 'string' && parsed.trim().length > 0) {
                     return parsed;
                 }
-
-                if (isStreaming) {
-                    throw new Error('Markdown parse returned empty result during streaming');
-                }
             }
         } catch (e) {
-            if (isStreaming) {
-                throw e;
-            }
             console.warn('[PodLlama] marked.parse failed, using fallback renderer', e);
             return fallbackMarkdown(text);
-        }
-
-        if (isStreaming) {
-            throw new Error('marked.parse unavailable during streaming');
         }
 
         return fallbackMarkdown(text);

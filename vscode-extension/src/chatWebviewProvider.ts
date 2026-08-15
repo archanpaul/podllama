@@ -211,16 +211,18 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
 
                     for (const rawLine of lines) {
                         const line = rawLine.trim();
-                        if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                        if (line.startsWith('data:') && line !== 'data: [DONE]' && line !== 'data:[DONE]') {
                             try {
-                                const json = JSON.parse(line.substring(6));
+                                const jsonStr = line.replace(/^data:\s*/, '');
+                                const json = JSON.parse(jsonStr);
                                 const delta = json.choices[0]?.delta;
                                 if (delta) {
-                                    if (delta.content) {
-                                        assistantText += delta.content;
+                                    const tokenText = delta.content ?? delta.reasoning_content ?? delta.thinking ?? '';
+                                    if (tokenText) {
+                                        assistantText += tokenText;
                                         this._view?.webview.postMessage({
                                             type: 'streamToken',
-                                            text: delta.content
+                                            text: tokenText
                                         });
                                     }
                                 }
@@ -232,16 +234,21 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                 });
 
                 res.on('end', () => {
-                    if (streamBuffer.trim().startsWith('data: ') && streamBuffer.trim() !== 'data: [DONE]') {
+                    const trailingLine = streamBuffer.trim();
+                    if (trailingLine.startsWith('data:') && trailingLine !== 'data: [DONE]' && trailingLine !== 'data:[DONE]') {
                         try {
-                            const json = JSON.parse(streamBuffer.trim().substring(6));
+                            const jsonStr = trailingLine.replace(/^data:\s*/, '');
+                            const json = JSON.parse(jsonStr);
                             const delta = json.choices[0]?.delta;
-                            if (delta && delta.content) {
-                                assistantText += delta.content;
-                                this._view?.webview.postMessage({
-                                    type: 'streamToken',
-                                    text: delta.content
-                                });
+                            if (delta) {
+                                const tokenText = delta.content ?? delta.reasoning_content ?? delta.thinking ?? '';
+                                if (tokenText) {
+                                    assistantText += tokenText;
+                                    this._view?.webview.postMessage({
+                                        type: 'streamToken',
+                                        text: tokenText
+                                    });
+                                }
                             }
                         } catch (e) {
                             // ignore

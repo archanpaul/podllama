@@ -158,7 +158,8 @@ An official extension, **PodLlama Code**, is packaged in [`vscode-extension/podl
 
 ### Features:
 - **Interactive Chat Sidebar**: A custom-themed webview panel (matching the Antigravity IDE aesthetic) utilizing local **Fira Sans** and **Fira Code** typography (with programming ligatures) for complete offline privacy.
-- **High-Performance Stream Renderer**: Powered by a dual-buffer streaming architecture (`streamDataBuffer` & `lastGoodHtml`) that renders live formatted Markdown smoothly while preventing DOM node detachment or layout flashes during packet fragmentation.
+- **High-Performance Real-Time Stream Renderer**: Powered by a dual-buffer streaming architecture (`streamDataBuffer` & `lastGoodHtml`) and a resilient fallback renderer in `chat.js` that renders live formatted Markdown token-by-token on screen without waiting for generation completion, protecting against CDN script unavailability, packet fragmentation, or missing syntax dependencies.
+- **Multi-Field SSE Delta Extractor**: Parses and streams token chunks seamlessly from standard responses (`content`), reasoning traces (`reasoning_content`), and thinking models (`thinking`).
 - **Context Attachment Button (`+`)**: Select any text/code file from your workspace and append it directly as a code-block context inside the chat panel.
 - **Dynamic Model Selection**: Swap between `podllama-chat` and `podllama-thinking` directly from the input footer dropdown (themed matching your VS Code active workspace theme).
 - **Editor Context Menu Selection**: Highlight any code in the editor, right-click, and choose **Chat** to automatically reveal the panel and copy the highlighted code selection as context.
