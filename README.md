@@ -346,11 +346,13 @@ make service-down
 Run either workspace agent (pi.dev or Oh My Pi) inside your current project folder:
 
 ```bash
-# Option A: Run official pi.dev CLI agent
-make run-pi
-
-# Option B: Run Oh My Pi (omp.sh) CLI agent
+# Option A: Run Oh My Pi (omp.sh) CLI agent (Default Chat model)
 make run-omp
+# or pass thinking model directly:
+./scripts/run_omp.sh --model podllama-thinking
+
+# Option B: Run official pi.dev CLI agent
+make run-pi
 
 # Option C: From inside any target project directory
 cd /path/to/your/project
@@ -359,6 +361,11 @@ make -C /path/to/podllama.git run-omp WORKSPACE_DIR=$(pwd)
 # Option D: Direct script invocation
 /path/to/podllama.git/scripts/run_omp.sh /path/to/your/project
 ```
+
+#### Selecting Models in OMP CLI (`omp.sh`)
+- **CLI Flag**: `./scripts/run_omp.sh --model podllama-thinking` or `./scripts/run_omp.sh --model podllama-chat`
+- **Environment Variable**: `OPENAI_MODEL=podllama-thinking make run-omp`
+- **Interactive**: Type `/model` or `/models` inside an active session to switch dynamically.
 
 ---
 

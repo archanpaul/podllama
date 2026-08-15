@@ -50,7 +50,7 @@ The **PodLlama Container Environment** provides a local, GPU-accelerated, contai
 
 - **`Containerfile.pi`**: Packages the official [pi.dev](https://pi.dev) terminal agent on `node:24-bookworm-slim` (`@earendil-works/pi-coding-agent`) per containerization standards. Supports build-time release pinning via `PI_VERSION`.
 - **`Containerfile.omp`**: Packages [Oh My Pi (omp.sh)](https://omp.sh/) (`@oh-my-pi/pi-coding-agent`) on `node:24-bookworm-slim` with `bun` runtime. Supports build-time release pinning via `OMP_VERSION`.
-- **Automatic Configuration Injection**: Automatically generates provider and model configurations (`models.json`, `auth.json`, `settings.json`, `trust.json`, `OMP.md`) pre-configured to connect seamlessly to the local PodLlama LiteLLM endpoint (`http://127.0.0.1:4000/v1`).
+- **Automatic Configuration Injection**: Automatically generates provider and model configurations (`models.yml` and `config.json` for OMP, `models.json`/`settings.json` for pi.dev) pre-configured to connect seamlessly to the local PodLlama LiteLLM endpoint (`http://127.0.0.1:4000/v1`) with `podllama/podllama-chat` and `podllama/podllama-thinking`.
 - **Interactive Workspace Shells**: Runs inside user workspaces with full access to project file trees (`make run-pi` for pi.dev agent, `make run-omp` for Oh My Pi agent).
 
 ---
