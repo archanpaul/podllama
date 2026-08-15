@@ -14,7 +14,7 @@ import urllib.request
 import urllib.error
 import subprocess
 import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 import yaml
 
 # Configurations & Environment Defaults
@@ -130,6 +130,10 @@ def start_llama_server(target_model_file):
     start_time = time.time()
     ready = False
     while time.time() - start_time < 45:
+        if llama_process is not None and llama_process.poll() is not None:
+            print(f"[Swapper] ERROR: llama-server process terminated unexpectedly with exit code {llama_process.returncode}!", flush=True)
+            stop_llama_server()
+            break
         try:
             req = urllib.request.Request(health_url)
             with urllib.request.urlopen(req, timeout=2) as resp:
@@ -172,19 +176,7 @@ def ensure_model_running(requested_model_name):
 
     with state_lock:
         load_config()
-        model_role = os.environ.get("MODEL_ROLE", "chat")
-
-        target_model = None
-        if model_role == "autocomplete":
-            target_model = config_data.get("active_autocomplete_model")
-        elif requested_model_name == "podllama-thinking":
-            target_model = config_data.get("active_thinking_model", config_data.get("active_chat_model"))
-        elif requested_model_name == "podllama-instruct":
-            target_model = "qwen2.5-coder-7b-instruct-q4_k_m.gguf"
-        elif requested_model_name in config_data.get("models", {}):
-            target_model = requested_model_name
-        else:
-            target_model = config_data.get("active_chat_model")
+        target_model = resolve_model_filename(requested_model_name)
 
         if not target_model:
             if os.path.exists(MODELS_DIR):
@@ -625,7 +617,7 @@ def main():
     t = threading.Thread(target=idle_supervisor_thread, daemon=True)
     t.start()
 
-    server = HTTPServer(("0.0.0.0", SERVER_PORT), ProxyHandler)
+    server = ThreadingHTTPServer(("0.0.0.0", SERVER_PORT), ProxyHandler)
     print(f"[Swapper] Proxy listening on 0.0.0.0:{SERVER_PORT} ready!", flush=True)
 
     def signal_handler(signum, frame):
