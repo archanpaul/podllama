@@ -91,9 +91,11 @@ def test_personas_api():
     log("--------------------------------------------------")
     log("API TEST 3: Personas Taxonomy & Skills API (GET /v1/personas)")
     urls_to_try = [
-        "http://127.0.0.1:8080/v1/personas",
         f"{BASE_URL}/personas",
-        "http://127.0.0.1:8080/personas"
+        f"{BASE_URL.rstrip('/')}/personas",
+        "http://127.0.0.1:4000/v1/personas",
+        "http://127.0.0.1:4000/personas",
+        "http://127.0.0.1:8080/v1/personas"
     ]
     headers = {"Authorization": f"Bearer {API_KEY}"}
 
@@ -168,7 +170,7 @@ def test_persona_slash_command_resolution(personas_data=None):
     start_t = time.time()
     if not personas_data or "personas" not in personas_data:
         try:
-            req = urllib.request.Request("http://127.0.0.1:8080/v1/personas", headers={"Authorization": f"Bearer {API_KEY}"})
+            req = urllib.request.Request(f"{BASE_URL}/personas", headers={"Authorization": f"Bearer {API_KEY}"})
             with urllib.request.urlopen(req, timeout=5) as resp:
                 personas_data = json.loads(resp.read().decode("utf-8"))
         except Exception:

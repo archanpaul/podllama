@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PodLlama • Sovereign, Vulkan-Accelerated Local AI Coding Environment</title>
+  <meta name="description" content="Sovereign AI coding powered by Podman: Cross-vendor Vulkan GPU acceleration, 0MB idle VRAM auto-stop, dual-model FIM autocomplete + reasoning, 21 CS personas, and official VS Code & pi.dev CLI agents.">
+  <meta name="keywords" content="PodLlama, local LLM, Vulkan GPU, llama.cpp, Podman, LiteLLM, Qwen3.5-9B, Qwen2.5-Coder, DeepSeek-R1, privacy AI, containerized AI">
+  
+  <meta property="og:title" content="PodLlama • Sovereign, Vulkan-Accelerated Local AI Coding Environment">
+  <meta property="og:description" content="100% Local Data Privacy, Universal Vulkan GPU, 0 MB Idle VRAM, Dual-Model Engine, and 21 Specialized CS Personas.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/brand/podllama-logo.svg">
+
+  <link rel="icon" type="image/svg+xml" href="assets/brand/podllama-logo.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <div class="ambient-glow"></div>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <a href="#hero" class="nav-brand">
+        <img src="assets/brand/podllama-logo.svg" alt="PodLlama Logo" class="nav-logo">
+        <div class="nav-title-wrap">
+          <span class="nav-title">PodLlama</span>
+          <span class="nav-version-badge"><span class="pulse-dot"></span> v1.2.1 • Vulkan • Port 4000</span>
+        </div>
+      </a>
+
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#why-podllama" class="nav-link">Why PodLlama</a></li>
+        <li><a href="#journey" class="nav-link">The Code Journey</a></li>
+        <li><a href="#architecture" class="nav-link">Architecture</a></li>
+        <li><a href="#models" class="nav-link">Models &amp; VRAM</a></li>
+        <li><a href="#personas" class="nav-link">21 Personas</a></li>
+        <li><a href="#tooling" class="nav-link">Tooling</a></li>
+        <li><a href="#quickstart" class="nav-link">Quickstart</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Theme">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+        <a href="https://github.com" target="_blank" class="btn btn-secondary btn-sm" id="github-link-btn">
+          <i class="fa-brands fa-github"></i> <span>GitHub</span>
+        </a>
+        <a href="#quickstart" class="btn btn-primary btn-sm" id="nav-get-started-btn">
+          <i class="fa-solid fa-bolt"></i> <span>Launch</span>
+        </a>
+        <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Toggle Menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero" id="hero">
+    <div class="container">
+      <div class="hero-grid">
+        <div class="hero-content">
+          <div class="hero-pill">
+            <i class="fa-solid fa-shield-halved"></i> 100% Sovereign • Universal Vulkan GPU
+          </div>
+          <h1 class="hero-title">
+            The <span class="gradient-text">Zero-Leakage</span> Local AI Coding Powerhouse
+          </h1>
+          <p class="hero-subtitle">
+            Why send your proprietary code to cloud servers? PodLlama runs dual-model autocomplete &amp; deep reasoning 100% locally with cross-vendor Vulkan GPU acceleration, 0 MB idle VRAM recovery, 21 CS personas, and official VS Code &amp; pi.dev CLI agents.
+          </p>
+
+          <div class="hero-actions">
+            <div class="quick-copy-box">
+              <code>$ make service-up</code>
+              <button class="copy-btn" data-copy="make service-up" title="Copy command">
+                <i class="fa-regular fa-copy"></i> Copy
+              </button>
+            </div>
+            <a href="#why-podllama" class="btn btn-secondary">
+              <i class="fa-solid fa-compass"></i> Why Choose PodLlama
+            </a>
+          </div>
+
+          <div class="hero-stats">
+            <div class="hero-stat-item">
+              <span class="hero-stat-value gradient-text">100%</span>
+              <span class="hero-stat-label">Air-Gapped Sovereign</span>
+            </div>
+            <div class="hero-stat-item">
+              <span class="hero-stat-value gradient-text">0 MB</span>
+              <span class="hero-stat-label">Idle VRAM Reclaimed</span>
+            </div>
+            <div class="hero-stat-item">
+              <span class="hero-stat-value gradient-text">21</span>
+              <span class="hero-stat-label">CS &amp; AI Personas</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Workspace Preview -->
+        <div class="workspace-mockup" id="workspace-preview">
+          <div class="mockup-header">
+            <div class="mockup-controls">
+              <span class="mockup-dot red"></span>
+              <span class="mockup-dot yellow"></span>
+              <span class="mockup-dot green"></span>
+            </div>
+            <div class="mockup-tabs">
+              <button class="mockup-tab active" data-tab="vscode">
+                <i class="fa-solid fa-code"></i> VS Code Chat
+              </button>
+              <button class="mockup-tab" data-tab="cli">
+                <i class="fa-solid fa-terminal"></i> pi.dev CLI
+              </button>
+              <button class="mockup-tab" data-tab="litellm">
+                <i class="fa-solid fa-network-wired"></i> LiteLLM Proxy
+              </button>
+            </div>
+            <div class="mockup-status-tag">
+              <span class="pulse-dot"></span> Port 4000
+            </div>
+          </div>
+
+          <div class="mockup-body">
+            <div class="tab-pane active" id="pane-vscode">
+              <div class="vscode-view">
+                <div class="vscode-chat-header">
+                  <div class="vscode-session-badge">
+                    <span class="badge badge-cyan"><i class="fa-solid fa-brain"></i> podllama-thinking</span>
+                    <span>Session #1 • Primer Dark Dimmed</span>
+                  </div>
+                  <span style="font-size: 0.74rem; color: var(--accent-green);"><i class="fa-solid fa-circle-check"></i> Vulkan GPU -ngl 99</span>
+                </div>
+                <div class="vscode-stream-container" id="vscode-stream-content"></div>
+              </div>
+            </div>
+
+            <div class="tab-pane" id="pane-cli">
+              <div id="cli-stream-content"></div>
+            </div>
+
+            <div class="tab-pane" id="pane-litellm">
+              <div id="litellm-stream-content"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why PodLlama: 4 Core Breakthroughs (Scannable Visual Infographic) -->
+  <section id="why-podllama" class="why-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag"><i class="fa-solid fa-star"></i> Core Breakthroughs</div>
+        <h2>What Makes PodLlama Unique?</h2>
+        <p class="section-desc">
+          Four distinct architectural advantages that set PodLlama apart from traditional local LLM tools and cloud assistants.
+        </p>
+      </div>
+
+      <div class="why-grid">
+        <!-- Breakthrough 1 -->
+        <div class="why-card green">
+          <div class="why-card-icon"><i class="fa-solid fa-shield-halved"></i></div>
+          <div class="why-card-content">
+            <h3 class="why-card-title">1. Zero Cloud Leakage (100% Sovereign)</h3>
+            <p class="why-card-desc">
+              Your source code, secrets, and AST indexes never touch remote cloud servers. Operates completely air-gapped with rootless Podman container sandboxing (<code>--userns=keep-id</code>).
+            </p>
+            <div class="why-card-highlight">
+              <i class="fa-solid fa-check"></i> No external network calls • Defense-grade privacy
+            </div>
+          </div>
+        </div>
+
+        <!-- Breakthrough 2 -->
+        <div class="why-card blue">
+          <div class="why-card-icon"><i class="fa-solid fa-microchip"></i></div>
+          <div class="why-card-content">
+            <h3 class="why-card-title">2. Universal Vulkan GPU Acceleration</h3>
+            <p class="why-card-desc">
+              No NVIDIA CUDA monopoly or driver lock-in. Powered by <code>llama.cpp-vulkan</code> to deliver high-speed layer offloading across Intel Arc / Iris Xe, AMD Radeon, and NVIDIA GPUs.
+            </p>
+            <div class="why-card-highlight">
+              <i class="fa-solid fa-check"></i> Intel Arc • AMD Radeon • NVIDIA • CPU Fallback
+            </div>
+          </div>
+        </div>
+
+        <!-- Breakthrough 3 -->
+        <div class="why-card teal">
+          <div class="why-card-icon"><i class="fa-solid fa-stopwatch"></i></div>
+          <div class="why-card-content">
+            <h3 class="why-card-title">3. 0 MB Idle Auto-Stop (Zero VRAM Waste)</h3>
+            <p class="why-card-desc">
+              Unlike Ollama or persistent servers that hoard 6GB–10GB of VRAM all day, PodLlama terminates the backend process after 10m idle, freeing 100% of GPU memory until your next keystroke.
+            </p>
+            <div class="why-card-highlight">
+              <i class="fa-solid fa-check"></i> 100% VRAM reclaimed • Sub-second cold wake
+            </div>
+          </div>
+        </div>
+
+        <!-- Breakthrough 4 -->
+        <div class="why-card cyan">
+          <div class="why-card-icon"><i class="fa-solid fa-network-wired"></i></div>
+          <div class="why-card-content">
+            <h3 class="why-card-title">4. Dual-Model Engine on Single Port 4000</h3>
+            <p class="why-card-desc">
+              Simultaneously serve ultra-low-latency FIM autocomplete (0.5B / 1.5B on Port 8081) and heavy reasoning/chat models on Port 8080 behind a single standardized LiteLLM OpenAI proxy.
+            </p>
+            <div class="why-card-highlight">
+              <i class="fa-solid fa-check"></i> Drop-in OpenAI API • Drop-in for VS Code, Cursor, Cline
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Code Journey: Visual Comparison -->
+  <section id="journey" class="journey-section" style="background: var(--bg-surface);">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag"><i class="fa-solid fa-route"></i> The Code Journey</div>
+        <h2>What Happens When You Type Code?</h2>
+        <p class="section-desc">
+          Compare the exact data path between PodLlama's sovereign local sandboxing and traditional cloud-hosted AI extensions.
+        </p>
+      </div>
+
+      <div class="journey-switcher-box">
+        <div class="journey-toggle-bar">
+          <button class="journey-toggle-btn active podllama" id="toggle-journey-podllama">
+            <i class="fa-solid fa-shield-check"></i> PodLlama Sovereign Flow (Local)
+          </button>
+          <button class="journey-toggle-btn cloud" id="toggle-journey-cloud">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Cloud AI Flow (Copilot / Cursor)
+          </button>
+        </div>
+
+        <div class="journey-flow-cards" id="journey-flow-cards">
+          <!-- Injected via journey-toggle.js -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive 4-Tier Architecture -->
+  <section id="architecture" class="architecture-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag"><i class="fa-solid fa-cubes"></i> Open Architecture</div>
+        <h2>Four-Tier Decoupled Container Pipeline</h2>
+        <p class="section-desc">
+          Click through each tier to inspect how PodLlama dispatches requests from client IDEs to Vulkan GPU layers.
+        </p>
+      </div>
+
+      <div class="architecture-container">
+        <div class="arch-visualizer">
+          <div class="arch-tier-card active" data-tier="1" id="tier-card-1">
+            <div class="arch-tier-header">
+              <span class="arch-tier-number">Tier 1 • Client &amp; IDE Integration</span>
+              <span class="badge badge-blue">IDE &amp; Agents</span>
+            </div>
+            <h4 class="arch-tier-title">VS Code Extension, pi.dev CLI &amp; Third-Party IDEs</h4>
+            <p class="arch-tier-summary">Webview chat, inline diffing, parallel streaming sessions, and workspace agent containers.</p>
+          </div>
+          <div class="arch-connector"><i class="fa-solid fa-arrow-down"></i> HTTP / SSE (Port 4000)</div>
+
+          <div class="arch-tier-card" data-tier="2" id="tier-card-2">
+            <div class="arch-tier-header">
+              <span class="arch-tier-number">Tier 2 • Unified Routing Proxy</span>
+              <span class="badge badge-cyan">podllama_proxy</span>
+            </div>
+            <h4 class="arch-tier-title">LiteLLM OpenAI-Compatible Router (Port 4000)</h4>
+            <p class="arch-tier-summary">Single endpoint parsing model aliases and dispatching chat vs autocomplete traffic.</p>
+          </div>
+          <div class="arch-connector"><i class="fa-solid fa-arrow-down"></i> Internal Network Dispatch</div>
+
+          <div class="arch-tier-card" data-tier="3" id="tier-card-3">
+            <div class="arch-tier-header">
+              <span class="arch-tier-number">Tier 3 • Podman Microservices Stack</span>
+              <span class="badge badge-teal">Supervisors</span>
+            </div>
+            <h4 class="arch-tier-title">chat_swapper.py (8080) &amp; Autocomplete Server (8081)</h4>
+            <p class="arch-tier-summary">Dynamic GGUF model auto-swapping, 0 MB idle auto-stop supervisor, and 21 personas API.</p>
+          </div>
+          <div class="arch-connector"><i class="fa-solid fa-arrow-down"></i> Vulkan GPU Layers (-ngl 99)</div>
+
+          <div class="arch-tier-card" data-tier="4" id="tier-card-4">
+            <div class="arch-tier-header">
+              <span class="arch-tier-number">Tier 4 • Host Hardware &amp; Sandboxing</span>
+              <span class="badge badge-green">Kernel &amp; Hardware</span>
+            </div>
+            <h4 class="arch-tier-title">Vulkan API (/dev/dri), CPU Fallback &amp; Rootless SELinux</h4>
+            <p class="arch-tier-summary">Cross-vendor GPU acceleration with strict user namespace mapping and volume scoping.</p>
+          </div>
+        </div>
+
+        <div class="arch-detail-panel" id="arch-specs-panel">
+          <div class="arch-detail-header">
+            <span class="badge badge-blue" style="margin-bottom: 6px;">Tier 1</span>
+            <h3 style="font-size: 1.25rem; margin-bottom: 4px;">Client &amp; IDE Integration Layer</h3>
+            <p style="font-size: 0.88rem; color: var(--accent-cyan); font-family: var(--font-mono); margin-bottom: 10px;">Official Extension, Terminal Agents &amp; External IDEs</p>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5;">
+              Interfaces seamlessly with your active workspace. Offers official VS Code extension with GitHub Primer themes, pi.dev and Oh My Pi terminal containers, plus drop-in compatibility for Cursor, Continue.dev, and Cline.
+            </p>
+          </div>
+          <div class="arch-detail-specs">
+            <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 4px;">Layer Specifications</h4>
+            <div class="spec-row"><span class="spec-key">VS Code Package:</span><span class="spec-val">podllama-code-1.2.1.vsix</span></div>
+            <div class="spec-row"><span class="spec-key">Terminal Agent CLI:</span><span class="spec-val">@earendil-works/pi-coding-agent</span></div>
+            <div class="spec-row"><span class="spec-key">Oh My Pi Runtime:</span><span class="spec-val">Bun + node:24-bookworm-slim</span></div>
+            <div class="spec-row"><span class="spec-key">API Protocol:</span><span class="spec-val">OpenAI REST / SSE Streaming</span></div>
+            <div class="spec-row"><span class="spec-key">Third-Party Support:</span><span class="spec-val">Continue.dev, Cline, Cursor, Roo</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Open Models & VRAM Calculator -->
+  <section id="models" class="models-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag"><i class="fa-solid fa-microchip"></i> Open Models &amp; Hardware</div>
+        <h2>Audited Open Weights &amp; VRAM Advisor</h2>
+        <p class="section-desc">
+          High-performance GGUF foundation models with automated SHA256 checksum verification.
+        </p>
+      </div>
+
+      <div class="features-grid" id="open-models-catalog" style="margin-bottom: 40px;"></div>
+
+      <div class="vram-calc-wrapper">
+        <div class="calc-grid">
+          <div class="calc-controls">
+            <h3 style="font-size: 1.3rem;"><i class="fa-solid fa-calculator" style="color: var(--accent-blue);"></i> Interactive Hardware &amp; VRAM Fit Advisor</h3>
+            <p style="font-size: 0.9rem; color: var(--text-secondary);">
+              Slide your available GPU VRAM to calculate the optimal GGUF model pairing and layer offload count (<code>-ngl</code>).
+            </p>
+
+            <div class="calc-group">
+              <div class="calc-label">
+                <span>Available GPU VRAM:</span>
+                <strong id="vram-val-display" style="color: var(--accent-cyan); font-family: var(--font-mono); font-size: 1.1rem;">16 GB</strong>
+              </div>
+              <input type="range" min="4" max="32" step="2" value="16" class="calc-slider" id="vram-slider">
+            </div>
+
+            <div class="calc-group">
+              <span class="calc-label">Quick VRAM Presets:</span>
+              <div class="calc-btn-group">
+                <button class="vram-preset-btn" data-vram="4">4 GB</button>
+                <button class="vram-preset-btn" data-vram="8">8 GB</button>
+                <button class="vram-preset-btn" data-vram="12">12 GB</button>
+                <button class="vram-preset-btn active" data-vram="16">16 GB</button>
+                <button class="vram-preset-btn" data-vram="24">24 GB</button>
+                <button class="vram-preset-btn" data-vram="32">32 GB+</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="calc-results-card">
+            <div class="recommendation-header">
+              <div style="font-size: 0.76rem; font-weight: 700; color: var(--accent-green); text-transform: uppercase; letter-spacing: 0.06em;">Recommended Deployment</div>
+              <h4 style="font-size: 1.1rem; margin-top: 2px;">Optimized Dual-Model Allocation</h4>
+            </div>
+            <div id="calc-recommendations-content" style="display: flex; flex-direction: column; gap: 10px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 21 CS & AI Personas -->
+  <section id="personas" class="personas-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag"><i class="fa-solid fa-graduation-cap"></i> 21 CS Personas</div>
+        <h2>Domain-Specific AI Personas with Slash Commands</h2>
+        <p class="section-desc">
+          Type shortcuts like <code>/prof</code>, <code>/algo</code>, <code>/cp</code>, <code>/devops</code>, <code>/sec</code> to inject verified prompts and route to optimal reasoning models.
+        </p>
+      </div>
+
+      <div class="personas-controls">
+        <div class="category-tabs" id="category-tabs-container"></div>
+        <div class="persona-search-bar">
+          <i class="fa-solid fa-magnifying-glass persona-search-icon"></i>
+          <input type="text" id="persona-search-input" class="persona-search-input" placeholder="Search by slash command (/cp, /prof), role, or skill...">
+        </div>
+      </div>
+
+      <div class="personas-grid" id="personas-grid-container"></div>
+    </div>
+  </section>
+
+  <!-- Developer Tooling -->
+  <section id="tooling" class="tooling-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag"><i class="fa-solid fa-toolbox"></i> Developer Tooling</div>
+        <h2>Official VS Code Extension &amp; CLI Agents</h2>
+        <p class="section-desc">
+          Everything you need for full-stack AI development right inside your editor and terminal.
+        </p>
+      </div>
+
+      <div class="tooling-showcase">
+        <div class="tool-card">
+          <div class="tool-header">
+            <div class="feature-icon-wrap" style="margin-bottom: 0; background: rgba(83, 155, 245, 0.15); color: var(--accent-blue);">
+              <i class="fa-solid fa-code"></i>
+            </div>
+            <div>
+              <h3 style="font-size: 1.25rem;">PodLlama Code (VS Code Extension)</h3>
+              <span class="badge badge-blue">Official Package • v1.2.1</span>
+            </div>
+          </div>
+          <ul class="tool-feature-list">
+            <li class="tool-feature-item"><i class="fa-solid fa-check"></i> <strong>Primer Theming:</strong> GitHub Dark Dimmed &amp; Light Default themes.</li>
+            <li class="tool-feature-item"><i class="fa-solid fa-check"></i> <strong>Multi-Session Chat:</strong> Parallel background generation across sessions.</li>
+            <li class="tool-feature-item"><i class="fa-solid fa-check"></i> <strong>KaTeX Math:</strong> Renders math equations ($...$) and formal proofs.</li>
+            <li class="tool-feature-item"><i class="fa-solid fa-check"></i> <strong>Context Attachments (+):</strong> Inject workspace files into chat context.</li>
+          </ul>
+          <div style="margin-top: auto;">
+            <div class="quick-copy-box">
+              <code style="font-size: 0.8rem;">$ make install-vscode-extension</code>
+              <button class="copy-btn" data-copy="make install-vscode-extension"><i class="fa-regular fa-copy"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <div class="feature-icon-wrap" style="margin-bottom: 0; background: rgba(45, 212, 191, 0.15); color: var(--accent-teal);">
+              <i class="fa-solid fa-terminal"></i>
+            </div>
+            <div>
+              <h3 style="font-size: 1.25rem;">pi.dev &amp; Oh My Pi (omp.sh) Containers</h3>
+              <span class="badge badge-teal">Container Agents</span>
+            </div>
+          </div>
+          <ul class="tool-feature-list">
+            <li class="tool-feature-item"><i class="fa-solid fa-check"></i> <strong>Official pi.dev Agent:</strong> Packages <code>@earendil-works/pi-coding-agent</code>.</li>
+            <li class="tool-feature-item"><i class="fa-solid fa-check"></i> <strong>Oh My Pi Runtime:</strong> Bun runtime container for <code>omp.sh</code> agent pairing.</li>
+            <li class="tool-feature-item"><i class="fa-solid fa-check"></i> <strong>Rootless Isolation:</strong> Executes actions inside <code>--userns=keep-id</code> namespace.</li>
+            <li class="tool-feature-item"><i class="fa-solid fa-check"></i> <strong>Auto-Configured:</strong> Automatically injects local LiteLLM provider setup.</li>
+          </ul>
+          <div style="margin-top: auto;">
+            <div class="quick-copy-box">
+              <code style="font-size: 0.8rem;">$ make run-pi</code>
+              <button class="copy-btn" data-copy="make run-pi"><i class="fa-regular fa-copy"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quickstart Hub & API Tester -->
+  <section id="quickstart" class="quickstart-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag"><i class="fa-solid fa-rocket"></i> 60-Second Setup</div>
+        <h2>Ready to Launch PodLlama?</h2>
+        <p class="section-desc">
+          Zero-compilation instant deployment. Run these simple commands in your terminal:
+        </p>
+      </div>
+
+      <div class="quickstart-grid">
+        <div class="steps-container">
+          <div class="step-card">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <div class="step-title">Verify System Infrastructure</div>
+              <div class="step-code-box">
+                <code>make check-infra</code>
+                <button class="copy-btn" data-copy="make check-infra"><i class="fa-regular fa-copy"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <div class="step-title">Download Active GGUF Models</div>
+              <div class="step-code-box">
+                <code>make download-active-models</code>
+                <button class="copy-btn" data-copy="make download-active-models"><i class="fa-regular fa-copy"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <div class="step-title">Launch Podman Services Stack (Port 4000)</div>
+              <div class="step-code-box">
+                <code>make service-up</code>
+                <button class="copy-btn" data-copy="make service-up"><i class="fa-regular fa-copy"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <div class="step-title">Install VS Code Extension</div>
+              <div class="step-code-box">
+                <code>make install-vscode-extension</code>
+                <button class="copy-btn" data-copy="make install-vscode-extension"><i class="fa-regular fa-copy"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Config Builder -->
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--radius-xl); padding: 24px; display: flex; flex-direction: column;">
+          <h3 style="font-size: 1.15rem; margin-bottom: 4px;"><i class="fa-solid fa-sliders" style="color: var(--accent-blue);"></i> Interactive Config Builder</h3>
+          <p style="font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 14px;">Customize your <code>config/model_conf.yaml</code>:</p>
+
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px;">
+            <div>
+              <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Active Chat Model:</label>
+              <select id="cfg-chat-model" style="width: 100%; padding: 7px 10px; background: var(--bg-input); border: 1px solid var(--border-default); border-radius: 6px; color: var(--text-primary); margin-top: 3px; font-family: var(--font-mono); font-size: 0.82rem;">
+                <option value="Qwen3.5-9B-Q4_K_M.gguf" selected>Qwen3.5-9B (Flagship)</option>
+                <option value="qwen2.5-coder-7b-instruct-q4_k_m.gguf">Qwen2.5-Coder-7B-Instruct</option>
+                <option value="qwen2.5-coder-3b-instruct-q4_k_m.gguf">Qwen2.5-Coder-3B-Instruct</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Active Thinking Model:</label>
+              <select id="cfg-think-model" style="width: 100%; padding: 7px 10px; background: var(--bg-input); border: 1px solid var(--border-default); border-radius: 6px; color: var(--text-primary); margin-top: 3px; font-family: var(--font-mono); font-size: 0.82rem;">
+                <option value="DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf" selected>DeepSeek-R1-Distill-Qwen-7B</option>
+                <option value="DeepSeek-R1-Distill-Qwen-14B-Q4_K_M.gguf">DeepSeek-R1-Distill-Qwen-14B (High-Tier)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="position: relative; flex-grow: 1;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span style="font-size: 0.76rem; color: var(--text-muted); font-family: var(--font-mono);">config/model_conf.yaml</span>
+              <button class="btn btn-secondary btn-sm" id="copy-yaml-btn" style="padding: 2px 7px; font-size: 0.74rem;">
+                <i class="fa-regular fa-copy"></i> Copy YAML
+              </button>
+            </div>
+            <pre id="generated-yaml-output" style="background: var(--bg-code); border: 1px solid var(--border-muted); border-radius: 6px; padding: 10px; font-size: 0.76rem; color: var(--accent-cyan); overflow-x: auto; height: 160px;"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="assets/brand/podllama-logo.svg" alt="PodLlama Logo" style="width: 32px; height: 32px;">
+            <span style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 800;">PodLlama</span>
+          </div>
+          <p style="font-size: 0.88rem; color: var(--text-secondary); max-width: 300px;">
+            Sovereign, Vulkan-accelerated local AI coding environment powered by Podman, LiteLLM, and 21 CS personas.
+          </p>
+          <div style="display: flex; gap: 12px; color: var(--text-muted); font-size: 1.05rem; margin-top: 6px;">
+            <a href="https://github.com" target="_blank" aria-label="GitHub Repository"><i class="fa-brands fa-github"></i></a>
+            <a href="https://podman.io" target="_blank" aria-label="Podman"><i class="fa-brands fa-docker"></i></a>
+            <a href="https://pi.dev" target="_blank" aria-label="pi.dev CLI"><i class="fa-solid fa-terminal"></i></a>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">Architecture</h4>
+          <ul class="footer-links">
+            <li><a href="#why-podllama">Vulkan GPU Offload</a></li>
+            <li><a href="#architecture">LiteLLM Unified Proxy</a></li>
+            <li><a href="#architecture">Dual-Model Orchestration</a></li>
+            <li><a href="#why-podllama">0 MB Idle Auto-Stop</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">Open Models</h4>
+          <ul class="footer-links">
+            <li><a href="#models">Qwen3.5-9B (Flagship Chat)</a></li>
+            <li><a href="#models">DeepSeek-R1 Distill 7B/14B</a></li>
+            <li><a href="#models">Qwen2.5-Coder 0.5B (FIM)</a></li>
+            <li><a href="#personas">21 CS &amp; AI Personas</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">Developer Tooling</h4>
+          <ul class="footer-links">
+            <li><a href="#tooling">VS Code Extension (VSIX)</a></li>
+            <li><a href="#tooling">pi.dev Container CLI</a></li>
+            <li><a href="#tooling">Oh My Pi (omp.sh) Bun Agent</a></li>
+            <li><a href="#quickstart">Quickstart Commands</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2026 PodLlama Project. Open Source Software (GPL/MIT/Apache).</span>
+        <a href="#hero" style="color: var(--accent-blue); display: flex; align-items: center; gap: 6px;">
+          Back to top <i class="fa-solid fa-arrow-up"></i>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Persona Inspector Modal -->
+  <div class="modal-overlay" id="persona-modal-overlay">
+    <div class="modal-card">
+      <button class="modal-close-btn" id="persona-modal-close" aria-label="Close Modal">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div id="persona-modal-body"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="global-toast"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/terminal-sim.js"></script>
+  <script src="js/journey-toggle.js"></script>
+  <script src="js/persona-explorer.js"></script>
+  <script src="js/vram-calculator.js"></script>
+  <script src="js/config-generator.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

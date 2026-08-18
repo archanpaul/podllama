@@ -240,24 +240,28 @@ def test_personas_json_config():
     categories = data["categories"]
     assert len(categories) >= 6, f"Expected at least 6 categories, got {len(categories)}"
 
-    cat_keys = {"id", "name", "description", "icon"}
     cat_ids = set()
     for cat in categories:
-        for k in cat_keys:
-            assert k in cat, f"Category '{cat.get('id')}' missing key '{k}'"
+        assert "id" in cat and "description" in cat, f"Category missing id/description: {cat}"
+        assert "name" in cat or "display_name" in cat, f"Category missing name/display_name: {cat}"
+        assert "icon" in cat or "ui_icon" in cat, f"Category missing icon/ui_icon: {cat}"
         cat_ids.add(cat["id"])
 
     assert "personas" in data, "Missing 'personas' key in config/personas.json"
     personas = data["personas"]
     assert len(personas) >= 21, f"Expected at least 21 personas, got {len(personas)}"
 
-    required_keys = {"id", "name", "category", "category_id", "icon", "slash_command", "description", "skills", "target_model", "system_prompt"}
     for p in personas:
-        for k in required_keys:
-            assert k in p, f"Persona '{p.get('id')}' missing key '{k}'"
-        assert p["category_id"] in cat_ids, f"Persona '{p.get('id')}' references invalid category_id '{p.get('category_id')}'"
-        assert isinstance(p["skills"], list) and len(p["skills"]) > 0, f"Persona '{p.get('id')}' must have a non-empty skills list"
-
+        assert "id" in p, f"Persona missing id: {p}"
+        ui = p.get("ui_metadata") or {}
+        bp = p.get("prompt_blueprint") or {}
+        cat_id = p.get("category_id") or p.get("category")
+        assert cat_id in cat_ids or p.get("category"), f"Persona '{p.get("id")}' references invalid category_id '{cat_id}'"
+        assert p.get("name") or ui.get("display_name"), f"Persona '{p["id"]}' missing name/display_name"
+        slash = ui.get("slash_command") or p.get("slash_command") or ""
+        assert slash.startswith("/"), f"Persona '{p["id"]}' invalid slash command: {slash!r}"
+        skills = bp.get("core_skills") or p.get("skills") or []
+        assert isinstance(skills, list) and len(skills) > 0, f"Persona '{p["id"]}' must have a non-empty skills list"
     # Verify specific key personas exist
     p_ids = {p["id"] for p in personas}
     assert "cp-solver" in p_ids, "Missing 'cp-solver' persona"

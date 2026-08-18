@@ -45,3 +45,10 @@ litellm_settings:
   drop_params: true
 general_settings:
   master_key: sk-local
+  pass_through_endpoints:
+    - path: "/v1/personas"
+      target: "http://podllama_chat:8080/v1/personas"
+      forward_headers: true
+    - path: "/personas"
+      target: "http://podllama_chat:8080/personas"
+      forward_headers: true
