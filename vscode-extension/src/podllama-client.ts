@@ -2,6 +2,16 @@ import * as http from 'http';
 import * as https from 'https';
 import { URL } from 'url';
 
+export interface PersonaItem {
+    id: string;
+    name: string;
+    icon: string;
+    slash_command: string;
+    description: string;
+    target_model: string;
+    system_prompt: string;
+}
+
 export interface ModelItem {
     id: string;
     object: string;
@@ -35,6 +45,20 @@ export class PodLlamaClient {
             return Array.isArray(data.data) && data.data.length > 0;
         } catch (err) {
             return false;
+        }
+    }
+
+    async listPersonas(): Promise<PersonaItem[]> {
+        const apiBase = this.getApiBase();
+        const apiKey = this.getApiKey();
+        const urlStr = `${apiBase.replace(/\/$/, '')}/personas`;
+
+        try {
+            const data = await this.httpGetJson<{ personas: PersonaItem[] }>(urlStr, apiKey);
+            return data.personas || [];
+        } catch (err) {
+            console.error('[PodLlama] Failed to list personas:', err);
+            return [];
         }
     }
 

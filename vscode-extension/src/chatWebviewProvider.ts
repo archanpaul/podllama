@@ -11,6 +11,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
     private _view?: vscode.WebviewView;
     private activeRequest: http.ClientRequest | undefined;
     private lastSelectedModel: string | undefined;
+    private lastSelectedPersona: string | undefined;
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -59,10 +60,10 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.onDidReceiveMessage(async (data) => {
             switch (data.command) {
                 case 'sendMessage':
-                    await this.handleUserMessage(data.prompt, data.model);
+                    await this.handleUserMessage(data.prompt, data.model, data.persona);
                     break;
                 case 'newConversation':
-                    const newConv = this.conversationManager.createConversation('New Chat', this.lastSelectedModel);
+                    const newConv = this.conversationManager.createConversation('New Chat', this.lastSelectedModel, this.lastSelectedPersona);
                     await this.refreshWebviewSession(newConv);
                     break;
                 case 'getHistoryList':
@@ -109,6 +110,14 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                         console.error('[PodLlama] Failed to update chatModel setting:', e);
                     }
                     break;
+                case 'selectPersona':
+                    this.lastSelectedPersona = data.persona;
+                    const activePersonaConv = this.conversationManager.getActiveConversation();
+                    if (activePersonaConv) {
+                        activePersonaConv.selectedPersona = data.persona;
+                        this.conversationManager.saveConversation(activePersonaConv);
+                    }
+                    break;
             }
         });
 
@@ -123,8 +132,10 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         if (this.activeRequest) return;
 
         const models = await this.client.listModels();
+        const personas = await this.client.listPersonas();
         const settings = this.getSettings();
         const activeModel = conv?.selectedModel || this.lastSelectedModel || settings.chatModel;
+        const activePersona = conv?.selectedPersona || this.lastSelectedPersona || '';
 
         this._view.webview.postMessage({
             type: 'initSession',
@@ -134,7 +145,9 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                 { id: settings.thinkingModel, object: 'model', owned_by: 'litellm' },
                 { id: 'podllama-instruct', object: 'model', owned_by: 'litellm' }
             ],
-            selectedModel: activeModel
+            selectedModel: activeModel,
+            personas: personas,
+            selectedPersona: activePersona
         });
     }
 
@@ -146,7 +159,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         });
     }
 
-    private async handleUserMessage(prompt: string, selectedModel: string) {
+    private async handleUserMessage(prompt: string, selectedModel: string, selectedPersona?: string) {
         const conv = this.conversationManager.getActiveConversation();
 
         // Add User Turn
@@ -175,8 +188,22 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                 .catch(err => console.error('[PodLlama] Background context summary error:', err));
         }
 
+        // Fetch personas to inject system prompt and auto-detect target model
+        const personas = await this.client.listPersonas();
+        let activePersona = personas.find(p => p.id === selectedPersona);
+        if (!activePersona && prompt.startsWith('/')) {
+            const slashWord = prompt.split(' ')[0].toLowerCase();
+            activePersona = personas.find(p => p.slash_command.toLowerCase() === slashWord);
+        }
+
         // Prepare messages payload for API
         const payloadMessages = [];
+        if (activePersona && activePersona.system_prompt) {
+            payloadMessages.push({
+                role: 'system',
+                content: activePersona.system_prompt
+            });
+        }
         if (conv.summarizedContext) {
             payloadMessages.push({
                 role: 'system',
@@ -187,8 +214,14 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
             payloadMessages.push({ role: m.role, content: m.content });
         });
 
+        // Target model resolution (use persona's target_model if specified and model is default)
+        let targetModel = selectedModel;
+        if (activePersona && activePersona.target_model && (!selectedModel || selectedModel === 'podllama-chat')) {
+            targetModel = activePersona.target_model;
+        }
+
         // Stream AI Response
-        await this.streamChatCompletions(selectedModel, payloadMessages, conv);
+        await this.streamChatCompletions(targetModel, payloadMessages, conv);
     }
 
     private streamChatCompletions(model: string, messages: any[], conv: any): Promise<void> {
@@ -443,6 +476,11 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         <div class="input-footer">
             <div class="left-controls">
                 <span class="plus-icon" id="add-context-btn" title="Add context attachment"><i class="fa-solid fa-plus"></i></span>
+                <div class="persona-select-container">
+                    <select class="select-control" id="persona-select" title="Select Persona Profile">
+                        <option value="">Default Persona</option>
+                    </select>
+                </div>
                 <div class="model-select-container">
                     <select class="select-control" id="model-select">
                         <option value="podllama-chat">podllama-chat</option>

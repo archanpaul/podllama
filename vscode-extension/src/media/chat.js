@@ -5,6 +5,7 @@
     const promptInput = document.getElementById('prompt-input');
     const sendBtn = document.getElementById('send-btn');
     const modelSelect = document.getElementById('model-select');
+    const personaSelect = document.getElementById('persona-select');
     const historyBtn = document.getElementById('history-btn');
     const newChatBtn = document.getElementById('new-chat-btn');
     const historyDrawer = document.getElementById('history-drawer');
@@ -20,6 +21,7 @@
             case 'initSession':
                 currentConversation = message.session;
                 updateModelSelect(message.models, message.selectedModel);
+                updatePersonaSelect(message.personas, message.selectedPersona);
                 renderConversation(currentConversation);
                 break;
             case 'updateModels':
@@ -42,6 +44,28 @@
                 break;
         }
     });
+
+    function updatePersonaSelect(personas, selectedPersona) {
+        if (!personaSelect) return;
+
+        const currentState = vscode.getState();
+        const activePersona = selectedPersona || (currentState && currentState.selectedPersona) || personaSelect.value || '';
+
+        personaSelect.innerHTML = '<option value="">Default Persona</option>';
+
+        if (Array.isArray(personas) && personas.length > 0) {
+            personas.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = `${p.name} (${p.slash_command})`;
+                opt.title = p.description || p.name;
+                if (p.id === activePersona) {
+                    opt.selected = true;
+                }
+                personaSelect.appendChild(opt);
+            });
+        }
+    }
 
     function updateModelSelect(models, selectedModel) {
         if (!modelSelect) return;
@@ -441,6 +465,7 @@
             if (!prompt) return;
 
             const selectedModel = modelSelect ? modelSelect.value : 'podllama-chat';
+            const selectedPersona = personaSelect ? personaSelect.value : '';
 
             appendMessageTurn('user', prompt);
             setGeneratingState(true);
@@ -448,7 +473,8 @@
             vscode.postMessage({
                 command: 'sendMessage',
                 prompt,
-                model: selectedModel
+                model: selectedModel,
+                persona: selectedPersona
             });
 
             promptInput.value = '';
@@ -515,6 +541,15 @@
             const currentState = vscode.getState() || {};
             vscode.setState({ ...currentState, selectedModel: selectedModel });
             vscode.postMessage({ command: 'selectModel', model: selectedModel });
+        });
+    }
+
+    if (personaSelect) {
+        personaSelect.addEventListener('change', () => {
+            const selectedPersona = personaSelect.value;
+            const currentState = vscode.getState() || {};
+            vscode.setState({ ...currentState, selectedPersona: selectedPersona });
+            vscode.postMessage({ command: 'selectPersona', persona: selectedPersona });
         });
     }
 

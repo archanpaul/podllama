@@ -17,6 +17,7 @@ export interface ConversationSession {
     messages: MessageTurn[];
     summarizedContext?: string;
     selectedModel?: string;
+    selectedPersona?: string;
 }
 
 export class ConversationManager {
@@ -46,14 +47,15 @@ export class ConversationManager {
         return this.createConversation('New Chat');
     }
 
-    createConversation(title = 'New Chat', selectedModel?: string): ConversationSession {
+    createConversation(title = 'New Chat', selectedModel?: string, selectedPersona?: string): ConversationSession {
         const newConv: ConversationSession = {
             id: `conv_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
             title,
             createdAt: Date.now(),
             updatedAt: Date.now(),
             messages: [],
-            selectedModel
+            selectedModel,
+            selectedPersona
         };
 
         const convs = [newConv, ...this.getAllConversations()];

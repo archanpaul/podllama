@@ -456,12 +456,14 @@ textarea::placeholder {
   background-color: var(--bg-hover);
 }
 
+.persona-select-container,
 .model-select-container {
   display: flex;
   align-items: center;
   background-color: transparent;
   border: none;
   cursor: pointer;
+  max-width: 140px;
 }
 
 .select-control {
