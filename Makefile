@@ -93,14 +93,15 @@ build-vscode-extension:
 		(cd vscode-extension && npm install); \
 	fi
 	(cd vscode-extension && npm run compile)
-	(cd vscode-extension && npx @vscode/vsce package --allow-missing-repository --allow-star-activation --no-dependencies)
+	@mkdir -p vscode-extension/out
+	(cd vscode-extension && npx @vscode/vsce package -o out/ --allow-missing-repository --allow-star-activation --no-dependencies)
 
 build-extension: build-vscode-extension
 
 install-vscode-extension: build-vscode-extension
 	@echo "Installing PodLlama Code extension into VS Code..."
 	@which code >/dev/null 2>&1 || (echo "ERROR: 'code' CLI is not found on PATH." && exit 1)
-	@latest_vsix=$$(ls -t vscode-extension/podllama-code-*.vsix 2>/dev/null | head -n 1); if [ -n "$$latest_vsix" ]; then echo "Installing $$latest_vsix..."; code --install-extension "$$latest_vsix" --force; else echo "ERROR: No VSIX file found in vscode-extension/"; exit 1; fi
+	@latest_vsix=$$(ls -t vscode-extension/out/podllama-code-*.vsix 2>/dev/null | head -n 1); if [ -n "$$latest_vsix" ]; then echo "Installing latest package $$latest_vsix..."; code --install-extension "$$latest_vsix" --force; else echo "ERROR: No VSIX file found in vscode-extension/out/"; exit 1; fi
 install-extension: install-vscode-extension
 
 start-server:

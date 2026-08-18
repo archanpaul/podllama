@@ -282,7 +282,7 @@ def test_vscode_extension_manifest():
     assert os.path.exists(out_js), "Compiled Extension JS file missing: out/extension.js"
 
     # Verify vsix package artifact
-    vsix_path = os.path.join(PROJECT_ROOT, "vscode-extension", f"podllama-code-{pkg['version']}.vsix")
+    vsix_path = os.path.join(PROJECT_ROOT, "vscode-extension", "out", f"podllama-code-{pkg['version']}.vsix")
     assert os.path.exists(vsix_path), f"Extension VSIX artifact missing: {vsix_path}"
 
     print("  -> PASSED: VS Code Extension manifest, settings properties, output JS, and VSIX artifact verified.")
