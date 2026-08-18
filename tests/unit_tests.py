@@ -65,9 +65,21 @@ def test_yaml_configurations():
     assert "podllama-thinking" in litellm_models, "podllama-thinking alias missing in litellm_config.yaml"
     assert "podllama-instruct" in litellm_models, "podllama-instruct alias missing in litellm_config.yaml"
 
-    # Ensure all model_conf.yaml GGUF files are exposed in litellm_config.yaml
-    for gguf_file in models_map.keys():
-        assert gguf_file in litellm_models, f"GGUF model file '{gguf_file}' missing from litellm_config.yaml"
+    # Ensure only active models and active role aliases are exposed in litellm_config.yaml
+    active_models = {
+        "podllama-chat",
+        "podllama-thinking",
+        "podllama-instruct",
+        "podllama-autocomplete",
+        model_conf["active_chat_model"],
+        model_conf["active_thinking_model"],
+        model_conf["active_autocomplete_model"]
+    }
+    for active_m in active_models:
+        assert active_m in litellm_models, f"Active model '{active_m}' missing from litellm_config.yaml"
+    # Ensure no inactive or unused models are listed
+    for model_name in litellm_models:
+        assert model_name in active_models, f"Inactive/unused model '{model_name}' must not be in litellm_config.yaml" 
 
     print("  -> PASSED: YAML configurations, context length, and LiteLLM model sync validated.")
 

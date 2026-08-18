@@ -105,8 +105,9 @@ Skills: ${p.skills.slice(0, 3).join(", ")}...` : "";
 
         modelSelect.innerHTML = '';
 
-        // Filter model list to only include IDs starting with 'podllama-'
-        const filteredModels = (models || []).filter(m => m.id && m.id.startsWith('podllama-'));
+        // Only list active chat and reasoning models (exclude autocomplete or non-chat models)
+        const allowedChatAliases = new Set(["podllama-chat", "podllama-thinking", "podllama-instruct"]);
+        const filteredModels = (models || []).filter(m => m.id && allowedChatAliases.has(m.id));
 
         if (filteredModels.length === 0) {
             const opt = document.createElement('option');

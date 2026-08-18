@@ -603,18 +603,22 @@ class ProxyHandler(BaseHTTPRequestHandler):
         active_autocomplete = config_data.get("active_autocomplete_model", "")
 
         model_entries = []
+        # Active role model aliases
         model_entries.append({"id": "podllama-chat", "object": "model", "owned_by": "podllama-swapper", "active_target": active_chat})
         model_entries.append({"id": "podllama-thinking", "object": "model", "owned_by": "podllama-swapper", "active_target": active_thinking})
-        model_entries.append({"id": "podllama-instruct", "object": "model", "owned_by": "podllama-swapper", "active_target": "qwen2.5-coder-7b-instruct-q4_k_m.gguf"})
+        model_entries.append({"id": "podllama-instruct", "object": "model", "owned_by": "podllama-swapper", "active_target": active_chat})
         model_entries.append({"id": "podllama-autocomplete", "object": "model", "owned_by": "podllama-swapper", "active_target": active_autocomplete})
 
-        for model_file, meta in models.items():
-            model_entries.append({
-                "id": model_file,
-                "object": "model",
-                "owned_by": "podllama-registry",
-                "details": meta
-            })
+        # Only list active model files (do not list inactive/unused models)
+        active_files = [f for f in [active_chat, active_thinking, active_autocomplete] if f]
+        for model_file in active_files:
+            if model_file in models:
+                model_entries.append({
+                    "id": model_file,
+                    "object": "model",
+                    "owned_by": "podllama-active",
+                    "details": models[model_file]
+                })
 
         response_body = json.dumps({"object": "list", "data": model_entries}, indent=2).encode("utf-8")
         self.send_response(200)
