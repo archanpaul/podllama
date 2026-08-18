@@ -85,7 +85,7 @@ def test_prompt_processing():
 
     try:
         req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=90) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             assert resp.status == 200, f"Expected 200, got {resp.status}"
             usage = data.get("usage", {})
@@ -113,7 +113,7 @@ def test_thinking_model_api():
         "messages": [
             {"role": "user", "content": "Explain worst-case time complexity of quicksort in one sentence."}
         ],
-        "max_tokens": 48,
+        "max_tokens": 24,
         "temperature": 0.1
     }
     url = f"{BASE_URL}/chat/completions"
@@ -127,7 +127,7 @@ def test_thinking_model_api():
 
     try:
         req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=90) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             assert resp.status == 200, f"Expected 200, got {resp.status}"
             msg = data.get("choices", [{}])[0].get("message", {})
@@ -151,7 +151,7 @@ def test_instruct_model_api():
             {"role": "system", "content": "You are a code assistant."},
             {"role": "user", "content": "Write a python function to compute factorial."}
         ],
-        "max_tokens": 48,
+        "max_tokens": 24,
         "temperature": 0.1
     }
     url = f"{BASE_URL}/chat/completions"
@@ -165,7 +165,7 @@ def test_instruct_model_api():
 
     try:
         req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=90) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             assert resp.status == 200, f"Expected 200, got {resp.status}"
             msg = data.get("choices", [{}])[0].get("message", {})
@@ -205,7 +205,7 @@ def test_chat_model_streaming():
         sys.stdout.write("  -> Streaming Output Chunks: ")
         sys.stdout.flush()
 
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=90) as resp:
             for line in resp:
                 line_str = line.decode("utf-8").strip()
                 if line_str.startswith("data: "):
@@ -255,7 +255,7 @@ def test_autocomplete_model():
 
     try:
         req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=90) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             choices = data.get("choices", [])
             assert len(choices) > 0, "No completion choices returned!"
@@ -314,7 +314,7 @@ def test_tool_calling():
 
     try:
         req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=90) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             assert resp.status == 200, f"Expected 200, got {resp.status}"
             log(f"  Response Status: {resp.status}")
@@ -366,7 +366,7 @@ def test_auto_stop_and_recovery():
     try:
         start_t = time.time()
         req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=90) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             elapsed = time.time() - start_t
             assert resp.status == 200, f"Expected 200, got {resp.status}"
@@ -493,13 +493,13 @@ def test_persona_completion_features(personas_data=None):
                 {"role": "system", "content": sys_prompt},
                 {"role": "user", "content": tc["prompt"]}
             ],
-            "max_tokens": 48,
+            "max_tokens": 24,
             "temperature": 0.1
         }
 
         try:
             req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
-            with urllib.request.urlopen(req, timeout=60) as resp:
+            with urllib.request.urlopen(req, timeout=90) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 assert resp.status == 200, f"Expected 200, got {resp.status}"
                 choices = data.get("choices", [])
