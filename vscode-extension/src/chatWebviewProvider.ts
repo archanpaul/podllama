@@ -412,6 +412,8 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
     <title>PodLlama Code</title>
     <link href="${fontAwesomeUri}" rel="stylesheet">
     <link href="${cssUri}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 </head>

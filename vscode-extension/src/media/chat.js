@@ -272,6 +272,63 @@
         });
     }
 
+
+    function renderLatex(text) {
+        if (typeof katex === "undefined" || !text) return text;
+
+        // 1. Process code block protection (don't format LaTeX inside code blocks)
+        const codeBlocks = [];
+        let cleanText = text.replace(/(```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
+            const placeholder = `%%CODE_BLOCK_${codeBlocks.length}%%`;
+            codeBlocks.push(match);
+            return placeholder;
+        });
+
+        // 2. Display Math: $$ ... $$ and \[ ... \]
+        cleanText = cleanText.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) => {
+            try {
+                return katex.renderToString(math.trim(), { displayMode: true, throwOnError: false });
+            } catch (e) {
+                return `$$${math}$$`;
+            }
+        });
+
+        cleanText = cleanText.replace(/\\\[([\s\S]*?)\\\]/g, (_, math) => {
+            try {
+                return katex.renderToString(math.trim(), { displayMode: true, throwOnError: false });
+            } catch (e) {
+                return `\\[${math}\\]`;
+            }
+        });
+
+        // 3. Inline Math: \( ... \) and $ ... $ (ignoring currency like $10 or $20.50)
+        cleanText = cleanText.replace(/\\\(([\s\S]*?)\\\)/g, (_, math) => {
+            try {
+                return katex.renderToString(math.trim(), { displayMode: false, throwOnError: false });
+            } catch (e) {
+                return `\\(${math}\\)`;
+            }
+        });
+
+        cleanText = cleanText.replace(/(?<!\\)\$([^$\n]+?)\$/g, (_, math) => {
+            if (/^\d+(?:\.\d+)?$/.test(math.trim())) {
+                return `$${math}$`;
+            }
+            try {
+                return katex.renderToString(math.trim(), { displayMode: false, throwOnError: false });
+            } catch (e) {
+                return `$${math}$`;
+            }
+        });
+
+        // 4. Restore code blocks
+        codeBlocks.forEach((cb, idx) => {
+            cleanText = cleanText.replace(`%%CODE_BLOCK_${idx}%%`, cb);
+        });
+
+        return cleanText;
+    }
+
     function formatMarkdown(text, isStreaming = false) {
         if (!text) return '';
         
@@ -322,6 +379,9 @@
                 processedText = processedText.replace(/<(script|style|textarea|svg|iframe)([\s>])/gi, '&lt;$1$2');
                 processedText = processedText.replace(/<\/(script|style|textarea|svg|iframe)>/gi, '&lt;/$1&gt;');
 
+                // 7. Render LaTeX math formulas via KaTeX
+                processedText = renderLatex(processedText);
+
                 const parsed = marked.parse(processedText);
                 if (typeof parsed === 'string' && parsed.trim().length > 0) {
                     return parsed;
@@ -353,8 +413,7 @@
             return `<pre><code class="language-${lang}">${code}</code></pre>`;
         });
         formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
-        formatted = formatted.replace(/\$\$([\s\S]*?)\$\$/g, '<div class="latex-display">$1</div>');
-        formatted = formatted.replace(/\\\(([\s\S]*?)\\\)/g, '<span class="latex-inline">$1</span>');
+        formatted = renderLatex(formatted);
         return formatted;
     }
 
