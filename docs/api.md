@@ -165,7 +165,7 @@ curl http://localhost:4000/health/liveliness
 
 ### 2.6 Personas List API (`GET /v1/personas` or `GET /personas`)
 
-Retrieves the in-memory array of pre-configured CS/AI personas from the backend swapper (`http://localhost:8080/v1/personas`).
+Retrieves the in-memory dictionary of domain categories and pre-configured personas with explicit skillsets from the backend swapper (`http://localhost:8080/v1/personas`).
 
 #### Example cURL
 ```bash
@@ -175,24 +175,50 @@ curl http://localhost:8080/v1/personas
 #### Response
 ```json
 {
+  "categories": [
+    {
+      "id": "cs-theory",
+      "name": "Computer Science & Foundations",
+      "description": "Theoretical CS, discrete mathematics, algorithmic complexity, formal logic, and academic problem solving.",
+      "icon": "fa-solid fa-graduation-cap"
+    }
+  ],
   "personas": [
     {
-      "id": "cs-professor",
-      "name": "University CS Professor",
-      "icon": "fa-solid fa-graduation-cap",
-      "slash_command": "/gate",
-      "description": "Formal CS theory, LaTeX math proofs, step-by-step logic, and GATE CS problem solving.",
-      "target_model": "podllama-thinking",
-      "system_prompt": "You are an expert Professor in Computer Science and an elite GATE CS subject matter specialist..."
+      "id": "cp-solver",
+      "name": "Competitive Programming Solver",
+      "category": "Computer Science & Foundations",
+      "category_id": "cs-theory",
+      "icon": "fa-solid fa-trophy",
+      "slash_command": "/cp",
+      "description": "ICPC Grandmaster, LeetCode Hard speedruns, optimal fast I/O, bitwise tricks, and contest edge-case busting.",
+      "skills": [
+        "Fast I/O & Low-Constant Optimization (C++ ios::sync_with_stdio, custom fread parsers)",
+        "Advanced Range Queries (Lazy Segment Trees, Treaps, Mo's Algorithm, Heavy-Light Decomposition)",
+        "Combinatorial Game Theory & Bitmask DP (Sprague-Grundy, SOS DP, Matrix Exponentiation)",
+        "Geometry & Math Primitives (Convex Hull, Fast Fourier Transform / NTT, Sieve / Miller-Rabin)",
+        "Stress-Testing Script Generation (Python / Bash fuzzing, brute-force verifier vs optimal solver)"
+      ],
+      "target_model": "podllama-chat",
+      "system_prompt": "You are an ICPC World Finalist and Competitive Programming Grandmaster..."
     },
     {
-      "id": "algo-specialist",
-      "name": "Algorithm Specialist",
-      "icon": "fa-solid fa-code-fork",
-      "slash_command": "/algo",
-      "description": "Asymptotic space-time complexity analysis, DP formulations, graph algorithms, and optimal data structures.",
+      "id": "hackathon-builder",
+      "name": "Hackathon MVP Prototyper",
+      "category": "Software Engineering & Architecture",
+      "category_id": "software-engineering",
+      "icon": "fa-solid fa-bolt",
+      "slash_command": "/hack",
+      "description": "Rapid MVP prototyping, 24-hour hackathon winning architecture, high-impact demos, modern UI stacks, and zero-boilerplate scaffolding.",
+      "skills": [
+        "Rapid 0-to-1 MVP Architecture & Pitch-Ready Demo Scaffolding",
+        "Full-Stack Rapid Prototyping (Next.js / FastAPI / Supabase / Tailwind / Vite)",
+        "AI Feature Injection (Instant LLM streaming, multimodal vision, vector search mockups)",
+        "Mock Data Generation, Faker Fixtures & Instant Seed Scripts",
+        "High-Impact UI/UX Polish, Micro-Animations & 2-Minute Demo Presentation Flow"
+      ],
       "target_model": "podllama-chat",
-      "system_prompt": "You are a Competitive Programming Master and Algorithm Specialist..."
+      "system_prompt": "You are a Silicon Valley Serial Hackathon Winner and Rapid 0-to-1 Prototyper..."
     }
   ]
 }

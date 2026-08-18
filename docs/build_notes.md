@@ -67,5 +67,8 @@ All model weights are stored in the host `./models/` directory, which is mounted
 | `make build-omp` | Builds only the Oh My Pi (omp.sh) workspace agent container image |
 | `make run-pi` | Launches the interactive pi.dev workspace agent container |
 | `make run-omp` | Launches the interactive Oh My Pi (omp.sh) workspace agent container |
-| `make test` | Executes unit test suite verifying configs and file permissions |
+| `make test` | Executes automated unit test suite verifying schemas, categories, skills, and permissions |
+| `make smoke-tests` | Executes live 12-stage API smoke test suite against running container stack |
+| `make build-extension` | Compiles and packages the PodLlama Code VS Code Extension (.vsix) |
+| `make install-extension` | Builds and installs the PodLlama Code extension directly into VS Code |
 | `make clean` | Removes built Podman images and temporary files |

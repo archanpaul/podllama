@@ -216,29 +216,49 @@ def test_makefile_targets():
 
 
 def test_personas_json_config():
-    """Test config/personas.json schema and chat_swapper in-memory persona loading."""
-    print("[1.5/6] Testing Personas JSON Configuration & In-Memory Loading...")
+    """Test config/personas.json schema, category-wise structure, skills, and chat_swapper in-memory loading."""
+    print("[1.5/6] Testing Category-Wise Personas & Skills JSON Configuration & In-Memory Loading...")
     personas_json_path = os.path.join(PROJECT_ROOT, "config", "personas.json")
     assert os.path.exists(personas_json_path), "config/personas.json missing!"
 
     with open(personas_json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
+    assert "categories" in data, "Missing 'categories' key in config/personas.json"
+    categories = data["categories"]
+    assert len(categories) >= 6, f"Expected at least 6 categories, got {len(categories)}"
+
+    cat_keys = {"id", "name", "description", "icon"}
+    cat_ids = set()
+    for cat in categories:
+        for k in cat_keys:
+            assert k in cat, f"Category '{cat.get('id')}' missing key '{k}'"
+        cat_ids.add(cat["id"])
+
     assert "personas" in data, "Missing 'personas' key in config/personas.json"
     personas = data["personas"]
-    assert len(personas) >= 12, f"Expected at least 12 personas, got {len(personas)}"
+    assert len(personas) >= 21, f"Expected at least 21 personas, got {len(personas)}"
 
-    required_keys = {"id", "name", "icon", "slash_command", "description", "target_model", "system_prompt"}
+    required_keys = {"id", "name", "category", "category_id", "icon", "slash_command", "description", "skills", "target_model", "system_prompt"}
     for p in personas:
         for k in required_keys:
             assert k in p, f"Persona '{p.get('id')}' missing key '{k}'"
+        assert p["category_id"] in cat_ids, f"Persona '{p.get('id')}' references invalid category_id '{p.get('category_id')}'"
+        assert isinstance(p["skills"], list) and len(p["skills"]) > 0, f"Persona '{p.get('id')}' must have a non-empty skills list"
+
+    # Verify specific key personas exist
+    p_ids = {p["id"] for p in personas}
+    assert "cp-solver" in p_ids, "Missing 'cp-solver' persona"
+    assert "hackathon-builder" in p_ids, "Missing 'hackathon-builder' persona"
+    assert "cs-professor" in p_ids, "Missing 'cs-professor' persona"
 
     sys.path.insert(0, os.path.join(PROJECT_ROOT, "containers"))
     import chat_swapper
     chat_swapper.PERSONAS_FILE = personas_json_path
     chat_swapper.load_personas()
-    assert len(chat_swapper.personas_data.get("personas", [])) >= 12, "chat_swapper failed to load personas into memory"
-    print("  -> PASSED: config/personas.json schema and chat_swapper in-memory loading verified.")
+    assert len(chat_swapper.personas_data.get("personas", [])) >= 21, "chat_swapper failed to load personas into memory"
+    assert len(chat_swapper.personas_data.get("categories", [])) >= 6, "chat_swapper failed to load categories into memory"
+    print("  -> PASSED: config/personas.json category taxonomy, domain skills, and chat_swapper in-memory loading verified.")
 
 
 

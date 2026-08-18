@@ -2,12 +2,22 @@ import * as http from 'http';
 import * as https from 'https';
 import { URL } from 'url';
 
+export interface PersonaCategory {
+    id: string;
+    name: string;
+    description: string;
+    icon: string;
+}
+
 export interface PersonaItem {
     id: string;
     name: string;
+    category?: string;
+    category_id?: string;
     icon: string;
     slash_command: string;
     description: string;
+    skills?: string[];
     target_model: string;
     system_prompt: string;
 }

@@ -49,21 +49,51 @@
         if (!personaSelect) return;
 
         const currentState = vscode.getState();
-        const activePersona = selectedPersona || (currentState && currentState.selectedPersona) || personaSelect.value || '';
+        const activePersona = selectedPersona || (currentState && currentState.selectedPersona) || personaSelect.value || "";
 
         personaSelect.innerHTML = '<option value="">Default Persona</option>';
 
         if (Array.isArray(personas) && personas.length > 0) {
-            personas.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                opt.textContent = `${p.name} (${p.slash_command})`;
-                opt.title = p.description || p.name;
-                if (p.id === activePersona) {
-                    opt.selected = true;
-                }
-                personaSelect.appendChild(opt);
-            });
+            const hasCategories = personas.some(p => p.category);
+            if (hasCategories) {
+                const categoryMap = new Map();
+                personas.forEach(p => {
+                    const cat = p.category || "General";
+                    if (!categoryMap.has(cat)) {
+                        categoryMap.set(cat, []);
+                    }
+                    categoryMap.get(cat).push(p);
+                });
+
+                categoryMap.forEach((personaList, categoryName) => {
+                    const group = document.createElement("optgroup");
+                    group.label = categoryName;
+                    personaList.forEach(p => {
+                        const opt = document.createElement("option");
+                        opt.value = p.id;
+                        opt.textContent = `${p.name} (${p.slash_command})`;
+                        const skillsSnippet = (p.skills && p.skills.length) ? `
+Skills: ${p.skills.slice(0, 3).join(", ")}...` : "";
+                        opt.title = (p.description || p.name) + skillsSnippet;
+                        if (p.id === activePersona) {
+                            opt.selected = true;
+                        }
+                        group.appendChild(opt);
+                    });
+                    personaSelect.appendChild(group);
+                });
+            } else {
+                personas.forEach(p => {
+                    const opt = document.createElement("option");
+                    opt.value = p.id;
+                    opt.textContent = `${p.name} (${p.slash_command})`;
+                    opt.title = p.description || p.name;
+                    if (p.id === activePersona) {
+                        opt.selected = true;
+                    }
+                    personaSelect.appendChild(opt);
+                });
+            }
         }
     }
 

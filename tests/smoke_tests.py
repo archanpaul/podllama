@@ -384,10 +384,11 @@ def test_auto_stop_and_recovery():
 
 def test_personas_api():
     log("--------------------------------------------------")
-    log("API TEST 10: Personas List API (GET /v1/personas)")
+    log("API TEST 10: Personas Taxonomy & Skills API (GET /v1/personas)")
     urls_to_try = [
         "http://127.0.0.1:8080/v1/personas",
-        f"{BASE_URL}/personas"
+        f"{BASE_URL}/personas",
+        "http://127.0.0.1:8080/personas"
     ]
     headers = {"Authorization": f"Bearer {API_KEY}"}
 
@@ -408,14 +409,141 @@ def test_personas_api():
 
     if data and "personas" in data:
         personas = data.get("personas", [])
+        categories = data.get("categories", [])
         p_ids = [p.get("id") for p in personas]
-        log(f"  Registered Persona IDs ({len(personas)} total): {p_ids[:6]}...")
-        assert len(personas) >= 12, f"Expected at least 12 personas, got {len(personas)}"
-        log(f"  -> PASSED: GET /v1/personas returned in-memory personas dataset successfully from {successful_url}.")
+        log(f"  Registered Persona IDs ({len(personas)} total across {len(categories)} categories): {p_ids[:8]}...")
+        assert len(personas) >= 21, f"Expected at least 21 personas, got {len(personas)}"
+        assert len(categories) >= 6, f"Expected at least 6 categories, got {len(categories)}"
+
+        # Verify category schema
+        for cat in categories:
+            assert "id" in cat and "name" in cat and "description" in cat and "icon" in cat, f"Invalid category: {cat}"
+
+        # Verify personas schema & skillsets
+        for p in personas:
+            assert "id" in p and "name" in p and "category" in p and "category_id" in p
+            assert "skills" in p and isinstance(p["skills"], list) and len(p["skills"]) > 0
+            assert "slash_command" in p and p["slash_command"].startswith("/")
+            assert "system_prompt" in p and len(p["system_prompt"]) > 0
+
+        # Assert key personas exist
+        assert "cp-solver" in p_ids, "Missing 'cp-solver' persona in response"
+        assert "hackathon-builder" in p_ids, "Missing 'hackathon-builder' persona in response"
+        assert "cs-professor" in p_ids, "Missing 'cs-professor' persona in response"
+        assert "algo-specialist" in p_ids, "Missing 'algo-specialist' persona in response"
+
+        log(f"  -> PASSED: GET /v1/personas returned in-memory category-wise personas dataset successfully from {successful_url}.")
+        return data
     else:
         log("  -> FAILED: Could not reach personas endpoint on port 8080 or 4000.")
         sys.exit(1)
 
+
+def test_persona_completion_features(personas_data=None):
+    log("--------------------------------------------------")
+    log("API TEST 11: Persona Prompt Injection & Target Model Execution")
+    
+    # Select sample personas across different categories
+    test_cases = [
+        {
+            "id": "cp-solver",
+            "slash": "/cp",
+            "prompt": "Find maximum subarray sum using Kadane's Algorithm in C++ with time and space complexity.",
+            "expected_kw": "Complexity"
+        },
+        {
+            "id": "hackathon-builder",
+            "slash": "/hack",
+            "prompt": "Suggest a high-impact MVP stack and 2-minute demo hook for an AI note summarizer.",
+            "expected_kw": "MVP"
+        },
+        {
+            "id": "cs-professor",
+            "slash": "/prof",
+            "prompt": "State the Master Theorem recurrence relation in LaTeX notation.",
+            "expected_kw": "$"
+        }
+    ]
+
+    personas_map = {}
+    if personas_data and "personas" in personas_data:
+        personas_map = {p["id"]: p for p in personas_data["personas"]}
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {API_KEY}"
+    }
+    url = f"{BASE_URL}/chat/completions"
+
+    for tc in test_cases:
+        p_info = personas_map.get(tc["id"], {})
+        persona_id = tc["id"]
+        persona_slash = tc["slash"]
+        sys_prompt = p_info.get("system_prompt", f"You are the {persona_id} specialist.")
+        target_model = p_info.get("target_model", "podllama-chat")
+        skills = p_info.get("skills", [])
+        skills_summary = ", ".join(skills[:3]) if skills else "General"
+
+        log(f"  Testing Persona: '{persona_id}' ({persona_slash}) -> Target Model: '{target_model}'")
+        log(f"  Persona Skills: {skills_summary}")
+
+        payload = {
+            "model": target_model,
+            "messages": [
+                {"role": "system", "content": sys_prompt},
+                {"role": "user", "content": tc["prompt"]}
+            ],
+            "max_tokens": 48,
+            "temperature": 0.1
+        }
+
+        try:
+            req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                assert resp.status == 200, f"Expected 200, got {resp.status}"
+                choices = data.get("choices", [])
+                assert len(choices) > 0, "No completion choices returned!"
+                msg = choices[0].get("message", {})
+                content = msg.get("content") or msg.get("reasoning_content", "")
+                log(f"    Response Status: {resp.status} | Tokens Generated: {data.get(usage, {}).get(completion_tokens, 0)}")
+                log(f"    Sample Output: {repr(content[:80].strip())}...")
+                assert len(content.strip()) > 0, f"Empty content generated for persona {tc[id]}"
+        except Exception as e:
+            log(f"  -> FAILED: Persona execution failed for '{tc[id]}': {e}")
+            sys.exit(1)
+
+    log("  -> PASSED: All persona prompt injections and model executions completed successfully.")
+
+
+def test_persona_slash_command_resolution(personas_data=None):
+    log("--------------------------------------------------")
+    log("API TEST 12: Persona Slash Command Mapping & Resolution")
+    
+    if not personas_data or "personas" not in personas_data:
+        try:
+            req = urllib.request.Request("http://127.0.0.1:8080/v1/personas", headers={"Authorization": f"Bearer {API_KEY}"})
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                personas_data = json.loads(resp.read().decode("utf-8"))
+        except Exception:
+            pass
+
+    personas = (personas_data or {}).get("personas", [])
+    slash_commands = {}
+    for p in personas:
+        cmd = p.get("slash_command", "").lower()
+        assert cmd.startswith("/"), f"Invalid slash command: {cmd}"
+        assert cmd not in slash_commands, f"Duplicate slash command detected: {cmd}"
+        slash_commands[cmd] = p["id"]
+
+    log(f"  Verified {len(slash_commands)} unique slash command mappings: {list(slash_commands.keys())[:10]}...")
+    assert "/cp" in slash_commands, "Missing /cp slash command"
+    assert "/hack" in slash_commands, "Missing /hack slash command"
+    assert "/prof" in slash_commands, "Missing /prof slash command"
+    assert "/algo" in slash_commands, "Missing /algo slash command"
+    assert "/dl" in slash_commands, "Missing /dl slash command"
+    assert "/dev" in slash_commands, "Missing /dev slash command"
+    log("  -> PASSED: Persona slash command mappings and uniqueness verified.")
 
 def main():
     print("==================================================================")
@@ -423,10 +551,12 @@ def main():
     print("==================================================================")
     test_proxy_health()
     test_list_models_api()
-    test_personas_api()
+    personas_data = test_personas_api()
+    test_persona_slash_command_resolution(personas_data)
     test_prompt_processing()
     test_thinking_model_api()
     test_instruct_model_api()
+    test_persona_completion_features(personas_data)
     test_chat_model_streaming()
     test_autocomplete_model()
     test_tool_calling()

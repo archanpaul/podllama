@@ -82,16 +82,19 @@ The **PodLlama Container Environment** provides a local, GPU-accelerated, contai
 ## 9. Automated Testing & Live Smoke Verification
 
 - **Unit Test Suite (`make test` / `tests/unit_tests.py`)**: Validates YAML configuration schemas, file permissions, container definition files, and idle supervisor configuration.
-- **Live Smoke Test Suite (`make smoke-tests` / `tests/smoke_tests.py`)**: Executes live end-to-end verification against the running Podman stack with verbose diagnostic logs for 9 distinct API endpoints:
+- **Live Smoke Test Suite (`make smoke-tests` / `tests/smoke_tests.py`)**: Executes live end-to-end verification against the running Podman stack with verbose diagnostic logs for 12 distinct API verification stages:
   - **1. Proxy Liveliness**: Probes `GET /health/liveliness`.
   - **2. List Models API**: Probes `GET /v1/models` and verifies registered model aliases.
-  - **3. Chat Completions & Prompt Processing**: Sends `podllama-chat` prompt and verifies `prompt_tokens` accounting.
-  - **4. Deep Thinking & Reasoning**: Sends `podllama-thinking` request and verifies reasoning model output.
-  - **5. Instruct Completions**: Sends `podllama-instruct` request and verifies Qwen 2.5 Coder 7B Instruct output.
-  - **6. Chat Model Streaming**: Sends `podllama-chat` streaming request and validates SSE token chunk streaming.
-  - **7. Autocomplete Model Completion**: Sends `podllama-autocomplete` FIM request and validates inline code completion.
-  - **8. Function & Tool Calling**: Sends tool definitions to validate tool support without server error.
-  - **9. Auto-Stop & Recovery Test**: Simulates backend model server stop (`stop_llama_server()`) and verifies automatic cold-start model reload and completion recovery.
+  - **3. Personas Taxonomy & Skills API**: Probes `GET /v1/personas` on Port 8080/4000, asserting all 6 domain categories and 21 personas with complete `skills` arrays.
+  - **4. Persona Slash Command Mapping**: Verifies uniqueness and resolution of all 21 slash shortcuts (`/cp`, `/hack`, `/prof`, `/algo`, `/dl`, etc.).
+  - **5. Chat Completions & Prompt Processing**: Sends `podllama-chat` prompt and verifies `prompt_tokens` accounting.
+  - **6. Deep Thinking & Reasoning**: Sends `podllama-thinking` request and verifies reasoning model output.
+  - **7. Instruct Completions**: Sends `podllama-instruct` request and verifies Qwen 2.5 Coder 7B Instruct output.
+  - **8. Persona Prompt Injection & Target Model Execution**: Tests chat completions with injected persona system prompts (`/cp`, `/hack`, `/prof`) across designated target models.
+  - **9. Chat Model Streaming**: Sends `podllama-chat` streaming request and validates SSE token chunk streaming.
+  - **10. Autocomplete Model Completion**: Sends `podllama-autocomplete` FIM request and validates inline code completion.
+  - **11. Function & Tool Calling**: Sends tool definitions to validate tool support without server error.
+  - **12. Auto-Stop & Recovery Test**: Simulates backend model server stop (`stop_llama_server()`) and verifies automatic cold-start model reload and completion recovery.
 
 ---
 
@@ -114,7 +117,13 @@ A companion extension, **PodLlama Code**, is bundled with the project to streaml
 
 ## 11. Server-Side Personas System & LaTeX Math Rendering
 
-- **12 Pre-Configured CS & AI Personas**: Configured in `config/personas.json` and loaded into memory on startup by `containers/chat_swapper.py`. Includes specialized personas for GATE CS (`/gate`), Algorithm Design (`/algo`), Deep Learning (`/dl`), MLOps (`/mlops`), Systems Architecture (`/architect`), Cybersecurity (`/sec`), Academic Paper Writing (`/paper`), and Scientific Peer Review (`/review`).
-- **Dynamic System Prompt & Model Pairings**: Choosing a persona automatically injects its domain-specific system prompt and routes to its recommended model (e.g. `/gate` -> `podllama-thinking`).
+- **21 Category-Wise CS, AI, Engineering & Research Personas**: Configured in `config/personas.json` and loaded into memory on startup by `containers/chat_swapper.py`. Organized across 6 distinct domain categories (`cs-theory`, `ai-ml`, `software-engineering`, `systems-devops`, `security-governance`, `research-data-science`) with 5 concrete, actionable skills defined per persona.
+  - **Computer Science & Foundations**: University CS Professor (`/prof`), Algorithm Specialist (`/algo`), Competitive Programming Solver (`/cp`), Theoretical Computer Scientist (`/theorist`).
+  - **Artificial Intelligence & Machine Learning**: Deep Learning Scientist (`/dl`), MLOps & Inference Engineer (`/mlops`), AI Safety Auditor (`/safety`), NLP & LLM Specialist (`/nlp`).
+  - **Software Engineering & Architecture**: Enterprise Solution Architect (`/architect`), Senior Polyglot Engineer (`/dev`), Full-Stack Web Architect (`/web`), Database & Storage Specialist (`/db`), Hackathon MVP Prototyper (`/hack`).
+  - **Systems, DevOps & Cloud Infrastructure**: DevOps Container Lead (`/devops`), Linux Systems & Kernel Engineer (`/systems`), Site Reliability Engineer (`/sre`).
+  - **Cybersecurity & Governance**: Cybersecurity Specialist (`/sec`), Cloud Security Architect (`/cloudsec`).
+  - **Research, Academia & Data Science**: Academic Paper Author (`/paper`), Scientific Peer Reviewer (`/review`), Data Scientist & Quant Analyst (`/data`).
+- **Dynamic System Prompt, Skillset & Model Pairings**: Choosing a persona automatically injects its domain-specific system prompt, category metadata, and routes to its recommended target model (`podllama-thinking`, `podllama-chat`, or `podllama-instruct`).
 - **KaTeX LaTeX Formula Rendering**: The VS Code extension chat panel natively renders math expressions (`$$...$$`, `\[...\]`, `\(...\)`, `$..$`) using embedded KaTeX styling.
 - **Out Directory VSIX Artifact**: The extension build script packages `.vsix` bundles into `vscode-extension/out/podllama-code-1.2.1.vsix` and `make install-vscode-extension` dynamically detects and installs the latest built package.
