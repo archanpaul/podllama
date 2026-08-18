@@ -154,7 +154,7 @@ Detailed documentation is available in the [`docs/`](./docs) directory:
 
 ## PodLlama Code VS Code Extension
 
-An official extension, **PodLlama Code**, is packaged in [`vscode-extension/podllama-code-0.1.0.vsix`](./vscode-extension/podllama-code-0.1.0.vsix) to interface directly with the local container stack:
+An official extension, **PodLlama Code**, is packaged in [`vscode-extension/podllama-code-1.2.1.vsix`](./vscode-extension/podllama-code-1.2.1.vsix) to interface directly with the local container stack:
 
 ### Features:
 - **Interactive Chat Sidebar**: A custom-themed webview panel (matching the Antigravity IDE aesthetic) utilizing local **Fira Sans** and **Fira Code** typography (with programming ligatures) for complete offline privacy.
@@ -172,7 +172,7 @@ An official extension, **PodLlama Code**, is packaged in [`vscode-extension/podl
 1. Ensure the Podman backend container stack is running (`make service-up`).
 2. Open VS Code.
 3. Open the command palette (`Ctrl+Shift+P` / `Cmd+Shift+P` on macOS) and run `Extensions: Install from VSIX...`.
-4. Select [`vscode-extension/podllama-code-0.1.0.vsix`](./vscode-extension/podllama-code-0.1.0.vsix).
+4. Select [`vscode-extension/podllama-code-1.2.1.vsix`](./vscode-extension/podllama-code-1.2.1.vsix).
 5. The extension is ready to use! Configure custom ports/keys if necessary in VS Code's settings under `PodLlama Code`.
 
 ---

@@ -100,8 +100,7 @@ build-extension: build-vscode-extension
 install-vscode-extension: build-vscode-extension
 	@echo "Installing PodLlama Code extension into VS Code..."
 	@which code >/dev/null 2>&1 || (echo "ERROR: 'code' CLI is not found on PATH." && exit 1)
-	code --install-extension vscode-extension/podllama-code-0.1.0.vsix --force
-
+	@latest_vsix=$$(ls -t vscode-extension/podllama-code-*.vsix 2>/dev/null | head -n 1); if [ -n "$$latest_vsix" ]; then echo "Installing $$latest_vsix..."; code --install-extension "$$latest_vsix" --force; else echo "ERROR: No VSIX file found in vscode-extension/"; exit 1; fi
 install-extension: install-vscode-extension
 
 start-server:
