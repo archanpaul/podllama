@@ -118,22 +118,38 @@ def test_personas_api():
         categories = data.get("categories", [])
         p_ids = [p.get("id") for p in personas]
         log(f"  Registered Persona IDs ({len(personas)} total across {len(categories)} categories): {p_ids[:8]}...")
-        assert len(personas) >= 21, f"Expected at least 21 personas, got {len(personas)}"
-        assert len(categories) >= 6, f"Expected at least 6 categories, got {len(categories)}"
+        assert len(personas) >= 30, f"Expected at least 30 personas, got {len(personas)}"
+        assert len(categories) >= 11, f"Expected at least 11 categories, got {len(categories)}"
 
+        # New schema uses display_name + ui_icon; old schema used name + icon.
         for cat in categories:
-            assert "id" in cat and "name" in cat and "description" in cat and "icon" in cat, f"Invalid category: {cat}"
+            assert "id" in cat and "description" in cat, f"Category missing id/description: {cat}"
+            assert "name" in cat or "display_name" in cat, f"Category missing name/display_name: {cat}"
+            assert "icon" in cat or "ui_icon" in cat, f"Category missing icon/ui_icon: {cat}"
 
+        # New schema: fields live under ui_metadata / llm_config / prompt_blueprint.
+        # Old schema: flat on the persona object. Both are accepted.
         for p in personas:
-            assert "id" in p and "name" in p and "category" in p and "category_id" in p
-            assert "skills" in p and isinstance(p["skills"], list) and len(p["skills"]) > 0
-            assert "slash_command" in p and p["slash_command"].startswith("/")
-            assert "system_prompt" in p and len(p["system_prompt"]) > 0
+            assert "id" in p, f"Persona missing id: {p}"
+            ui = p.get("ui_metadata") or {}
+            bp = p.get("prompt_blueprint") or {}
+            assert p.get("name") or ui.get("display_name"), f"Persona {p['id']} missing name/display_name"
+            assert p.get("category_id") or p.get("category"), f"Persona {p['id']} missing category linkage"
+            slash = ui.get("slash_command") or p.get("slash_command") or ""
+            assert slash.startswith("/"), f"Persona {p['id']} invalid slash command: {slash!r}"
+            skills = bp.get("core_skills") or p.get("skills") or []
+            assert isinstance(skills, list) and len(skills) > 0, f"Persona {p['id']} has no skills"
+            sys_prompt = bp.get("role_definition") or p.get("system_prompt") or ""
+            assert len(sys_prompt) > 0, f"Persona {p['id']} has empty system prompt"
 
         assert "cp-solver" in p_ids, "Missing 'cp-solver' persona in response"
         assert "hackathon-builder" in p_ids, "Missing 'hackathon-builder' persona in response"
         assert "cs-professor" in p_ids, "Missing 'cs-professor' persona in response"
         assert "algo-specialist" in p_ids, "Missing 'algo-specialist' persona in response"
+        assert "ai-agent-architect" in p_ids, "Missing 'ai-agent-architect' persona in response"
+        assert "code-reviewer" in p_ids, "Missing 'code-reviewer' persona in response"
+        assert "terraform-iac-engineer" in p_ids, "Missing 'terraform-iac-engineer' persona in response"
+        assert "rust-systems-engineer" in p_ids, "Missing 'rust-systems-engineer' persona in response"
 
         log(f"  -> PASSED: GET /v1/personas returned in-memory category-wise personas dataset successfully from {successful_url}.")
         dur = time.time() - start_t
@@ -162,13 +178,15 @@ def test_persona_slash_command_resolution(personas_data=None):
     if not personas:
         dur = time.time() - start_t
         log("  -> FAILED: No personas loaded for slash command verification.")
-        record_result(4, "Persona Slash Commands", "21 Slash Shortcuts", "FAILED", dur, "No personas available")
+        record_result(4, "Persona Slash Commands", "30 Slash Shortcuts", "FAILED", dur, "No personas available")
         return False
 
     slash_commands = {}
     for p in personas:
-        cmd = p.get("slash_command", "").lower()
-        assert cmd.startswith("/"), f"Invalid slash command: {cmd}"
+        # New schema: slash_command lives under ui_metadata
+        ui = p.get("ui_metadata") or {}
+        cmd = (ui.get("slash_command") or p.get("slash_command") or "").lower()
+        assert cmd.startswith("/"), f"Invalid slash command for persona {p['id']}: {cmd!r}"
         assert cmd not in slash_commands, f"Duplicate slash command detected: {cmd}"
         slash_commands[cmd] = p["id"]
 
@@ -179,9 +197,16 @@ def test_persona_slash_command_resolution(personas_data=None):
     assert "/algo" in slash_commands, "Missing /algo slash command"
     assert "/dl" in slash_commands, "Missing /dl slash command"
     assert "/dev" in slash_commands, "Missing /dev slash command"
+    assert "/agent" in slash_commands, "Missing /agent slash command"
+    assert "/codereview" in slash_commands, "Missing /codereview slash command"
+    assert "/terraform" in slash_commands, "Missing /terraform slash command"
+    assert "/rust" in slash_commands, "Missing /rust slash command"
+    assert "/flutter-android" in slash_commands, "Missing /flutter-android slash command"
+    assert "/go-cloud" in slash_commands, "Missing /go-cloud slash command"
+    assert "/static" in slash_commands, "Missing /static slash command"
     log("  -> PASSED: Persona slash command mappings and uniqueness verified.")
     dur = time.time() - start_t
-    record_result(4, "Persona Slash Commands", "21 Slash Shortcuts", "PASSED", dur)
+    record_result(4, "Persona Slash Commands", "30 Slash Shortcuts", "PASSED", dur)
     return True
 
 
