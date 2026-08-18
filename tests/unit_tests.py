@@ -241,6 +241,70 @@ def test_personas_json_config():
     print("  -> PASSED: config/personas.json schema and chat_swapper in-memory loading verified.")
 
 
+
+def test_vscode_extension_manifest():
+    """Test VS Code extension package.json manifest, configurations, compiled output, and vsix build artifacts."""
+    print("[7/8] Testing VS Code Extension Manifest & Build Artifacts...")
+    pkg_path = os.path.join(PROJECT_ROOT, "vscode-extension", "package.json")
+    assert os.path.exists(pkg_path), "vscode-extension/package.json missing!"
+
+    with open(pkg_path, "r", encoding="utf-8") as f:
+        pkg = json.load(f)
+
+    assert pkg.get("name") == "podllama-code", "Incorrect package name in package.json"
+    assert "version" in pkg, "Missing version in package.json"
+    assert pkg.get("main") == "./out/extension.js", "Main entrypoint must be ./out/extension.js"
+
+    contributes = pkg.get("contributes", {})
+    assert "viewsContainers" in contributes, "Missing viewsContainers in contributes"
+    assert "views" in contributes, "Missing views in contributes"
+    assert "commands" in contributes, "Missing commands in contributes"
+
+    props = contributes.get("configuration", {}).get("properties", {})
+    expected_props = [
+        "podllama.apiBase",
+        "podllama.apiKey",
+        "podllama.chatModel",
+        "podllama.thinkingModel",
+        "podllama.instructModel",
+        "podllama.autocompleteModel",
+        "podllama.enableInlineCompletion",
+        "podllama.enableDropdownCompletion",
+        "podllama.debounceMs",
+        "podllama.maxTokens",
+        "podllama.temperature"
+    ]
+    for prop in expected_props:
+        assert prop in props, f"Missing configuration property '{prop}' in package.json"
+
+    # Verify compiled JavaScript output
+    out_js = os.path.join(PROJECT_ROOT, "vscode-extension", "out", "extension.js")
+    assert os.path.exists(out_js), "Compiled Extension JS file missing: out/extension.js"
+
+    # Verify vsix package artifact
+    vsix_path = os.path.join(PROJECT_ROOT, "vscode-extension", f"podllama-code-{pkg['version']}.vsix")
+    assert os.path.exists(vsix_path), f"Extension VSIX artifact missing: {vsix_path}"
+
+    print("  -> PASSED: VS Code Extension manifest, settings properties, output JS, and VSIX artifact verified.")
+
+
+def test_litellm_alias_mapping():
+    """Test LiteLLM model alias routing entries in litellm_config.yaml."""
+    print("[8/8] Testing LiteLLM Model Routing Alias Mapping...")
+    litellm_path = os.path.join(PROJECT_ROOT, "config", "litellm_config.yaml")
+    with open(litellm_path, "r", encoding="utf-8") as f:
+        conf = yaml.safe_load(f)
+
+    model_map = {item["model_name"]: item["litellm_params"]["model"] for item in conf.get("model_list", [])}
+
+    assert model_map.get("podllama-chat") == "openai/podllama-chat", f"podllama-chat mapped to unexpected '{model_map.get('podllama-chat')}'"
+    assert model_map.get("podllama-thinking") == "openai/podllama-thinking", f"podllama-thinking mapped to unexpected '{model_map.get('podllama-thinking')}'"
+    assert model_map.get("podllama-instruct") == "openai/podllama-instruct", f"podllama-instruct mapped to unexpected '{model_map.get('podllama-instruct')}'"
+    assert model_map.get("podllama-autocomplete") == "openai/podllama-autocomplete", f"podllama-autocomplete mapped to unexpected '{model_map.get('podllama-autocomplete')}'"
+
+    print("  -> PASSED: LiteLLM model routing aliases (podllama-chat, podllama-thinking, podllama-instruct) verified.")
+
+
 def run_all_tests():
     print("==================================================")
     print("       PodLlama Comprehensive Unit Test Suite     ")
@@ -252,10 +316,11 @@ def run_all_tests():
     test_container_definitions()
     test_chat_swapper_idle_config()
     test_makefile_targets()
+    test_vscode_extension_manifest()
+    test_litellm_alias_mapping()
     print("==================================================")
     print(" SUCCESS: All automated unit tests passed!       ")
     print("==================================================")
-
 
 if __name__ == "__main__":
     run_all_tests()

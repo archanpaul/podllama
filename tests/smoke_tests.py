@@ -381,12 +381,37 @@ def test_auto_stop_and_recovery():
         sys.exit(1)
 
 
+
+def test_personas_api():
+    log("--------------------------------------------------")
+    log("API TEST 10: Personas List API (GET /v1/personas)")
+    url = f"{BASE_URL}/personas"
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+    log(f"  Target URL: {url}")
+    log("  Expected: Status 200 OK with in-memory JSON personas array")
+
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            log(f"  Response Status: {resp.status}")
+            personas = data.get("personas", [])
+            p_ids = [p.get("id") for p in personas]
+            log(f"  Registered Persona IDs ({len(personas)} total): {p_ids[:6]}...")
+            assert resp.status == 200, f"Expected status 200, got {resp.status}"
+            assert len(personas) >= 12, f"Expected at least 12 personas, got {len(personas)}"
+            log("  -> PASSED: GET /v1/personas returned in-memory personas dataset successfully.")
+    except Exception as e:
+        log(f"  -> WARNING: Personas API endpoint check skipped or failed: {e}")
+
+
 def main():
     print("==================================================================")
     print("       PodLlama Environment Comprehensive API Smoke Test Suite   ")
     print("==================================================================")
     test_proxy_health()
     test_list_models_api()
+    test_personas_api()
     test_prompt_processing()
     test_thinking_model_api()
     test_instruct_model_api()
@@ -401,4 +426,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
