@@ -2,7 +2,7 @@
   "name": "podllama-code",
   "displayName": "PodLlama Code",
   "description": "Clean, lean, aesthetically pleasing AI assistant & low-latency autocomplete for VS Code powered by local PodLlama containers.",
-  "version": "0.1.0",
+  "version": "1.2.1",
   "publisher": "podllama",
   "engines": {
     "vscode": "^1.60.0"
