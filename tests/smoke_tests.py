@@ -506,11 +506,11 @@ def test_persona_completion_features(personas_data=None):
                 assert len(choices) > 0, "No completion choices returned!"
                 msg = choices[0].get("message", {})
                 content = msg.get("content") or msg.get("reasoning_content", "")
-                log(f"    Response Status: {resp.status} | Tokens Generated: {data.get(usage, {}).get(completion_tokens, 0)}")
+                log(f"    Response Status: {resp.status} | Tokens Generated: {data.get("usage", {}).get("completion_tokens", 0)}")
                 log(f"    Sample Output: {repr(content[:80].strip())}...")
-                assert len(content.strip()) > 0, f"Empty content generated for persona {tc[id]}"
+                assert len(content.strip()) > 0, f"Empty content generated for persona {persona_id}"
         except Exception as e:
-            log(f"  -> FAILED: Persona execution failed for '{tc[id]}': {e}")
+            log(f"  -> FAILED: Persona execution failed for '{persona_id}': {e}")
             sys.exit(1)
 
     log("  -> PASSED: All persona prompt injections and model executions completed successfully.")
