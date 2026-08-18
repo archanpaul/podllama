@@ -163,6 +163,43 @@ curl http://localhost:4000/health/liveliness
 
 ---
 
+### 2.6 Personas List API (`GET /v1/personas` or `GET /personas`)
+
+Retrieves the in-memory array of pre-configured CS/AI personas from the backend swapper (`http://localhost:8080/v1/personas`).
+
+#### Example cURL
+```bash
+curl http://localhost:8080/v1/personas
+```
+
+#### Response
+```json
+{
+  "personas": [
+    {
+      "id": "cs-professor",
+      "name": "University CS Professor",
+      "icon": "fa-solid fa-graduation-cap",
+      "slash_command": "/gate",
+      "description": "Formal CS theory, LaTeX math proofs, step-by-step logic, and GATE CS problem solving.",
+      "target_model": "podllama-thinking",
+      "system_prompt": "You are an expert Professor in Computer Science and an elite GATE CS subject matter specialist..."
+    },
+    {
+      "id": "algo-specialist",
+      "name": "Algorithm Specialist",
+      "icon": "fa-solid fa-code-fork",
+      "slash_command": "/algo",
+      "description": "Asymptotic space-time complexity analysis, DP formulations, graph algorithms, and optimal data structures.",
+      "target_model": "podllama-chat",
+      "system_prompt": "You are a Competitive Programming Master and Algorithm Specialist..."
+    }
+  ]
+}
+```
+
+---
+
 ## 3. Model Mapping & Execution Specification
 
 | Model Alias / GGUF Identifier | Role / Category | Backend Target Server | Loaded Model File | Disk Size | Concurrency & Execution Behavior |

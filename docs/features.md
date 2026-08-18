@@ -108,3 +108,13 @@ A companion extension, **PodLlama Code**, is bundled with the project to streaml
 - **Editor Integration ('Chat' Menu)**: Right-clicking highlighted code pastes it instantly as active chat context.
 - **Inline Proposed Change Diffing**: Allows reviewing applied code patches inline using VS Code's native accept/reject actions.
 - **Asynchronous Context Summarization Engine**: Triggers context summarization asynchronously via `podllama-chat` once a conversation exceeds 6 message turns. Compresses details into structured context points to save token history overhead while allowing live chat completions to stream immediately without blocking.
+
+
+---
+
+## 11. Server-Side Personas System & LaTeX Math Rendering
+
+- **12 Pre-Configured CS & AI Personas**: Configured in `config/personas.json` and loaded into memory on startup by `containers/chat_swapper.py`. Includes specialized personas for GATE CS (`/gate`), Algorithm Design (`/algo`), Deep Learning (`/dl`), MLOps (`/mlops`), Systems Architecture (`/architect`), Cybersecurity (`/sec`), Academic Paper Writing (`/paper`), and Scientific Peer Review (`/review`).
+- **Dynamic System Prompt & Model Pairings**: Choosing a persona automatically injects its domain-specific system prompt and routes to its recommended model (e.g. `/gate` -> `podllama-thinking`).
+- **KaTeX LaTeX Formula Rendering**: The VS Code extension chat panel natively renders math expressions (`$$...$$`, `\[...\]`, `\(...\)`, `$..$`) using embedded KaTeX styling.
+- **Out Directory VSIX Artifact**: The extension build script packages `.vsix` bundles into `vscode-extension/out/podllama-code-1.2.1.vsix` and `make install-vscode-extension` dynamically detects and installs the latest built package.
