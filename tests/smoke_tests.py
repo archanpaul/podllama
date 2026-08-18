@@ -533,7 +533,7 @@ def test_tool_calling():
                 }
             }
         ],
-        "max_tokens": 32
+        "max_tokens": 16
     }
     url = f"{BASE_URL}/chat/completions"
     headers = {
