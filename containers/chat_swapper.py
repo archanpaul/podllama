@@ -22,6 +22,12 @@ CONFIG_FILE = os.environ.get("CONFIG_FILE", "/app/config/model_conf.yaml")
 if not os.path.exists(CONFIG_FILE) and os.path.exists("/models/model_conf.yaml"):
     CONFIG_FILE = "/models/model_conf.yaml"
 
+PERSONAS_FILE = os.environ.get("PERSONAS_FILE", "/app/config/personas.json")
+if not os.path.exists(PERSONAS_FILE) and os.path.exists("/models/personas.json"):
+    PERSONAS_FILE = "/models/personas.json"
+if not os.path.exists(PERSONAS_FILE) and os.path.exists(os.path.join(os.path.dirname(__file__), "..", "config", "personas.json")):
+    PERSONAS_FILE = os.path.join(os.path.dirname(__file__), "..", "config", "personas.json")
+
 MODELS_DIR = os.environ.get("MODELS_DIR", "/models")
 SERVER_PORT = int(os.environ.get("SERVER_PORT", "8080"))
 LLAMA_PORT = int(os.environ.get("LLAMA_PORT", "8082"))
@@ -30,6 +36,7 @@ DEFAULT_IDLE_TIMEOUT = 600  # 10 minutes default
 
 def get_idle_timeout():
     load_config()
+    load_personas()
     timeout = config_data.get("idle_timeout_seconds")
     if timeout is not None:
         try:
@@ -44,6 +51,16 @@ current_model = None
 llama_process = None
 last_request_time = time.time()
 config_data = {}
+personas_data = {}
+
+def load_personas():
+    global personas_data
+    if os.path.exists(PERSONAS_FILE):
+        try:
+            with open(PERSONAS_FILE, "r", encoding="utf-8") as f:
+                personas_data = json.load(f) or {}
+        except Exception as e:
+            print(f"[Swapper] Error loading personas from {PERSONAS_FILE}: {e}", flush=True)
 
 
 def load_config():
@@ -552,10 +569,22 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 pass
 
     def do_GET(self):
-        if self.path == "/v1/models" or self.path == "/models":
+        if self.path in ["/v1/models", "/models"]:
             self.send_models_list()
+        elif self.path in ["/v1/personas", "/personas"]:
+            self.send_personas_list()
         else:
             self.handle_proxy()
+
+    def send_personas_list(self):
+        if not personas_data:
+            load_personas()
+        response_body = json.dumps(personas_data, indent=2).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(response_body)))
+        self.end_headers()
+        self.wfile.write(response_body)
 
     def do_POST(self):
         self.handle_proxy()

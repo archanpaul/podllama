@@ -8,6 +8,7 @@ executable script permissions, container definitions, and Makefile target parity
 import os
 import sys
 import yaml
+import json
 
 PROJECT_ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -214,11 +215,38 @@ def test_makefile_targets():
     print("  -> PASSED: Makefile target parity and alias mappings verified.")
 
 
+def test_personas_json_config():
+    """Test config/personas.json schema and chat_swapper in-memory persona loading."""
+    print("[1.5/6] Testing Personas JSON Configuration & In-Memory Loading...")
+    personas_json_path = os.path.join(PROJECT_ROOT, "config", "personas.json")
+    assert os.path.exists(personas_json_path), "config/personas.json missing!"
+
+    with open(personas_json_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    assert "personas" in data, "Missing 'personas' key in config/personas.json"
+    personas = data["personas"]
+    assert len(personas) >= 12, f"Expected at least 12 personas, got {len(personas)}"
+
+    required_keys = {"id", "name", "icon", "slash_command", "description", "target_model", "system_prompt"}
+    for p in personas:
+        for k in required_keys:
+            assert k in p, f"Persona '{p.get('id')}' missing key '{k}'"
+
+    sys.path.insert(0, os.path.join(PROJECT_ROOT, "containers"))
+    import chat_swapper
+    chat_swapper.PERSONAS_FILE = personas_json_path
+    chat_swapper.load_personas()
+    assert len(chat_swapper.personas_data.get("personas", [])) >= 12, "chat_swapper failed to load personas into memory"
+    print("  -> PASSED: config/personas.json schema and chat_swapper in-memory loading verified.")
+
+
 def run_all_tests():
     print("==================================================")
     print("       PodLlama Comprehensive Unit Test Suite     ")
     print("==================================================")
     test_yaml_configurations()
+    test_personas_json_config()
     test_model_resolution_logic()
     test_script_permissions()
     test_container_definitions()
