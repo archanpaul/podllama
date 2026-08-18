@@ -1,7 +1,7 @@
 model_list:
 - model_name: podllama-chat
   litellm_params:
-    model: openai/qwen2.5-coder
+    model: openai/podllama-chat
     api_base: http://podllama_chat:8080/v1
     api_key: sk-local
     drop_params: true
@@ -13,13 +13,13 @@ model_list:
     drop_params: true
 - model_name: podllama-thinking
   litellm_params:
-    model: openai/qwen2.5-coder
+    model: openai/podllama-thinking
     api_base: http://podllama_chat:8080/v1
     api_key: sk-local
     drop_params: true
 - model_name: podllama-instruct
   litellm_params:
-    model: openai/qwen2.5-coder-7b-instruct-q4_k_m.gguf
+    model: openai/podllama-instruct
     api_base: http://podllama_chat:8080/v1
     api_key: sk-local
     drop_params: true

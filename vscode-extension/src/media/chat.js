@@ -45,6 +45,10 @@
 
     function updateModelSelect(models, selectedModel) {
         if (!modelSelect) return;
+
+        const currentState = vscode.getState();
+        const activeModel = selectedModel || (currentState && currentState.selectedModel) || modelSelect.value || 'podllama-chat';
+
         modelSelect.innerHTML = '';
 
         // Filter model list to only include IDs starting with 'podllama-'
@@ -52,21 +56,27 @@
 
         if (filteredModels.length === 0) {
             const opt = document.createElement('option');
-            opt.value = 'podllama-chat';
-            opt.textContent = 'podllama-chat';
+            opt.value = activeModel;
+            opt.textContent = activeModel;
             modelSelect.appendChild(opt);
             return;
         }
 
+        let foundSelected = false;
         filteredModels.forEach(m => {
             const opt = document.createElement('option');
             opt.value = m.id;
             opt.textContent = m.id;
-            if (m.id === selectedModel) {
+            if (m.id === activeModel) {
                 opt.selected = true;
+                foundSelected = true;
             }
             modelSelect.appendChild(opt);
         });
+
+        if (!foundSelected && modelSelect.options.length > 0) {
+            modelSelect.options[0].selected = true;
+        }
     }
 
     function renderConversation(conv) {
@@ -437,6 +447,15 @@
     if (addContextBtn) {
         addContextBtn.addEventListener('click', () => {
             vscode.postMessage({ command: 'addContextAttachment' });
+        });
+    }
+
+    if (modelSelect) {
+        modelSelect.addEventListener('change', () => {
+            const selectedModel = modelSelect.value;
+            const currentState = vscode.getState() || {};
+            vscode.setState({ ...currentState, selectedModel: selectedModel });
+            vscode.postMessage({ command: 'selectModel', model: selectedModel });
         });
     }
 

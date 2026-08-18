@@ -10,6 +10,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'podllama.chatView';
     private _view?: vscode.WebviewView;
     private activeRequest: http.ClientRequest | undefined;
+    private lastSelectedModel: string | undefined;
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -61,7 +62,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                     await this.handleUserMessage(data.prompt, data.model);
                     break;
                 case 'newConversation':
-                    const newConv = this.conversationManager.createConversation('New Chat');
+                    const newConv = this.conversationManager.createConversation('New Chat', this.lastSelectedModel);
                     await this.refreshWebviewSession(newConv);
                     break;
                 case 'getHistoryList':
@@ -94,6 +95,20 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                     this.conversationManager.saveConversation(currentConv);
                     this.sendHistoryList();
                     break;
+                case 'selectModel':
+                    this.lastSelectedModel = data.model;
+                    const activeModelConv = this.conversationManager.getActiveConversation();
+                    if (activeModelConv) {
+                        activeModelConv.selectedModel = data.model;
+                        this.conversationManager.saveConversation(activeModelConv);
+                    }
+                    try {
+                        const config = vscode.workspace.getConfiguration('podllama');
+                        await config.update('chatModel', data.model, vscode.ConfigurationTarget.Global);
+                    } catch (e) {
+                        console.error('[PodLlama] Failed to update chatModel setting:', e);
+                    }
+                    break;
             }
         });
 
@@ -109,6 +124,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
 
         const models = await this.client.listModels();
         const settings = this.getSettings();
+        const activeModel = conv?.selectedModel || this.lastSelectedModel || settings.chatModel;
 
         this._view.webview.postMessage({
             type: 'initSession',
@@ -118,7 +134,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                 { id: settings.thinkingModel, object: 'model', owned_by: 'litellm' },
                 { id: 'podllama-instruct', object: 'model', owned_by: 'litellm' }
             ],
-            selectedModel: settings.chatModel
+            selectedModel: activeModel
         });
     }
 

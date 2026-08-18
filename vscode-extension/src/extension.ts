@@ -173,7 +173,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         vscode.commands.registerCommand('podllama.newConversation', () => {
-            const newConv = conversationManager.createConversation('New Chat');
+            const newConv = conversationManager.createConversation('New Chat', getSettings().chatModel);
             chatWebviewProvider.refreshWebviewSession(newConv);
         })
     );
