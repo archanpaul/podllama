@@ -2,6 +2,8 @@ services:
   podllama_chat:
     image: podllama-server:latest
     container_name: podllama_chat
+    ports:
+      - "8080:8080"
     environment:
       - MODEL_ROLE=chat
     devices:

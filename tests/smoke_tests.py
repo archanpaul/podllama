@@ -385,24 +385,36 @@ def test_auto_stop_and_recovery():
 def test_personas_api():
     log("--------------------------------------------------")
     log("API TEST 10: Personas List API (GET /v1/personas)")
-    url = f"{BASE_URL}/personas"
+    urls_to_try = [
+        "http://127.0.0.1:8080/v1/personas",
+        f"{BASE_URL}/personas"
+    ]
     headers = {"Authorization": f"Bearer {API_KEY}"}
-    log(f"  Target URL: {url}")
-    log("  Expected: Status 200 OK with in-memory JSON personas array")
 
-    try:
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            log(f"  Response Status: {resp.status}")
-            personas = data.get("personas", [])
-            p_ids = [p.get("id") for p in personas]
-            log(f"  Registered Persona IDs ({len(personas)} total): {p_ids[:6]}...")
-            assert resp.status == 200, f"Expected status 200, got {resp.status}"
-            assert len(personas) >= 12, f"Expected at least 12 personas, got {len(personas)}"
-            log("  -> PASSED: GET /v1/personas returned in-memory personas dataset successfully.")
-    except Exception as e:
-        log(f"  -> WARNING: Personas API endpoint check skipped or failed: {e}")
+    data = None
+    successful_url = None
+    for url in urls_to_try:
+        log(f"  Target URL: {url}")
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                if resp.status == 200:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    successful_url = url
+                    log(f"  Response Status: {resp.status}")
+                    break
+        except Exception as e:
+            log(f"  -> Target URL {url} returned: {e}")
+
+    if data and "personas" in data:
+        personas = data.get("personas", [])
+        p_ids = [p.get("id") for p in personas]
+        log(f"  Registered Persona IDs ({len(personas)} total): {p_ids[:6]}...")
+        assert len(personas) >= 12, f"Expected at least 12 personas, got {len(personas)}"
+        log(f"  -> PASSED: GET /v1/personas returned in-memory personas dataset successfully from {successful_url}.")
+    else:
+        log("  -> FAILED: Could not reach personas endpoint on port 8080 or 4000.")
+        sys.exit(1)
 
 
 def main():

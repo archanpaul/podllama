@@ -51,15 +51,26 @@ export class PodLlamaClient {
     async listPersonas(): Promise<PersonaItem[]> {
         const apiBase = this.getApiBase();
         const apiKey = this.getApiKey();
-        const urlStr = `${apiBase.replace(/\/$/, '')}/personas`;
+        const primaryUrl = `${apiBase.replace(/\/$/, '')}/personas`;
 
         try {
-            const data = await this.httpGetJson<{ personas: PersonaItem[] }>(urlStr, apiKey);
-            return data.personas || [];
+            const data = await this.httpGetJson<{ personas: PersonaItem[] }>(primaryUrl, apiKey);
+            if (data && Array.isArray(data.personas) && data.personas.length > 0) {
+                return data.personas;
+            }
         } catch (err) {
-            console.error('[PodLlama] Failed to list personas:', err);
-            return [];
+            // Fallback to direct swapper port 8080 if primary apiBase points to LiteLLM (port 4000)
+            try {
+                const fallbackUrl = primaryUrl.replace(':4000', ':8080');
+                const data = await this.httpGetJson<{ personas: PersonaItem[] }>(fallbackUrl, apiKey);
+                if (data && Array.isArray(data.personas)) {
+                    return data.personas;
+                }
+            } catch (e) {
+                console.error('[PodLlama] Failed to list personas:', e);
+            }
         }
+        return [];
     }
 
     async listModels(): Promise<ModelItem[]> {
