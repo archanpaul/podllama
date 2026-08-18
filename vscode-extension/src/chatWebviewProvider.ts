@@ -1,15 +1,22 @@
-import * as vscode from 'vscode';
-import * as http from 'http';
-import * as https from 'https';
-import { URL } from 'url';
-import { ConversationManager } from './conversationManager';
-import { PodLlamaClient } from './podllama-client';
-import { DiffContentProvider } from './diffContentProvider';
+import * as vscode from "vscode";
+import * as http from "http";
+import * as https from "https";
+import { URL } from "url";
+import { ConversationManager, ConversationSession } from "./conversationManager";
+import { PodLlamaClient } from "./podllama-client";
+import { DiffContentProvider } from "./diffContentProvider";
+
+interface ActiveStreamState {
+    request: http.ClientRequest;
+    accumulatedText: string;
+    model: string;
+    conv: ConversationSession;
+}
 
 export class ChatWebviewProvider implements vscode.WebviewViewProvider {
-    public static readonly viewType = 'podllama.chatView';
+    public static readonly viewType = "podllama.chatView";
     private _view?: vscode.WebviewView;
-    private activeRequest: http.ClientRequest | undefined;
+    private activeStreams: Map<string, ActiveStreamState> = new Map();
     private lastSelectedModel: string | undefined;
     private lastSelectedPersona: string | undefined;
 
@@ -21,15 +28,38 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         private diffProvider: DiffContentProvider
     ) { }
 
-    private abortCurrentRequest() {
-        if (this.activeRequest) {
-            this.activeRequest.destroy();
-            this.activeRequest = undefined;
-            this._view?.webview.postMessage({
-                type: 'streamToken',
-                text: '\n\n*Generation stopped by user.*'
-            });
-            this._view?.webview.postMessage({ type: 'streamEnd' });
+    private abortCurrentRequest(conversationId?: string) {
+        const targetId = conversationId || this.conversationManager.getActiveConversationId();
+        if (targetId && this.activeStreams.has(targetId)) {
+            const stream = this.activeStreams.get(targetId)!;
+            stream.request.destroy();
+            
+            if (stream.accumulatedText) {
+                stream.conv.messages.push({
+                    id: `msg_${Date.now()}`,
+                    role: "assistant",
+                    content: stream.accumulatedText + "\n\n*Generation stopped by user.*",
+                    model: stream.model,
+                    timestamp: Date.now()
+                });
+                this.conversationManager.saveConversation(stream.conv);
+            }
+
+            this.activeStreams.delete(targetId);
+
+            if (this.conversationManager.getActiveConversationId() === targetId) {
+                this._view?.webview.postMessage({
+                    type: "streamToken",
+                    conversationId: targetId,
+                    text: "\n\n*Generation stopped by user.*"
+                });
+                this._view?.webview.postMessage({
+                    type: "streamEnd",
+                    conversationId: targetId
+                });
+            }
+
+            this.sendHistoryList();
         }
     }
 
@@ -45,12 +75,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
             localResourceRoots: [this._extensionUri]
         };
 
-        // Retain webview context when hidden to prevent text/messages from resetting
         webviewView.description = "Local AI Chat";
-        // @ts-ignore
-        if (typeof webviewView.show === 'function') {
-            // some versions expose different view options
-        }
         // @ts-ignore
         webviewView.webview.options.retainContextWhenHidden = true;
 
@@ -59,44 +84,63 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         // Handle incoming messages from Webview UI
         webviewView.webview.onDidReceiveMessage(async (data) => {
             switch (data.command) {
-                case 'sendMessage':
-                    await this.handleUserMessage(data.prompt, data.model, data.persona);
+                case "copyToClipboard":
+                    if (data.text) {
+                        vscode.env.clipboard.writeText(data.text);
+                        vscode.window.showInformationMessage("Conversation copied to clipboard as Markdown.");
+                    }
                     break;
-                case 'newConversation':
-                    const newConv = this.conversationManager.createConversation('New Chat', this.lastSelectedModel, this.lastSelectedPersona);
+                case "insertToActiveFile":
+                    if (data.markdown) {
+                        await this.insertToActiveFile(data.markdown);
+                    }
+                    break;
+                case "sendMessage":
+                    await this.handleUserMessage(data.prompt, data.model, data.persona, data.conversationId);
+                    break;
+                case "newConversation":
+                    const newConv = this.conversationManager.createConversation("New Chat", this.lastSelectedModel, this.lastSelectedPersona);
                     await this.refreshWebviewSession(newConv);
-                    break;
-                case 'getHistoryList':
                     this.sendHistoryList();
                     break;
-                case 'selectConversation':
+                case "getHistoryList":
+                    this.sendHistoryList();
+                    break;
+                case "selectConversation":
                     const conv = this.conversationManager.setActiveConversation(data.id);
                     if (conv) {
                         await this.refreshWebviewSession(conv);
                     }
                     break;
-                case 'deleteConversation':
+                case "deleteConversation":
+                    if (this.activeStreams.has(data.id)) {
+                        this.abortCurrentRequest(data.id);
+                    }
                     const updatedList = this.conversationManager.deleteConversation(data.id);
                     this.sendHistoryList(updatedList);
                     const activeConv = this.conversationManager.getActiveConversation();
                     await this.refreshWebviewSession(activeConv);
                     break;
-                case 'applyPatch':
+                case "applyPatch":
                     await this.applyCodePatch(data.code);
                     break;
-                case 'stopGeneration':
-                    this.abortCurrentRequest();
+                case "stopGeneration":
+                    this.abortCurrentRequest(data.conversationId);
                     break;
-                case 'addContextAttachment':
+                case "addContextAttachment":
                     await this.handleAddContextAttachment();
                     break;
-                case 'renameConversation':
-                    const currentConv = this.conversationManager.getActiveConversation();
-                    currentConv.title = data.title;
-                    this.conversationManager.saveConversation(currentConv);
-                    this.sendHistoryList();
+                case "renameConversation":
+                    const targetConvId = data.conversationId || this.conversationManager.getActiveConversationId();
+                    const allConvs = this.conversationManager.getAllConversations();
+                    const targetConv = allConvs.find(c => c.id === targetConvId) || this.conversationManager.getActiveConversation();
+                    if (targetConv) {
+                        targetConv.title = data.title;
+                        this.conversationManager.saveConversation(targetConv);
+                        this.sendHistoryList();
+                    }
                     break;
-                case 'selectModel':
+                case "selectModel":
                     this.lastSelectedModel = data.model;
                     const activeModelConv = this.conversationManager.getActiveConversation();
                     if (activeModelConv) {
@@ -104,13 +148,13 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                         this.conversationManager.saveConversation(activeModelConv);
                     }
                     try {
-                        const config = vscode.workspace.getConfiguration('podllama');
-                        await config.update('chatModel', data.model, vscode.ConfigurationTarget.Global);
+                        const config = vscode.workspace.getConfiguration("podllama");
+                        await config.update("chatModel", data.model, vscode.ConfigurationTarget.Global);
                     } catch (e) {
-                        console.error('[PodLlama] Failed to update chatModel setting:', e);
+                        console.error("[PodLlama] Failed to update chatModel setting:", e);
                     }
                     break;
-                case 'selectPersona':
+                case "selectPersona":
                     this.lastSelectedPersona = data.persona;
                     const activePersonaConv = this.conversationManager.getActiveConversation();
                     if (activePersonaConv) {
@@ -127,56 +171,67 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
     }
 
     public async refreshWebviewSession(conv = this.conversationManager.getActiveConversation()) {
-        if (!this._view) return;
-        // Do not interrupt or clear the webview session mid-stream!
-        if (this.activeRequest) return;
+        if (!this._view || !conv) return;
 
         const models = await this.client.listModels();
         const personas = await this.client.listPersonas();
         const settings = this.getSettings();
-        const activeModel = conv?.selectedModel || this.lastSelectedModel || settings.chatModel;
-        const activePersona = conv?.selectedPersona || this.lastSelectedPersona || '';
+        const activeModel = conv.selectedModel || this.lastSelectedModel || settings.chatModel;
+        const activePersona = conv.selectedPersona || this.lastSelectedPersona || "";
+
+        const activeStream = this.activeStreams.get(conv.id);
+        const isGenerating = !!activeStream;
+        const partialText = activeStream ? activeStream.accumulatedText : "";
 
         this._view.webview.postMessage({
-            type: 'initSession',
+            type: "initSession",
             session: conv,
+            isGenerating: isGenerating,
+            partialText: partialText,
+            runningConversationIds: Array.from(this.activeStreams.keys()),
             models: models.length > 0 ? models : [
-                { id: settings.chatModel, object: 'model', owned_by: 'litellm' },
-                { id: settings.thinkingModel, object: 'model', owned_by: 'litellm' },
-                { id: 'podllama-instruct', object: 'model', owned_by: 'litellm' }
+                { id: settings.chatModel, object: "model", owned_by: "litellm" },
+                { id: settings.thinkingModel, object: "model", owned_by: "litellm" },
+                { id: "podllama-instruct", object: "model", owned_by: "litellm" }
             ],
             selectedModel: activeModel,
             personas: personas,
             selectedPersona: activePersona
         });
+
+        this.sendHistoryList();
     }
 
     private sendHistoryList(list = this.conversationManager.getAllConversations()) {
         if (!this._view) return;
         this._view.webview.postMessage({
-            type: 'updateHistoryList',
-            conversations: list
+            type: "updateHistoryList",
+            conversations: list,
+            activeConversationId: this.conversationManager.getActiveConversationId(),
+            runningConversationIds: Array.from(this.activeStreams.keys())
         });
     }
 
-    private async handleUserMessage(prompt: string, selectedModel: string, selectedPersona?: string) {
-        const conv = this.conversationManager.getActiveConversation();
+    private async handleUserMessage(prompt: string, selectedModel: string, selectedPersona?: string, targetConversationId?: string) {
+        const allConvs = this.conversationManager.getAllConversations();
+        const conv = (targetConversationId ? allConvs.find(c => c.id === targetConversationId) : undefined) || this.conversationManager.getActiveConversation();
 
         // Add User Turn
         conv.messages.push({
             id: `msg_${Date.now()}`,
-            role: 'user',
+            role: "user",
             content: prompt,
             timestamp: Date.now()
         });
 
         if (conv.messages.length === 1) {
-            conv.title = prompt.length > 25 ? prompt.substring(0, 25) + '...' : prompt;
+            conv.title = prompt.length > 25 ? prompt.substring(0, 25) + "..." : prompt;
         }
 
         this.conversationManager.saveConversation(conv);
+        this.sendHistoryList();
 
-        // Summarize context if conversation exceeds 6 turns (run asynchronously so it does not block streaming!)
+        // Summarize context if conversation exceeds 6 turns asynchronously
         if (conv.messages.length > 6 && !conv.summarizedContext) {
             this.client.summarizeContext(conv.messages.slice(0, -2), selectedModel)
                 .then(summary => {
@@ -185,14 +240,14 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                         this.conversationManager.saveConversation(conv);
                     }
                 })
-                .catch(err => console.error('[PodLlama] Background context summary error:', err));
+                .catch(err => console.error("[PodLlama] Background context summary error:", err));
         }
 
         // Fetch personas to inject system prompt and auto-detect target model
         const personas = await this.client.listPersonas();
         let activePersona = personas.find(p => p.id === selectedPersona);
-        if (!activePersona && prompt.startsWith('/')) {
-            const slashWord = prompt.split(' ')[0].toLowerCase();
+        if (!activePersona && prompt.startsWith("/")) {
+            const slashWord = prompt.split(" ")[0].toLowerCase();
             activePersona = personas.find(p => p.slash_command.toLowerCase() === slashWord);
         }
 
@@ -200,13 +255,13 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         const payloadMessages = [];
         if (activePersona && activePersona.system_prompt) {
             payloadMessages.push({
-                role: 'system',
+                role: "system",
                 content: activePersona.system_prompt
             });
         }
         if (conv.summarizedContext) {
             payloadMessages.push({
-                role: 'system',
+                role: "system",
                 content: `Previous Conversation Summary Context:\n${conv.summarizedContext}`
             });
         }
@@ -214,22 +269,22 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
             payloadMessages.push({ role: m.role, content: m.content });
         });
 
-        // Target model resolution (use persona's target_model if specified and model is default)
+        // Target model resolution
         let targetModel = selectedModel;
-        if (activePersona && activePersona.target_model && (!selectedModel || selectedModel === 'podllama-chat')) {
+        if (activePersona && activePersona.target_model && (!selectedModel || selectedModel === "podllama-chat")) {
             targetModel = activePersona.target_model;
         }
 
-        // Stream AI Response
-        await this.streamChatCompletions(targetModel, payloadMessages, conv);
+        // Stream AI Response asynchronously so concurrent requests run simultaneously
+        this.streamChatCompletions(targetModel, payloadMessages, conv);
     }
 
-    private streamChatCompletions(model: string, messages: any[], conv: any): Promise<void> {
+    private streamChatCompletions(model: string, messages: any[], conv: ConversationSession): Promise<void> {
         return new Promise((resolve) => {
             const settings = this.getSettings();
-            const apiBase = settings.apiBase.replace(/\/$/, '');
+            const apiBase = settings.apiBase.replace(/\/$/, "");
             const parsedUrl = new URL(`${apiBase}/chat/completions`);
-            const transport = parsedUrl.protocol === 'https:' ? https : http;
+            const transport = parsedUrl.protocol === "https:" ? https : http;
 
             const body = JSON.stringify({
                 model: model,
@@ -240,40 +295,44 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
 
             const options = {
                 hostname: parsedUrl.hostname,
-                port: parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
+                port: parsedUrl.port || (parsedUrl.protocol === "https:" ? 443 : 80),
                 path: parsedUrl.pathname + parsedUrl.search,
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${settings.apiKey}`
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${settings.apiKey}`
                 }
             };
 
-            let assistantText = '';
-            let streamBuffer = '';
+            let streamBuffer = "";
 
             const req = transport.request(options, (res) => {
-                res.on('data', (chunk: Buffer) => {
-                    streamBuffer += chunk.toString('utf8');
-                    const lines = streamBuffer.split('\n');
-                    // The last item in array is incomplete unless streamBuffer ended with a newline
-                    streamBuffer = lines.pop() || '';
+                res.on("data", (chunk: Buffer) => {
+                    streamBuffer += chunk.toString("utf8");
+                    const lines = streamBuffer.split("\n");
+                    streamBuffer = lines.pop() || "";
+
+                    const activeStream = this.activeStreams.get(conv.id);
+                    if (!activeStream) return;
 
                     for (const rawLine of lines) {
                         const line = rawLine.trim();
-                        if (line.startsWith('data:') && line !== 'data: [DONE]' && line !== 'data:[DONE]') {
+                        if (line.startsWith("data:") && line !== "data: [DONE]" && line !== "data:[DONE]") {
                             try {
-                                const jsonStr = line.replace(/^data:\s*/, '');
+                                const jsonStr = line.replace(/^data:\s*/, "");
                                 const json = JSON.parse(jsonStr);
                                 const delta = json.choices[0]?.delta;
                                 if (delta) {
-                                    const tokenText = delta.content ?? delta.reasoning_content ?? delta.thinking ?? '';
+                                    const tokenText = delta.content ?? delta.reasoning_content ?? delta.thinking ?? "";
                                     if (tokenText) {
-                                        assistantText += tokenText;
-                                        this._view?.webview.postMessage({
-                                            type: 'streamToken',
-                                            text: tokenText
-                                        });
+                                        activeStream.accumulatedText += tokenText;
+                                        if (this.conversationManager.getActiveConversationId() === conv.id) {
+                                            this._view?.webview.postMessage({
+                                                type: "streamToken",
+                                                conversationId: conv.id,
+                                                text: tokenText
+                                            });
+                                        }
                                     }
                                 }
                             } catch (e) {
@@ -283,71 +342,167 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                     }
                 });
 
-                res.on('end', () => {
-                    const trailingLine = streamBuffer.trim();
-                    if (trailingLine.startsWith('data:') && trailingLine !== 'data: [DONE]' && trailingLine !== 'data:[DONE]') {
-                        try {
-                            const jsonStr = trailingLine.replace(/^data:\s*/, '');
-                            const json = JSON.parse(jsonStr);
-                            const delta = json.choices[0]?.delta;
-                            if (delta) {
-                                const tokenText = delta.content ?? delta.reasoning_content ?? delta.thinking ?? '';
-                                if (tokenText) {
-                                    assistantText += tokenText;
-                                    this._view?.webview.postMessage({
-                                        type: 'streamToken',
-                                        text: tokenText
-                                    });
+                res.on("end", () => {
+                    const activeStream = this.activeStreams.get(conv.id);
+                    if (activeStream) {
+                        const trailingLine = streamBuffer.trim();
+                        if (trailingLine.startsWith("data:") && trailingLine !== "data: [DONE]" && trailingLine !== "data:[DONE]") {
+                            try {
+                                const jsonStr = trailingLine.replace(/^data:\s*/, "");
+                                const json = JSON.parse(jsonStr);
+                                const delta = json.choices[0]?.delta;
+                                if (delta) {
+                                    const tokenText = delta.content ?? delta.reasoning_content ?? delta.thinking ?? "";
+                                    if (tokenText) {
+                                        activeStream.accumulatedText += tokenText;
+                                        if (this.conversationManager.getActiveConversationId() === conv.id) {
+                                            this._view?.webview.postMessage({
+                                                type: "streamToken",
+                                                conversationId: conv.id,
+                                                text: tokenText
+                                            });
+                                        }
+                                    }
                                 }
+                            } catch (e) {
+                                // ignore
                             }
-                        } catch (e) {
-                            // ignore
                         }
+
+                        const finalText = activeStream.accumulatedText;
+                        this.activeStreams.delete(conv.id);
+
+                        conv.messages.push({
+                            id: `msg_${Date.now()}`,
+                            role: "assistant",
+                            content: finalText,
+                            model: model,
+                            timestamp: Date.now()
+                        });
+
+                        this.conversationManager.saveConversation(conv);
+
+                        if (this.conversationManager.getActiveConversationId() === conv.id) {
+                            this._view?.webview.postMessage({
+                                type: "streamEnd",
+                                conversationId: conv.id
+                            });
+                        }
+
+                        this.sendHistoryList();
                     }
-                    this.activeRequest = undefined;
-                    this._view?.webview.postMessage({ type: 'streamEnd' });
-
-                    conv.messages.push({
-                        id: `msg_${Date.now()}`,
-                        role: 'assistant',
-                        content: assistantText,
-                        model: model,
-                        timestamp: Date.now()
-                    });
-
-                    this.conversationManager.saveConversation(conv);
                     resolve();
                 });
             });
 
-            req.on('error', (err) => {
-                this.activeRequest = undefined;
-                console.error('[PodLlama] Stream error:', err);
-                this._view?.webview.postMessage({
-                    type: 'streamToken',
-                    text: `\n\n*Error connecting to PodLlama backend: ${err.message}*`
-                });
-                this._view?.webview.postMessage({ type: 'streamEnd' });
+            req.on("error", (err) => {
+                console.error(`[PodLlama] Stream error for conversation ${conv.id}:`, err);
+                const activeStream = this.activeStreams.get(conv.id);
+                this.activeStreams.delete(conv.id);
+
+                if (activeStream) {
+                    conv.messages.push({
+                        id: `msg_${Date.now()}`,
+                        role: "assistant",
+                        content: (activeStream.accumulatedText ? activeStream.accumulatedText + "\n\n" : "") + `*Error connecting to PodLlama backend: ${err.message}*`,
+                        model: model,
+                        timestamp: Date.now()
+                    });
+                    this.conversationManager.saveConversation(conv);
+                }
+
+                if (this.conversationManager.getActiveConversationId() === conv.id) {
+                    this._view?.webview.postMessage({
+                        type: "streamToken",
+                        conversationId: conv.id,
+                        text: `\n\n*Error connecting to PodLlama backend: ${err.message}*`
+                    });
+                    this._view?.webview.postMessage({
+                        type: "streamEnd",
+                        conversationId: conv.id
+                    });
+                }
+
+                this.sendHistoryList();
                 resolve();
             });
 
-            this.activeRequest = req;
+            this.activeStreams.set(conv.id, {
+                request: req,
+                accumulatedText: "",
+                model,
+                conv
+            });
+
+            this.sendHistoryList();
             req.write(body);
             req.end();
         });
     }
 
+    
+    public exportActiveConversationMarkdown(): string {
+        const conv = this.conversationManager.getActiveConversation();
+        if (!conv || !conv.messages || conv.messages.length === 0) {
+            return "# PodLlama Chat\n\n*Empty conversation*";
+        }
+        let md = `# ${conv.title || "PodLlama Chat"}\n\n`;
+        if (conv.createdAt) {
+            md += `*Date: ${new Date(conv.createdAt).toLocaleString()}*\n`;
+        }
+        if (conv.selectedModel) {
+            md += `*Model: ${conv.selectedModel}*\n`;
+        }
+        md += "\n---\n\n";
+
+        conv.messages.forEach(msg => {
+            const roleTitle = msg.role === "user" ? "👤 User" : `🤖 Assistant${msg.model ? ` (${msg.model})` : ""}`;
+            md += `### ${roleTitle}\n\n`;
+            if (msg.thinking) {
+                md += `> **Thought Process:**\n> ${msg.thinking.replace(/\n/g, "\n> ")}\n\n`;
+            }
+            md += `${msg.content}\n\n`;
+        });
+        return md.trim();
+    }
+
+    public async insertToActiveFile(markdown: string): Promise<boolean> {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showWarningMessage("No active editor found. Open a file to insert the chat markdown.");
+            return false;
+        }
+
+        const document = editor.document;
+        const selection = editor.selection;
+
+        const edit = new vscode.WorkspaceEdit();
+        if (selection.isEmpty) {
+            edit.insert(document.uri, selection.active, markdown);
+        } else {
+            edit.replace(document.uri, selection, markdown);
+        }
+
+        const success = await vscode.workspace.applyEdit(edit);
+        if (success) {
+            vscode.window.showInformationMessage("Chat markdown inserted into active file.");
+            return true;
+        } else {
+            vscode.window.showErrorMessage("Failed to insert chat markdown into active file.");
+            return false;
+        }
+    }
+
     private async applyCodePatch(code: string) {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
-            vscode.window.showWarningMessage('No active editor found to apply code patch.');
+            vscode.window.showWarningMessage("No active editor found to apply code patch.");
             return;
         }
 
         const document = editor.document;
         const selection = editor.selection;
 
-        // Apply edit directly inline inside the active editor
         const edit = new vscode.WorkspaceEdit();
         if (selection.isEmpty) {
             edit.insert(document.uri, selection.active, code);
@@ -357,37 +512,34 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
 
         const success = await vscode.workspace.applyEdit(edit);
         if (success) {
-            // Trigger native accept/reject overlay for the changes
-            vscode.commands.executeCommand('editor.action.dirtydiff.next');
+            vscode.commands.executeCommand("editor.action.dirtydiff.next");
 
-            const accept = 'Accept Changes';
-            const reject = 'Reject Changes';
+            const accept = "Accept Changes";
+            const reject = "Reject Changes";
             const action = await vscode.window.showInformationMessage(
-                'Proposed changes applied. Would you like to keep them?',
+                "Proposed changes applied. Would you like to keep them?",
                 accept,
                 reject
             );
 
             if (action === reject) {
-                // Revert changes by executing undo command
-                await vscode.commands.executeCommand('undo');
-                vscode.window.showInformationMessage('Changes rejected and reverted.');
+                await vscode.commands.executeCommand("undo");
+                vscode.window.showInformationMessage("Changes rejected and reverted.");
             } else if (action === accept) {
-                // Keep changes by saving the document
                 await document.save();
-                vscode.window.showInformationMessage('Changes accepted and saved.');
+                vscode.window.showInformationMessage("Changes accepted and saved.");
             }
         } else {
-            vscode.window.showErrorMessage('Failed to apply proposed code changes.');
+            vscode.window.showErrorMessage("Failed to apply proposed code changes.");
         }
     }
 
     private async handleAddContextAttachment() {
         const fileUris = await vscode.window.showOpenDialog({
             canSelectMany: false,
-            openLabel: 'Add to context',
+            openLabel: "Add to context",
             filters: {
-                'Code / Text Files': ['ts', 'js', 'py', 'json', 'yaml', 'yml', 'md', 'txt', 'go', 'rs', 'c', 'cpp', 'h', 'java', 'html', 'css', 'sh']
+                "Code / Text Files": ["ts", "js", "py", "json", "yaml", "yml", "md", "txt", "go", "rs", "c", "cpp", "h", "java", "html", "css", "sh"]
             }
         });
 
@@ -397,12 +549,11 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                 const content = doc.getText();
                 const relativePath = vscode.workspace.asRelativePath(fileUris[0]);
 
-                // Post message to webview containing code block to append
-                const contextStr = `\n\n[Context: ${relativePath}]\n\`\`\`\n${content}\n\`\`\`\n`;
+                const contextStr = "\n\n[Context: " + relativePath + "]\n```\n" + content + "\n```\n";
                 this._view?.webview.postMessage({
-                    type: 'streamToken',
-                    text: '',
-                    thinking: '',
+                    type: "streamToken",
+                    text: "",
+                    thinking: "",
                     appendInput: contextStr
                 });
             } catch (err: any) {
@@ -413,29 +564,28 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
 
     public injectCodeSelection(code: string, filepath: string, instruction?: string) {
         if (!this._view) {
-            // Reveal chat view if hidden
-            vscode.commands.executeCommand('workbench.view.extension.podllama-activitybar');
+            vscode.commands.executeCommand("workbench.view.extension.podllama-activitybar");
         }
 
         const relativePath = vscode.workspace.asRelativePath(filepath);
-        let injectedVal = ``;
+        let injectedVal = "";
         if (instruction) {
             injectedVal += `${instruction}\n`;
         }
-        injectedVal += `\n[Context Selection: ${relativePath}]\n\`\`\`\n${code}\n\`\`\`\n`;
+        injectedVal += "\n[Context Selection: " + relativePath + "]\n```\n" + code + "\n```\n";
 
         this._view?.webview.postMessage({
-            type: 'streamToken',
-            text: '',
-            thinking: '',
+            type: "streamToken",
+            text: "",
+            thinking: "",
             appendInput: injectedVal
         });
     }
 
     private getHtmlForWebview(webview: vscode.Webview): string {
-        const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'src', 'media', 'chat.css'));
-        const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'src', 'media', 'chat.js'));
-        const fontAwesomeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'src', 'media', 'font-awesome', 'css', 'all.min.css'));
+        const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "src", "media", "chat.css"));
+        const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "src", "media", "chat.js"));
+        const fontAwesomeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "src", "media", "font-awesome", "css", "all.min.css"));
 
         return `<!DOCTYPE html>
 <html lang="en">
@@ -457,13 +607,29 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
             <input type="text" class="chat-title-input" id="chat-title-input" value="PodLlama Code" title="Click to rename conversation" />
         </div>
         <div class="header-actions">
+            <div class="export-dropdown-container">
+                <button class="icon-btn" id="export-menu-btn" title="Export Conversation (Markdown / Insert)"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
+                <div class="export-dropdown-menu" id="export-dropdown-menu">
+                    <button class="export-menu-item" id="copy-markdown-btn" title="Copy conversation as formatted Markdown">
+                        <i class="fa-solid fa-copy"></i>
+                        <span>Copy as Markdown</span>
+                    </button>
+                    <button class="export-menu-item" id="insert-active-file-btn" title="Insert conversation markdown into active file">
+                        <i class="fa-solid fa-file-import"></i>
+                        <span>Insert to Active File</span>
+                    </button>
+                </div>
+            </div>
             <button class="icon-btn" id="new-chat-btn" title="New Conversation"><i class="fa-solid fa-plus"></i></button>
             <button class="icon-btn" id="history-btn" title="Conversation History"><i class="fa-solid fa-clock-rotate-left"></i></button>
         </div>
     </div>
 
     <div class="history-drawer" id="history-drawer">
-        <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px;">Past Conversations</div>
+        <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <span>Past Conversations</span>
+            <span id="active-sessions-count" style="font-size: 11px; color: var(--text-muted); font-weight: 400;"></span>
+        </div>
         <ul class="history-list" id="history-list"></ul>
     </div>
 

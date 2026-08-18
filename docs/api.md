@@ -334,7 +334,21 @@ models:
       autocomplete: "<|fim_prefix|>{{{prefix}}}<|fim_suffix|>{{{suffix}}}<|fim_middle|>"
 ```
 
-### 4.2 Cline / Roo Code Extension Configuration
+### 4.2 Official VS Code Extension (PodLlama Code) Commands
+
+The bundled extension (`podllama-code`) provides the following interactive commands and keybindings:
+
+| Command ID | Title | Description |
+| :--- | :--- | :--- |
+| `podllama.newConversation` | `PodLlama: New Conversation` | Initializes a new chat session in the sidebar webview. |
+| `podllama.copyChatMarkdown` | `PodLlama: Copy Chat as Markdown` | Formats the active conversation into CommonMark and copies it to the system clipboard. |
+| `podllama.insertChatToActiveFile` | `PodLlama: Insert Chat into Active File` | Formats the active conversation and inserts it directly into the active editor at cursor position. |
+| `podllama.toggleAutocomplete` | `PodLlama: Toggle Autocomplete` | Toggles inline ghost text completions on/off. |
+| `podllama.applyCodePatch` | `PodLlama: Apply Code Patch to Active File` | Applies proposed code modifications inline with accept/reject diff review. |
+| `podllama.resetSettings` | `PodLlama: Reset Settings to Default` | Resets all `podllama.*` configuration settings to default. |
+| `podllama.sendToChat` | `Chat` (Context Menu) | Pastes highlighted editor text selection directly into the chat webview as context. |
+
+### 4.3 Cline / Roo Code Extension Configuration
 
 - **API Provider**: OpenAI Compatible
 - **Base URL**: `http://localhost:4000/v1`

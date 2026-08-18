@@ -57,6 +57,14 @@
       {
         "command": "podllama.sendToChat",
         "title": "Chat"
+      },
+      {
+        "command": "podllama.copyChatMarkdown",
+        "title": "PodLlama: Copy Chat as Markdown"
+      },
+      {
+        "command": "podllama.insertChatToActiveFile",
+        "title": "PodLlama: Insert Chat into Active File"
       }
     ],
     "menus": {

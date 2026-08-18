@@ -250,3 +250,47 @@ model_list:
   ]
 }
 ```
+
+---
+
+## 6. VS Code Extension (PodLlama Code) Internal Architecture
+
+### 6.1 Concurrent Multi-Session Stream Orchestration
+
+The extension host (`ChatWebviewProvider.ts`) maintains a non-blocking stream map:
+```typescript
+activeStreams: Map<string, { request: http.ClientRequest; accumulatedText: string; model: string; conv: ConversationSession }>
+```
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant UI as Webview Client (chat.js)
+    participant Host as Extension Host (chatWebviewProvider.ts)
+    participant Mgr as ConversationManager
+    participant Backend as LiteLLM Proxy (:4000)
+
+    Note over UI,Backend: Concurrent Session Stream Execution
+    UI->>Host: sendMessage(prompt, model, persona, conversationId="conv_A")
+    Host->>Backend: POST /v1/chat/completions (stream=true)
+    Host->>Host: activeStreams.set("conv_A", streamState)
+
+    Note over UI,Host: User switches active session to conv_B
+    UI->>Host: selectConversation(id="conv_B")
+    Host->>Mgr: setActiveConversation("conv_B")
+    Host->>UI: initSession(session=conv_B, isGenerating=false)
+
+    Backend-->>Host: streamToken chunk for conv_A
+    Host->>Host: Accumulate tokens into conv_A buffer (activeStreams)
+    Note over Host: conv_A is in background; token not sent to conv_B UI
+
+    Backend-->>Host: streamEnd for conv_A
+    Host->>Mgr: saveConversation(conv_A with complete assistant turn)
+    Host->>Host: activeStreams.delete("conv_A")
+    Host->>UI: updateHistoryList(runningConversationIds=[])
+```
+
+### 6.2 Session Export Subsystem
+- **Markdown Export**: Formats the full conversation session (Metadata, Title, Timestamps, System Prompt, User turns, Assistant reasoning blocks, and responses) into clean CommonMark.
+- **Clipboard Output**: Copies formatted markdown directly via `vscode.env.clipboard.writeText`.
+- **Editor Document Insertion**: Uses `vscode.WorkspaceEdit` to insert formatted conversation notes at the user's active cursor position in open workspace files.

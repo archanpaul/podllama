@@ -101,8 +101,11 @@ The **PodLlama Container Environment** provides a local, GPU-accelerated, contai
 ## 10. Official VS Code Extension (PodLlama Code)
 
 A companion extension, **PodLlama Code**, is bundled with the project to streamline developer workflows locally:
-- **Offline Fonts & Styles**: Self-contains Fira Sans and Fira Code fonts, enabling coding ligatures and offline privacy.
-- **Antigravity-inspired Sidebar**: A webview chat panel featuring a compact header, renamed conversation sessions, themed model dropdown controls, and scalable play/stop generation icons.
+- **GitHub Primer Design System Theming**: Includes bundled official **GitHub Light Default** and **GitHub Dark Dimmed** color themes. The chat webview seamlessly inherits Primer design tokens (`#22272e` canvas, `#1c2128` inset, `#444c56` border, `#539bf5` blue accent, `#347d39` green buttons) with offline **Fira Sans** and **Fira Code** typography (with programming ligatures).
+- **Simultaneous Multi-Session Chat Execution**: Run parallel AI generation streams across multiple sessions concurrently without blocking or aborting background conversations. Tokens accumulate in memory and save to persistent history upon completion.
+- **Dynamic Active Webview Synchronization**: Switching between conversations in the History drawer immediately displays the target session's latest state. If a switched session is currently streaming in the background, all completed messages and in-progress tokens are restored instantly with live stream continuation and per-session stop controls.
+- **Real-Time Running Indicators & Drawer Count**: The history drawer highlights the active session and displays live spinning badges (`Generating...`) alongside an active background session counter (e.g. `(2 running)`).
+- **Session Export (Copy as Markdown & Insert to Active File)**: Export any chat session directly from the header export menu or via the VS Code Command Palette (`PodLlama: Copy Chat as Markdown` and `PodLlama: Insert Chat into Active File`).
 - **Decoupled Dual-Buffer Architecture**: Ingestion buffer (`streamDataBuffer`) and presentation buffer (`viewBuffer` / `lastGoodHtml`) decouple network packet reception from browser UI paints for real-time token-by-token streaming.
 - **Resilient Fallback Live Markdown Renderer**: Formats Markdown live during streaming with `fallbackMarkdown` protection against CDN script unavailability, unparsed tokens, split backticks, and TCP packet fragmentation.
 - **Multi-Field SSE Delta Streaming**: Extracts and streams token chunks seamlessly across standard responses (`content`), DeepSeek reasoning traces (`reasoning_content`), and thinking models (`thinking`).

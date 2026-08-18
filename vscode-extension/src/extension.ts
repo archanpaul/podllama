@@ -178,6 +178,21 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
+    context.subscriptions.push(
+        vscode.commands.registerCommand('podllama.copyChatMarkdown', async () => {
+            const md = chatWebviewProvider.exportActiveConversationMarkdown();
+            await vscode.env.clipboard.writeText(md);
+            vscode.window.showInformationMessage('PodLlama: Conversation copied to clipboard as Markdown.');
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('podllama.insertChatToActiveFile', async () => {
+            const md = chatWebviewProvider.exportActiveConversationMarkdown();
+            await chatWebviewProvider.insertToActiveFile(md);
+        })
+    );
+
     // Context Menu selection commands forwarding editor blocks to Chat
     const getActiveEditorSelection = () => {
         const editor = vscode.window.activeTextEditor;
