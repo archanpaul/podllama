@@ -507,3 +507,16 @@ textarea::placeholder {
 .send-btn:active {
   transform: scale(0.9);
 }
+
+/* KaTeX LaTeX Display & Inline Styling */
+.katex-display {
+  margin: 10px 0 !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 6px 0;
+}
+
+.katex {
+  font-size: 1.05em !important;
+  color: var(--text-main);
+}
