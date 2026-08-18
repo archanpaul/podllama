@@ -127,7 +127,19 @@
           "description": "Sampling temperature for autocomplete."
         }
       }
-    }
+    },
+    "themes": [
+      {
+        "label": "GitHub Light Default",
+        "uiTheme": "vs",
+        "path": "./themes/github-light-default.json"
+      },
+      {
+        "label": "GitHub Dark Dimmed",
+        "uiTheme": "vs-dark",
+        "path": "./themes/github-dark-dimmed.json"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

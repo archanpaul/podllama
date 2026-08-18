@@ -2,7 +2,7 @@
 """
 Smoke Test Suite for PodLlama Container Environment.
 Verifies live endpoint connectivity, API list models, Chat model prompt processing,
-Streaming, Thinking model reasoning, Autocomplete completion, and Tool calling.
+Streaming, Thinking model reasoning, Autocomplete completion, Personas, Tool calling, and Auto-stop recovery.
 """
 
 import sys
@@ -16,9 +16,22 @@ BASE_URL = "http://127.0.0.1:4000/v1"
 HEALTH_URL = "http://127.0.0.1:4000/health/liveliness"
 API_KEY = "sk-local"
 
+test_results = []
+
 
 def log(msg):
     print(f"[SMOKE TEST] {msg}", flush=True)
+
+
+def record_result(test_num, name, target, status, duration, error=""):
+    test_results.append({
+        "num": test_num,
+        "name": name,
+        "target": target,
+        "status": status,
+        "duration": duration,
+        "error": error
+    })
 
 
 def test_proxy_health():
@@ -26,6 +39,7 @@ def test_proxy_health():
     log("API TEST 1: Proxy Liveliness Check (GET /health/liveliness)")
     log(f"  Target URL: {HEALTH_URL}")
     log("  Expected: Status 200 OK with liveliness message")
+    start_t = time.time()
     try:
         req = urllib.request.Request(HEALTH_URL)
         with urllib.request.urlopen(req, timeout=5) as resp:
@@ -34,9 +48,14 @@ def test_proxy_health():
             log(f"  Response Payload: {repr(data.strip())}")
             assert resp.status == 200, f"Expected status 200, got {resp.status}"
             log("  -> PASSED: GET /health/liveliness active and healthy.")
+            dur = time.time() - start_t
+            record_result(1, "Proxy Liveliness Check", "GET /health/liveliness", "PASSED", dur)
+            return True
     except Exception as e:
+        dur = time.time() - start_t
         log(f"  -> FAILED: Could not connect to LiteLLM Proxy liveliness at {HEALTH_URL}: {e}")
-        sys.exit(1)
+        record_result(1, "Proxy Liveliness Check", "GET /health/liveliness", "FAILED", dur, str(e))
+        return False
 
 
 def test_list_models_api():
@@ -45,7 +64,8 @@ def test_list_models_api():
     url = f"{BASE_URL}/models"
     headers = {"Authorization": f"Bearer {API_KEY}"}
     log(f"  Target URL: {url}")
-    log("  Expected: Status 200 OK with JSON array containing model objects")
+    log("  Expected: Status 200 OK with JSON array containing active model objects")
+    start_t = time.time()
     try:
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=10) as resp:
@@ -57,21 +77,124 @@ def test_list_models_api():
             assert resp.status == 200, f"Expected status 200, got {resp.status}"
             assert len(models) > 0, "No models returned from GET /v1/models!"
             log("  -> PASSED: GET /v1/models returned active model list successfully.")
+            dur = time.time() - start_t
+            record_result(2, "List Models API", "GET /v1/models", "PASSED", dur)
+            return True
     except Exception as e:
+        dur = time.time() - start_t
         log(f"  -> FAILED: List models request failed: {e}")
-        sys.exit(1)
+        record_result(2, "List Models API", "GET /v1/models", "FAILED", dur, str(e))
+        return False
+
+
+def test_personas_api():
+    log("--------------------------------------------------")
+    log("API TEST 3: Personas Taxonomy & Skills API (GET /v1/personas)")
+    urls_to_try = [
+        "http://127.0.0.1:8080/v1/personas",
+        f"{BASE_URL}/personas",
+        "http://127.0.0.1:8080/personas"
+    ]
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+
+    start_t = time.time()
+    data = None
+    successful_url = None
+    for url in urls_to_try:
+        log(f"  Target URL: {url}")
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                if resp.status == 200:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    successful_url = url
+                    log(f"  Response Status: {resp.status}")
+                    break
+        except Exception as e:
+            log(f"  -> Target URL {url} returned: {e}")
+
+    if data and "personas" in data:
+        personas = data.get("personas", [])
+        categories = data.get("categories", [])
+        p_ids = [p.get("id") for p in personas]
+        log(f"  Registered Persona IDs ({len(personas)} total across {len(categories)} categories): {p_ids[:8]}...")
+        assert len(personas) >= 21, f"Expected at least 21 personas, got {len(personas)}"
+        assert len(categories) >= 6, f"Expected at least 6 categories, got {len(categories)}"
+
+        for cat in categories:
+            assert "id" in cat and "name" in cat and "description" in cat and "icon" in cat, f"Invalid category: {cat}"
+
+        for p in personas:
+            assert "id" in p and "name" in p and "category" in p and "category_id" in p
+            assert "skills" in p and isinstance(p["skills"], list) and len(p["skills"]) > 0
+            assert "slash_command" in p and p["slash_command"].startswith("/")
+            assert "system_prompt" in p and len(p["system_prompt"]) > 0
+
+        assert "cp-solver" in p_ids, "Missing 'cp-solver' persona in response"
+        assert "hackathon-builder" in p_ids, "Missing 'hackathon-builder' persona in response"
+        assert "cs-professor" in p_ids, "Missing 'cs-professor' persona in response"
+        assert "algo-specialist" in p_ids, "Missing 'algo-specialist' persona in response"
+
+        log(f"  -> PASSED: GET /v1/personas returned in-memory category-wise personas dataset successfully from {successful_url}.")
+        dur = time.time() - start_t
+        record_result(3, "Personas Taxonomy & Skills", "GET /v1/personas", "PASSED", dur)
+        return data
+    else:
+        dur = time.time() - start_t
+        log("  -> FAILED: Could not reach personas endpoint on port 8080 or 4000.")
+        record_result(3, "Personas Taxonomy & Skills", "GET /v1/personas", "FAILED", dur, "Could not reach endpoint")
+        return None
+
+
+def test_persona_slash_command_resolution(personas_data=None):
+    log("--------------------------------------------------")
+    log("API TEST 4: Persona Slash Command Mapping & Resolution")
+    start_t = time.time()
+    if not personas_data or "personas" not in personas_data:
+        try:
+            req = urllib.request.Request("http://127.0.0.1:8080/v1/personas", headers={"Authorization": f"Bearer {API_KEY}"})
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                personas_data = json.loads(resp.read().decode("utf-8"))
+        except Exception:
+            pass
+
+    personas = (personas_data or {}).get("personas", [])
+    if not personas:
+        dur = time.time() - start_t
+        log("  -> FAILED: No personas loaded for slash command verification.")
+        record_result(4, "Persona Slash Commands", "21 Slash Shortcuts", "FAILED", dur, "No personas available")
+        return False
+
+    slash_commands = {}
+    for p in personas:
+        cmd = p.get("slash_command", "").lower()
+        assert cmd.startswith("/"), f"Invalid slash command: {cmd}"
+        assert cmd not in slash_commands, f"Duplicate slash command detected: {cmd}"
+        slash_commands[cmd] = p["id"]
+
+    log(f"  Verified {len(slash_commands)} unique slash command mappings: {list(slash_commands.keys())[:10]}...")
+    assert "/cp" in slash_commands, "Missing /cp slash command"
+    assert "/hack" in slash_commands, "Missing /hack slash command"
+    assert "/prof" in slash_commands, "Missing /prof slash command"
+    assert "/algo" in slash_commands, "Missing /algo slash command"
+    assert "/dl" in slash_commands, "Missing /dl slash command"
+    assert "/dev" in slash_commands, "Missing /dev slash command"
+    log("  -> PASSED: Persona slash command mappings and uniqueness verified.")
+    dur = time.time() - start_t
+    record_result(4, "Persona Slash Commands", "21 Slash Shortcuts", "PASSED", dur)
+    return True
 
 
 def test_prompt_processing():
     log("--------------------------------------------------")
-    log("API TEST 3: Chat Completions (POST /v1/chat/completions - 'podllama-chat')")
+    log("API TEST 5: Chat Completions (POST /v1/chat/completions - 'podllama-chat')")
     payload = {
         "model": "podllama-chat",
         "messages": [
             {"role": "system", "content": "You are a code analyzer."},
             {"role": "user", "content": "Analyze snippet:\ndef add(a: int, b: int) -> int:\n    return a + b\nSummarize function purpose."}
         ],
-        "max_tokens": 32,
+        "max_tokens": 24,
         "temperature": 0.1
     }
     url = f"{BASE_URL}/chat/completions"
@@ -83,6 +206,7 @@ def test_prompt_processing():
     log(f"  Request Model: {payload['model']}")
     log("  Expected: Status 200 OK with evaluated prompt_tokens and non-empty completion")
 
+    start_t = time.time()
     try:
         req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
         with urllib.request.urlopen(req, timeout=90) as resp:
@@ -100,14 +224,19 @@ def test_prompt_processing():
             assert prompt_tokens > 0, "Prompt tokens count must be > 0"
             assert completion_tokens > 0, "Completion tokens count must be > 0"
             log("  -> PASSED: Chat completions and token accounting verified.")
+            dur = time.time() - start_t
+            record_result(5, "Chat Completions & Tokens", "podllama-chat", "PASSED", dur)
+            return True
     except Exception as e:
+        dur = time.time() - start_t
         log(f"  -> FAILED: Prompt processing test failed: {e}")
-        sys.exit(1)
+        record_result(5, "Chat Completions & Tokens", "podllama-chat", "FAILED", dur, str(e))
+        return False
 
 
 def test_thinking_model_api():
     log("--------------------------------------------------")
-    log("API TEST 4: Deep Thinking & Reasoning (POST /v1/chat/completions - 'podllama-thinking')")
+    log("API TEST 6: Deep Thinking & Reasoning (POST /v1/chat/completions - 'podllama-thinking')")
     payload = {
         "model": "podllama-thinking",
         "messages": [
@@ -125,6 +254,7 @@ def test_thinking_model_api():
     log(f"  Request Model: {payload['model']}")
     log("  Expected: Status 200 OK with DeepSeek-R1 reasoning output")
 
+    start_t = time.time()
     try:
         req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
         with urllib.request.urlopen(req, timeout=90) as resp:
@@ -135,16 +265,19 @@ def test_thinking_model_api():
             log(f"  Response Status: {resp.status}")
             log(f"  Thinking Output Sample: {repr(content.strip())}")
             log("  -> PASSED: Thinking model completions API verified successfully.")
+            dur = time.time() - start_t
+            record_result(6, "Deep Thinking & Reasoning", "podllama-thinking", "PASSED", dur)
+            return True
     except Exception as e:
+        dur = time.time() - start_t
         log(f"  -> FAILED: Thinking model API request failed: {e}")
-        sys.exit(1)
-
-
+        record_result(6, "Deep Thinking & Reasoning", "podllama-thinking", "FAILED", dur, str(e))
+        return False
 
 
 def test_instruct_model_api():
     log("--------------------------------------------------")
-    log("API TEST 5: Instruct Completions (POST /v1/chat/completions - 'podllama-instruct')")
+    log("API TEST 7: Instruct Completions (POST /v1/chat/completions - 'podllama-instruct')")
     payload = {
         "model": "podllama-instruct",
         "messages": [
@@ -163,6 +296,7 @@ def test_instruct_model_api():
     log(f"  Request Model: {payload['model']}")
     log("  Expected: Status 200 OK with Qwen 2.5 Coder 7B Instruct output")
 
+    start_t = time.time()
     try:
         req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
         with urllib.request.urlopen(req, timeout=90) as resp:
@@ -173,20 +307,106 @@ def test_instruct_model_api():
             log(f"  Response Status: {resp.status}")
             log(f"  Instruct Output Sample: {repr(content.strip())}")
             log("  -> PASSED: Instruct model (podllama-instruct) completions API verified successfully.")
+            dur = time.time() - start_t
+            record_result(7, "Instruct Completions", "podllama-instruct", "PASSED", dur)
+            return True
     except Exception as e:
+        dur = time.time() - start_t
         log(f"  -> FAILED: Instruct model API request failed: {e}")
-        sys.exit(1)
+        record_result(7, "Instruct Completions", "podllama-instruct", "FAILED", dur, str(e))
+        return False
+
+
+def test_persona_completion_features(personas_data=None):
+    log("--------------------------------------------------")
+    log("API TEST 8: Persona Prompt Injection & Target Model Execution")
+    
+    test_cases = [
+        {
+            "id": "cp-solver",
+            "slash": "/cp",
+            "prompt": "Find maximum subarray sum using Kadane's Algorithm in C++ with complexity."
+        },
+        {
+            "id": "hackathon-builder",
+            "slash": "/hack",
+            "prompt": "Suggest a high-impact MVP stack and 2-minute demo hook for an AI note summarizer."
+        },
+        {
+            "id": "cs-professor",
+            "slash": "/prof",
+            "prompt": "State the Master Theorem recurrence relation in LaTeX notation."
+        }
+    ]
+
+    personas_map = {}
+    if personas_data and "personas" in personas_data:
+        personas_map = {p["id"]: p for p in personas_data["personas"]}
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {API_KEY}"
+    }
+    url = f"{BASE_URL}/chat/completions"
+
+    start_t = time.time()
+    try:
+        for tc in test_cases:
+            p_info = personas_map.get(tc["id"], {})
+            persona_id = tc["id"]
+            persona_slash = tc["slash"]
+            sys_prompt = p_info.get("system_prompt", f"You are the {persona_id} specialist.")
+            target_model = p_info.get("target_model", "podllama-chat")
+            skills = p_info.get("skills", [])
+            skills_summary = ", ".join(skills[:3]) if skills else "General"
+
+            log(f"  Testing Persona: '{persona_id}' ({persona_slash}) -> Target Model: '{target_model}'")
+            log(f"  Persona Skills: {skills_summary}")
+
+            payload = {
+                "model": target_model,
+                "messages": [
+                    {"role": "system", "content": sys_prompt},
+                    {"role": "user", "content": tc["prompt"]}
+                ],
+                "max_tokens": 24,
+                "temperature": 0.1
+            }
+
+            req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
+            with urllib.request.urlopen(req, timeout=90) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                assert resp.status == 200, f"Expected 200, got {resp.status}"
+                choices = data.get("choices", [])
+                assert len(choices) > 0, "No completion choices returned!"
+                msg = choices[0].get("message", {})
+                content = msg.get("content") or msg.get("reasoning_content", "")
+                tokens = data.get("usage", {}).get("completion_tokens", 0)
+                log(f"    Response Status: {resp.status} | Tokens Generated: {tokens}")
+                log(f"    Sample Output: {repr(content[:80].strip())}...")
+                assert len(content.strip()) > 0, f"Empty content generated for persona {persona_id}"
+
+        log("  -> PASSED: All persona prompt injections and model executions completed successfully.")
+        dur = time.time() - start_t
+        record_result(8, "Persona Prompt Injection", "/cp, /hack, /prof", "PASSED", dur)
+        return True
+    except Exception as e:
+        dur = time.time() - start_t
+        log(f"  -> FAILED: Persona execution failed: {e}")
+        record_result(8, "Persona Prompt Injection", "/cp, /hack, /prof", "FAILED", dur, str(e))
+        return False
+
 
 def test_chat_model_streaming():
     log("--------------------------------------------------")
-    log("API TEST 6: Chat Streaming SSE (POST /v1/chat/completions with stream=true)")
+    log("API TEST 9: Chat Streaming SSE (POST /v1/chat/completions with stream=true)")
     payload = {
         "model": "podllama-chat",
         "messages": [
             {"role": "system", "content": "You are a helpful coding assistant."},
             {"role": "user", "content": "Write a one-line Python function to reverse a string."}
         ],
-        "max_tokens": 64,
+        "max_tokens": 32,
         "temperature": 0.1,
         "stream": True
     }
@@ -199,6 +419,7 @@ def test_chat_model_streaming():
     log(f"  Request Model: {payload['model']} (Stream Mode)")
     log("  Expected: Server-Sent Events (SSE) data stream chunks ending with [DONE]")
 
+    start_t = time.time()
     try:
         req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
         tokens_received = 0
@@ -229,18 +450,23 @@ def test_chat_model_streaming():
         assert tokens_received > 0, "No tokens streamed from Chat model!"
         log(f"  -> Stream Chunks Received: {tokens_received}")
         log("  -> PASSED: Chat SSE token chunk streaming verified.")
+        dur = time.time() - start_t
+        record_result(9, "Chat SSE Token Streaming", "Stream SSE Chunks", "PASSED", dur)
+        return True
     except Exception as e:
+        dur = time.time() - start_t
         log(f"  -> FAILED: Chat model streaming request failed: {e}")
-        sys.exit(1)
+        record_result(9, "Chat SSE Token Streaming", "Stream SSE Chunks", "FAILED", dur, str(e))
+        return False
 
 
 def test_autocomplete_model():
     log("--------------------------------------------------")
-    log("API TEST 7: Text Completions / Autocomplete (POST /v1/completions - 'podllama-autocomplete')")
+    log("API TEST 10: Text Completions / Autocomplete (POST /v1/completions - 'podllama-autocomplete')")
     payload = {
         "model": "podllama-autocomplete",
         "prompt": "<|fim_prefix|>def fibonacci(n: int) -> int:\n    if n <= 1:\n        return n\n    return <|fim_suffix|>\n<|fim_middle|>",
-        "max_tokens": 32,
+        "max_tokens": 24,
         "temperature": 0.1,
         "stop": ["\n", "\n\n", "<|endoftext|>", "<|file_separator|>", "```", "# Explanation", "# Note", "def "]
     }
@@ -253,6 +479,7 @@ def test_autocomplete_model():
     log(f"  Request Model: {payload['model']}")
     log("  Expected: Status 200 OK with FIM inline code completion text")
 
+    start_t = time.time()
     try:
         req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
         with urllib.request.urlopen(req, timeout=90) as resp:
@@ -272,14 +499,19 @@ def test_autocomplete_model():
             assert not clean_text.startswith("The function"), f"Completion returned natural language explanation instead of code: {repr(clean_text)}"
             assert "calculates" not in clean_text.lower(), f"Completion returned conversational text: {repr(clean_text)}"
             log("  -> PASSED: Autocomplete model prompt processing & completion verified.")
+            dur = time.time() - start_t
+            record_result(10, "Autocomplete FIM Completion", "podllama-autocomplete", "PASSED", dur)
+            return True
     except Exception as e:
+        dur = time.time() - start_t
         log(f"  -> FAILED: Autocomplete model completion request failed: {e}")
-        sys.exit(1)
+        record_result(10, "Autocomplete FIM Completion", "podllama-autocomplete", "FAILED", dur, str(e))
+        return False
 
 
 def test_tool_calling():
     log("--------------------------------------------------")
-    log("API TEST 8: Function & Tool Calling (POST /v1/chat/completions - 'podllama-chat')")
+    log("API TEST 11: Function & Tool Calling (POST /v1/chat/completions - 'podllama-chat')")
     payload = {
         "model": "podllama-chat",
         "messages": [
@@ -301,7 +533,7 @@ def test_tool_calling():
                 }
             }
         ],
-        "max_tokens": 64
+        "max_tokens": 32
     }
     url = f"{BASE_URL}/chat/completions"
     headers = {
@@ -312,6 +544,7 @@ def test_tool_calling():
     log(f"  Request Model: {payload['model']} with function definitions")
     log("  Expected: Status 200 OK without server error")
 
+    start_t = time.time()
     try:
         req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
         with urllib.request.urlopen(req, timeout=90) as resp:
@@ -319,14 +552,19 @@ def test_tool_calling():
             assert resp.status == 200, f"Expected 200, got {resp.status}"
             log(f"  Response Status: {resp.status}")
             log("  -> PASSED: Tool calling request handled without server error.")
+            dur = time.time() - start_t
+            record_result(11, "Function & Tool Calling", "Tool Calling Defs", "PASSED", dur)
+            return True
     except Exception as e:
+        dur = time.time() - start_t
         log(f"  -> FAILED: Tool calling request failed: {e}")
-        sys.exit(1)
+        record_result(11, "Function & Tool Calling", "Tool Calling Defs", "FAILED", dur, str(e))
+        return False
 
 
 def test_auto_stop_and_recovery():
     log("--------------------------------------------------")
-    log("API TEST 9: Auto-Stop & Recovery Test (POST /v1/chat/completions after model stop)")
+    log("API TEST 12: Auto-Stop & Recovery Test (POST /v1/chat/completions after model stop)")
     log("  Simulating model server stop / idle auto-shutdown...")
     
     container_cmd = None
@@ -363,8 +601,8 @@ def test_auto_stop_and_recovery():
     log(f"  Request Model: {payload['model']}")
     log("  Expected: Status 200 OK after automatic model reload & swapper recovery")
 
+    start_t = time.time()
     try:
-        start_t = time.time()
         req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
         with urllib.request.urlopen(req, timeout=90) as resp:
             data = json.loads(resp.read().decode("utf-8"))
@@ -376,179 +614,53 @@ def test_auto_stop_and_recovery():
             log(f"  Recovery Latency: {elapsed:.2f}s")
             log(f"  Response Output Sample: {repr(content.strip())}")
             log("  -> PASSED: Auto-stop recovery verified successfully.")
+            dur = time.time() - start_t
+            record_result(12, "Auto-Stop & Recovery", "Cold-Start Reload", "PASSED", dur)
+            return True
     except Exception as e:
+        dur = time.time() - start_t
         log(f"  -> FAILED: Auto-stop & recovery test failed: {e}")
-        sys.exit(1)
+        record_result(12, "Auto-Stop & Recovery", "Cold-Start Reload", "FAILED", dur, str(e))
+        return False
 
 
-
-def test_personas_api():
-    log("--------------------------------------------------")
-    log("API TEST 10: Personas Taxonomy & Skills API (GET /v1/personas)")
-    urls_to_try = [
-        "http://127.0.0.1:8080/v1/personas",
-        f"{BASE_URL}/personas",
-        "http://127.0.0.1:8080/personas"
-    ]
-    headers = {"Authorization": f"Bearer {API_KEY}"}
-
-    data = None
-    successful_url = None
-    for url in urls_to_try:
-        log(f"  Target URL: {url}")
-        try:
-            req = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                if resp.status == 200:
-                    data = json.loads(resp.read().decode("utf-8"))
-                    successful_url = url
-                    log(f"  Response Status: {resp.status}")
-                    break
-        except Exception as e:
-            log(f"  -> Target URL {url} returned: {e}")
-
-    if data and "personas" in data:
-        personas = data.get("personas", [])
-        categories = data.get("categories", [])
-        p_ids = [p.get("id") for p in personas]
-        log(f"  Registered Persona IDs ({len(personas)} total across {len(categories)} categories): {p_ids[:8]}...")
-        assert len(personas) >= 21, f"Expected at least 21 personas, got {len(personas)}"
-        assert len(categories) >= 6, f"Expected at least 6 categories, got {len(categories)}"
-
-        # Verify category schema
-        for cat in categories:
-            assert "id" in cat and "name" in cat and "description" in cat and "icon" in cat, f"Invalid category: {cat}"
-
-        # Verify personas schema & skillsets
-        for p in personas:
-            assert "id" in p and "name" in p and "category" in p and "category_id" in p
-            assert "skills" in p and isinstance(p["skills"], list) and len(p["skills"]) > 0
-            assert "slash_command" in p and p["slash_command"].startswith("/")
-            assert "system_prompt" in p and len(p["system_prompt"]) > 0
-
-        # Assert key personas exist
-        assert "cp-solver" in p_ids, "Missing 'cp-solver' persona in response"
-        assert "hackathon-builder" in p_ids, "Missing 'hackathon-builder' persona in response"
-        assert "cs-professor" in p_ids, "Missing 'cs-professor' persona in response"
-        assert "algo-specialist" in p_ids, "Missing 'algo-specialist' persona in response"
-
-        log(f"  -> PASSED: GET /v1/personas returned in-memory category-wise personas dataset successfully from {successful_url}.")
-        return data
+def print_summary_report(total_duration):
+    print("\n" + "=" * 92)
+    print("                      PodLlama API Smoke Test Execution Summary Report")
+    print("=" * 92)
+    header = f"{'#':<3} | {'Test Name':<32} | {'Target Feature / Endpoint':<28} | {'Status':<8} | {'Duration':>8}"
+    print(header)
+    print("-" * 92)
+    
+    passed_count = sum(1 for r in test_results if r["status"] == "PASSED")
+    failed_count = sum(1 for r in test_results if r["status"] != "PASSED")
+    
+    for r in test_results:
+        dur_str = f"{r['duration']:.2f}s"
+        status_display = r['status']
+        row = f"{r['num']:<3} | {r['name']:<32} | {r['target']:<28} | {status_display:<8} | {dur_str:>8}"
+        print(row)
+        if r.get("error"):
+            print(f"    └── Failure Detail: {r['error']}")
+            
+    print("-" * 92)
+    summary_line = f"Total Tests: {len(test_results)} | Passed: {passed_count} | Failed: {failed_count} | Total Elapsed Time: {total_duration:.2f}s"
+    print(summary_line)
+    print("=" * 92)
+    if failed_count == 0 and len(test_results) > 0:
+        print(" SUCCESS: All live API endpoint smoke tests passed successfully!")
+        print("=" * 92 + "\n")
     else:
-        log("  -> FAILED: Could not reach personas endpoint on port 8080 or 4000.")
-        sys.exit(1)
+        print(" FAILURE: Some smoke test stages failed. Please check the logs above.")
+        print("=" * 92 + "\n")
 
-
-def test_persona_completion_features(personas_data=None):
-    log("--------------------------------------------------")
-    log("API TEST 11: Persona Prompt Injection & Target Model Execution")
-    
-    # Select sample personas across different categories
-    test_cases = [
-        {
-            "id": "cp-solver",
-            "slash": "/cp",
-            "prompt": "Find maximum subarray sum using Kadane's Algorithm in C++ with time and space complexity.",
-            "expected_kw": "Complexity"
-        },
-        {
-            "id": "hackathon-builder",
-            "slash": "/hack",
-            "prompt": "Suggest a high-impact MVP stack and 2-minute demo hook for an AI note summarizer.",
-            "expected_kw": "MVP"
-        },
-        {
-            "id": "cs-professor",
-            "slash": "/prof",
-            "prompt": "State the Master Theorem recurrence relation in LaTeX notation.",
-            "expected_kw": "$"
-        }
-    ]
-
-    personas_map = {}
-    if personas_data and "personas" in personas_data:
-        personas_map = {p["id"]: p for p in personas_data["personas"]}
-
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {API_KEY}"
-    }
-    url = f"{BASE_URL}/chat/completions"
-
-    for tc in test_cases:
-        p_info = personas_map.get(tc["id"], {})
-        persona_id = tc["id"]
-        persona_slash = tc["slash"]
-        sys_prompt = p_info.get("system_prompt", f"You are the {persona_id} specialist.")
-        target_model = p_info.get("target_model", "podllama-chat")
-        skills = p_info.get("skills", [])
-        skills_summary = ", ".join(skills[:3]) if skills else "General"
-
-        log(f"  Testing Persona: '{persona_id}' ({persona_slash}) -> Target Model: '{target_model}'")
-        log(f"  Persona Skills: {skills_summary}")
-
-        payload = {
-            "model": target_model,
-            "messages": [
-                {"role": "system", "content": sys_prompt},
-                {"role": "user", "content": tc["prompt"]}
-            ],
-            "max_tokens": 24,
-            "temperature": 0.1
-        }
-
-        try:
-            req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
-            with urllib.request.urlopen(req, timeout=90) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-                assert resp.status == 200, f"Expected 200, got {resp.status}"
-                choices = data.get("choices", [])
-                assert len(choices) > 0, "No completion choices returned!"
-                msg = choices[0].get("message", {})
-                content = msg.get("content") or msg.get("reasoning_content", "")
-                log(f"    Response Status: {resp.status} | Tokens Generated: {data.get("usage", {}).get("completion_tokens", 0)}")
-                log(f"    Sample Output: {repr(content[:80].strip())}...")
-                assert len(content.strip()) > 0, f"Empty content generated for persona {persona_id}"
-        except Exception as e:
-            log(f"  -> FAILED: Persona execution failed for '{persona_id}': {e}")
-            sys.exit(1)
-
-    log("  -> PASSED: All persona prompt injections and model executions completed successfully.")
-
-
-def test_persona_slash_command_resolution(personas_data=None):
-    log("--------------------------------------------------")
-    log("API TEST 12: Persona Slash Command Mapping & Resolution")
-    
-    if not personas_data or "personas" not in personas_data:
-        try:
-            req = urllib.request.Request("http://127.0.0.1:8080/v1/personas", headers={"Authorization": f"Bearer {API_KEY}"})
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                personas_data = json.loads(resp.read().decode("utf-8"))
-        except Exception:
-            pass
-
-    personas = (personas_data or {}).get("personas", [])
-    slash_commands = {}
-    for p in personas:
-        cmd = p.get("slash_command", "").lower()
-        assert cmd.startswith("/"), f"Invalid slash command: {cmd}"
-        assert cmd not in slash_commands, f"Duplicate slash command detected: {cmd}"
-        slash_commands[cmd] = p["id"]
-
-    log(f"  Verified {len(slash_commands)} unique slash command mappings: {list(slash_commands.keys())[:10]}...")
-    assert "/cp" in slash_commands, "Missing /cp slash command"
-    assert "/hack" in slash_commands, "Missing /hack slash command"
-    assert "/prof" in slash_commands, "Missing /prof slash command"
-    assert "/algo" in slash_commands, "Missing /algo slash command"
-    assert "/dl" in slash_commands, "Missing /dl slash command"
-    assert "/dev" in slash_commands, "Missing /dev slash command"
-    log("  -> PASSED: Persona slash command mappings and uniqueness verified.")
 
 def main():
     print("==================================================================")
     print("       PodLlama Environment Comprehensive API Smoke Test Suite   ")
     print("==================================================================")
+    suite_start = time.time()
+
     test_proxy_health()
     test_list_models_api()
     personas_data = test_personas_api()
@@ -561,9 +673,13 @@ def main():
     test_autocomplete_model()
     test_tool_calling()
     test_auto_stop_and_recovery()
-    print("==================================================================")
-    print(" SUCCESS: All live API endpoint smoke tests passed!               ")
-    print("==================================================================")
+
+    total_dur = time.time() - suite_start
+    print_summary_report(total_dur)
+
+    failed = any(r["status"] != "PASSED" for r in test_results)
+    if failed:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
